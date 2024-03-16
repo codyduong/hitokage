@@ -1,15 +1,17 @@
 // mod config;
 // use config::read_config_main;
-// mod pipes;
-// use pipes::{create_and_connect_pipe, read_from_pipe};
+mod pipes;
+use cxxqt_object::KomorebiPipeRust;
+use pipes::{create_and_connect_pipe, read_from_pipe};
 
 pub mod cxxqt_object;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
-fn main() {
+#[tokio::main]
+async fn main() {
     // read_config_main();
 
     // QCoreApplication::init(|app| {
-    //     let mut engine = QQmlApplicationEngine::new();
+    //     let mut engine: cxx::UniquePtr<QQmlApplicationEngine> = QQmlApplicationEngine::new();
     //     let rust_object = QBox::new(MyRustObject::new());
 
     //     // Komorebi Pipe
@@ -35,6 +37,15 @@ fn main() {
     // Create the application and engine
     let mut app = QGuiApplication::new();
     let mut engine = QQmlApplicationEngine::new();
+
+    // let pipe_handler = komorebi_pipe_obj.clone();
+    tokio::spawn(async move {
+        if let Ok(pipe) = create_and_connect_pipe().await {
+            println!("{:?}", read_from_pipe(pipe).await.ok());
+        } else {
+            println!("Failed to create or connect to the named pipe");
+        }
+    });
 
     // Load the QML path into the engine
     if let Some(engine) = engine.as_mut() {

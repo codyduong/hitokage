@@ -20,10 +20,10 @@ pub mod qobject {
         #[qproperty(QString, string)]
         type MyObject = super::MyObjectRust;
 
-        // #[qobject]
-        // #[qml_element]
-        // #[qproperty(QString, string)]
-        // type KomorebiPipe = super::KomorebiPipeRust;
+        #[qobject]
+        #[qml_element]
+        #[qproperty(QString, string)]
+        type KomorebiPipe = super::KomorebiPipeRust;
     }
 
     unsafe extern "RustQt" {
@@ -60,11 +60,13 @@ impl qobject::MyObject {
     }
 }
 
-// #[derive(Default)]
-// pub struct KomorebiPipeRust {
-//     string: QString,
-// }
+#[derive(Default)]
+pub struct KomorebiPipeRust {
+    string: QString,
+}
 
-// impl qobject::KomorebiPipe {
-
-// }
+impl qobject::KomorebiPipe {
+    pub fn pipe(self: Pin<&mut Self>, string: &QString) {
+        self.set_string(string.clone())
+    }
+}

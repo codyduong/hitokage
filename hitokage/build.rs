@@ -8,6 +8,7 @@ fn main() {
         // - Qt Qml is linked by enabling the qt_qml Cargo feature (default).
         // - Qt Qml requires linking Qt Network on macOS
         .qt_module("Network")
+        .qt_module("Widgets")
         .qml_module(QmlModule {
             uri: "hitokage",
             rust_files: &["src/cxxqt_object.rs"],

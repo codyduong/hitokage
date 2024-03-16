@@ -1,17 +1,12 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
 import QtQuick.Window 2.12
-
-// ANCHOR: book_qml_import
-// This must match the uri and version
-// specified in the qml_module in the build.rs script.
 import hitokage 1.0
-// ANCHOR_END: book_qml_import
 
 Window {
     height: 480
-    flags: Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint
-    title: qsTr("Hitokage")
+    // flags: Qt.FramelessWindowHint // | Qt.WindowStaysOnTopHint
+    title: qsTr("hitokage")
     visible: true
     width: 640
 
@@ -19,6 +14,11 @@ Window {
         id: myObject
         number: 1
         string: qsTr("My String with my number: %1").arg(myObject.number)
+    }
+
+    KomorebiPipe {
+        id: komorebiPipe
+        string: qsTr("No data")
     }
 
     Column {
@@ -52,5 +52,10 @@ Window {
             onClicked: Qt.quit()
         }
     }
+
+    Column {
+        Label {
+            text: qsTr("String: %1").arg(komorebiPipe.string)
+        }
+    }
 }
-// ANCHOR_END: book_main_qml
