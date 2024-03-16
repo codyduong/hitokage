@@ -51,11 +51,13 @@ Window {
 
             onClicked: Qt.quit()
         }
-    }
 
-    Column {
         Label {
             text: qsTr("String: %1").arg(komorebiPipe.string)
         }
+    }
+
+    Column {
+        
     }
 }
