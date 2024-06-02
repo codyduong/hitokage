@@ -1,67 +1,154 @@
-// mod config;
-// use config::read_config_main;
+use relm4::prelude::*;
+use gtk4::prelude::*;
+use gtk4::{gdk};
+use windows::{
+    core::*,
+    Win32::Foundation::*,
+    Win32::UI::WindowsAndMessaging::*,
+};
+use chrono::Local;
+
+mod win_utils;
 mod pipes;
-use cxxqt_object::KomorebiPipeRust;
-use pipes::{create_and_connect_pipe, read_from_pipe};
 
-pub mod cxxqt_object;
-use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
-#[tokio::main]
-async fn main() {
-    // read_config_main();
+#[derive(Debug)]
+enum Msg {
+    Komorebi(String),
+    KomorebiErr(String),
+    Tick, // system clock
+}
 
-    // QCoreApplication::init(|app| {
-    //     let mut engine: cxx::UniquePtr<QQmlApplicationEngine> = QQmlApplicationEngine::new();
-    //     let rust_object = QBox::new(MyRustObject::new());
+struct Model {
+    output: String,
+    current_time: String,
+}
 
-    //     // Komorebi Pipe
-    //     let pipe_handler = my_rust_object.clone();
-    //     tokio::spawn(async move {
-    //         if let Ok(pipe) = create_and_connect_pipe().await {
-    //             read_from_pipe(pipe, pipe_handler).await;
-    //         } else {
-    //             println!("Failed to create or connect to the named pipe");
-    //         }
-    //     });
+const HITOKAGE_STATUSBAR_HEIGHT: i32 = 64;
 
-    //     // Expose the Rust object to QML
-    //     engine
-    //         .root_context()
-    //         .set_context_property("myRustObject", &rust_object);
+#[relm4::component]
+impl SimpleComponent for Model {
+    type Input = Msg;
+    type Output = ();
+    type Init = ();
+    type Widgets = AppWidgets;
 
-    //     engine.load(&QUrl::from("qrc:/qt/qml/hitokage/qml/main.qml"));
+    view! {
+        gtk::ApplicationWindow {
+            set_default_size: (0, 0),
+            set_resizable: false,
+            set_display: &gdk::Display::default().expect("Failed to get default display"),
+            set_decorated: false,
 
-    //     app.exec()
-    // });
+            gtk::Box {
+                set_orientation: gtk::Orientation::Vertical,
+                gtk::Label {
+                    set_label: "Hello, World!",
+                },
 
-    // Create the application and engine
-    let mut app = QGuiApplication::new();
-    let mut engine = QQmlApplicationEngine::new();
+                gtk::Label {
+                    #[watch]
+                    set_label: &format!("{}", model.current_time),
+                },
 
-    // let pipe_handler = komorebi_pipe_obj.clone();
-    tokio::spawn(async move {
-        if let Ok(pipe) = create_and_connect_pipe().await {
-            println!("{:?}", read_from_pipe(pipe).await.ok());
-        } else {
-            println!("Failed to create or connect to the named pipe");
+                gtk::Label {
+                    set_natural_wrap_mode: gtk::NaturalWrapMode::Word,
+
+                    // #[watch]
+                    // set_label: &format!("{}", model.output.as_str()),
+                },
+
+                gtk::Button {
+                    set_label: "Test",
+                    connect_clicked => move |window| {
+                        println!("foobar");
+                    }
+                },
+            },
+
+            connect_realize => move |window| {
+                let x = win_utils::get_primary_width();
+                window.set_size_request(x, HITOKAGE_STATUSBAR_HEIGHT);
+            },
+
+            // this fails in realize, for what reason i have no clue LOL!
+            connect_show => move |window| {
+                // Set Status bar to TOP or BOTTOM of screen
+
+                // https://discourse.gnome.org/t/set-absolut-window-position-in-gtk4/8552/4
+                let native = window.native().expect("Failed to get native");
+                let surface = native.surface().expect("Failed to get surface");
+
+                // specifically for windows -> https://discourse.gnome.org/t/how-to-center-gtkwindows-in-gtk4/3112/13
+                let handle = surface.downcast::<gdk4_win32::Win32Surface>().expect("Failed to get Win32Surface").handle();
+                let win_handle = HWND(handle.0);
+
+                println!("{:?}", win_handle);
+
+                unsafe {
+                    SetWindowPos(
+                        win_handle,
+                        HWND_TOPMOST,
+                        0,
+                        0,
+                        0,
+                        0,
+                        SWP_NOSIZE,
+                    )
+                    .ok();
+                }
+            }
         }
-    });
-
-    // Load the QML path into the engine
-    if let Some(engine) = engine.as_mut() {
-        engine.load(&QUrl::from("qrc:/qt/qml/hitokage/qml/main.qml"));
     }
 
-    // ? https://github.com/KDAB/cxx-qt/blob/4e8c0ff412a5f65998b79eada1ef73c1080f6a3e/examples/cargo_without_cmake/src/main.rs#L31-L35
-    // if let Some(engine) = engine.as_mut() {
-    //     // Listen to a signal from the QML Engine
-    //     engine.as_qqmlengine().on_quit(|_| {
-    //         println!("QML Quit!");
-    //     });
-    // }
+    fn init(
+        _init_params: Self::Init,
+        root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let model = Model {
+            current_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+            output: String::new(),
+        };
 
-    // Start the app
-    if let Some(app) = app.as_mut() {
-        app.exec();
+        // Insert the code generation of the view! macro here
+        let widgets = view_output!();
+
+        // komorebi pipe
+        let sender_clone = sender.clone();
+        pipes::start_async_reader(sender_clone);
+
+        // system clock
+        let sender_clone = sender.clone();
+        glib::timeout_add_seconds_local(1, move || {
+            sender_clone.input(Msg::Tick);
+            glib::ControlFlow::Continue
+        });
+
+        ComponentParts { model, widgets }
     }
+
+    fn update(&mut self, msg: Msg, _sender: ComponentSender<Self>) {
+        match msg {
+            Msg::Komorebi(notif) => {
+                println!("{:?}", &notif);
+                self.output = String::new();
+                self.output.push_str(&notif);
+                // self.output.push('\n');
+            }
+            Msg::KomorebiErr(line) => {
+                self.output = String::new();
+                self.output.push_str("ERROR!");
+                self.output.push_str(&line);
+                // self.output.push('\n');
+            }
+            Msg::Tick => {
+                self.current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+            }
+        }
+    }
+}
+
+fn main() {
+    let app = RelmApp::new("com.example.Relm4App");
+    app.run::<Model>(());
 }

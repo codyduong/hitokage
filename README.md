@@ -1,15 +1,31 @@
 # hitokage 日と影
 
-> [!CAUTION]
+> [! CAUTION]
 > This is a work-in-progress, mostly built for personal use until I can dedicate more time to it.
 > As a consequence support and documentation is sparse, good luck.
 
-Highly configurable companion status bar primarily built for usage with [komorebi](https://github.com/LGUG2Z/komorebi)
+*__hitokage__ is a configurable status bar for Windows implemented in Rust using the relm4/gtk4 framework.*
+
+It is primarily built for usage with [ `komorebi` ](https://github.com/LGUG2Z/komorebi), but is also usable as a 
+standalone drop-in replacement for the default Windows Taskbar.
+
+Documentation and guides at: ~~https://codyduong.dev/hitokage/~~ (🚧 TODO USER FACING DOCS 🚧)
 
 ## Demo
 
 ## Installation
 
-## Cargo
+* Install from nightly or stable from [releases]()
+* Winget `winget install hitokage`
+* Powershell Gallery `Install-Module hitokage`
 
-## Build from Source
+### Developing/Building From Source
+
+Requires
+* https://github.com/Relm4/Relm4/tree/main
+  + https://gtk-rs.org/gtk4-rs/git/book/installation_windows.html
+  + https://github.com/wingtk/gvsbuild#development-environment
+
+## License
+
+MIT
