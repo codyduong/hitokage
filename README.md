@@ -1,6 +1,6 @@
 # hitokage 日と影
 
-> [! CAUTION]
+> [!CAUTION]
 > This is a work-in-progress, mostly built for personal use until I can dedicate more time to it.
 > As a consequence support and documentation is sparse, good luck.
 
@@ -15,9 +15,11 @@ Documentation and guides at: ~~https://codyduong.dev/hitokage/~~ (🚧 TODO USER
 
 ## Installation
 
+<!--
 * Install from nightly or stable from [releases]()
 * Winget `winget install hitokage`
 * Powershell Gallery `Install-Module hitokage`
+-->
 
 ### Developing/Building From Source
 
