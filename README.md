@@ -28,6 +28,11 @@ Requires
   + https://gtk-rs.org/gtk4-rs/git/book/installation_windows.html
   + https://github.com/wingtk/gvsbuild#development-environment
 
+<!--
+Build notes:
+* msys2 pkg-config sucks -> https://github.com/rust-lang/pkg-config-rs/issues/51#issuecomment-346300858
+-->
+
 ## License
 
 MIT

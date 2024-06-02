@@ -35,7 +35,8 @@ pub async fn create_and_connect_pipe() -> Result<HANDLE, WinError> {
             0,
             Some(ptr::null()),
         )
-    }.expect("Failed to create pipe");
+    }
+    .expect("Failed to create pipe");
 
     if pipe.is_invalid() {
         return Err(windows::core::Error::from_win32());
@@ -156,30 +157,33 @@ pub async fn read_from_pipe(pipe: HANDLE) -> Result<Option<JsonValue>, ReadPipeE
 }
 
 pub fn start_async_reader(sender: relm4::ComponentSender<crate::Model>) {
-  // Create an async runtime
-  glib::MainContext::default().spawn_local(async move {
-      match create_and_connect_pipe().await {
-          Ok(pipe) => {
-              loop {
-                  match read_from_pipe(pipe).await {
-                      Ok(Some(json)) => {
-                          let line = json.to_string();
-                          sender.input(crate::Msg::Komorebi(line));
-                      }
-                      Ok(None) => {
-                          // Handle empty read, maybe break the loop if the pipe is closed
-                          break;
-                      }
-                      Err(e) => {
-                          sender.input(crate::Msg::KomorebiErr(format!("Read error: {:?}", e)));
-                          break;
-                      }
-                  }
-              }
-          }
-          Err(e) => {
-              sender.input(crate::Msg::KomorebiErr(format!("Pipe connection error: {:?}", e)));
-          }
-      }
-  });
+    // Create an async runtime
+    glib::MainContext::default().spawn_local(async move {
+        match create_and_connect_pipe().await {
+            Ok(pipe) => {
+                loop {
+                    match read_from_pipe(pipe).await {
+                        Ok(Some(json)) => {
+                            let line = json.to_string();
+                            sender.input(crate::Msg::Komorebi(line));
+                        }
+                        Ok(None) => {
+                            // Handle empty read, maybe break the loop if the pipe is closed
+                            break;
+                        }
+                        Err(e) => {
+                            sender.input(crate::Msg::KomorebiErr(format!("Read error: {:?}", e)));
+                            break;
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                sender.input(crate::Msg::KomorebiErr(format!(
+                    "Pipe connection error: {:?}",
+                    e
+                )));
+            }
+        }
+    });
 }
