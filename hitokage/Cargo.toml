@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.38"
-# v4_16 has a problem with parsing PKG_CONFIG_PATH
+# gvsbuild is on GTK 4.14.4 -- https://github.com/wingtk/gvsbuild/releases
 gdk4 = { version = "0.8.2", features = ["v4_14"] }
 gdk4-win32 = { version = "0.8.2", features = ["v4_4", "win32"] }
 glib = "0.19.7"
@@ -31,3 +31,20 @@ serde_json = { version = "1.0.117" }
 komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "3f6e19b8b48b27b77810c469b9baa3e5b25c9af9"}
 # komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.26"}
 color-eyre = "0.6"
+lua-src = "546.0.2"
+anyhow = "1.0.86"
+log = "0.4.21"
+simple_logger = "5.0.0"
+
+[dependencies.mlua]
+version = "0.9.8"
+features = [
+  "lua54",
+  "serialize",
+  "vendored",
+]
+
+# thank you wez from wezterm very cool
+[dependencies.luahelper]
+git = "https://github.com/wez/wezterm/"
+rev = "b8f94c474ce48ac195b51c1aeacf41ae049b774e"

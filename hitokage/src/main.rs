@@ -1,15 +1,12 @@
-use relm4::prelude::*;
-use gtk4::prelude::*;
-use gtk4::{gdk};
-use windows::{
-    core::*,
-    Win32::Foundation::*,
-    Win32::UI::WindowsAndMessaging::*,
-};
 use chrono::Local;
+use gtk4::gdk;
+use gtk4::prelude::*;
+use log::trace;
+use relm4::prelude::*;
+use windows::{core::*, Win32::Foundation::*, Win32::UI::WindowsAndMessaging::*};
 
-mod win_utils;
 mod pipes;
+mod win_utils;
 
 #[derive(Debug)]
 enum Msg {
@@ -119,7 +116,9 @@ impl SimpleComponent for Model {
 
         // system clock
         let sender_clone = sender.clone();
-        glib::timeout_add_seconds_local(1, move || {
+        // "Precise timing is not guaranteed, the timeout may be delayed by other events."
+        // so yeah, use 500ms increment, if we skip a second we have bigger problems performance wise...
+        glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
             sender_clone.input(Msg::Tick);
             glib::ControlFlow::Continue
         });
@@ -130,7 +129,7 @@ impl SimpleComponent for Model {
     fn update(&mut self, msg: Msg, _sender: ComponentSender<Self>) {
         match msg {
             Msg::Komorebi(notif) => {
-                println!("{:?}", &notif);
+                // println!("{:?}", &notif);
                 self.output = String::new();
                 self.output.push_str(&notif);
                 // self.output.push('\n');
@@ -148,7 +147,25 @@ impl SimpleComponent for Model {
     }
 }
 
+mod lua;
+
 fn main() {
+    let lua = lua::make_lua().unwrap();
+
+    simple_logger::SimpleLogger::new().init().unwrap();
+
+    let lua_result = lua
+        .load(
+            r#"
+print(hitokage);
+hitokage.print("foobarbaz")
+print("lit");
+"#,
+        )
+        .exec();
+
+    println!("{:?}", lua_result);
+
     let app = RelmApp::new("com.example.Relm4App");
     app.run::<Model>(());
 }
