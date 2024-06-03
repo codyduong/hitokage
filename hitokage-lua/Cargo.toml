@@ -1,0 +1,21 @@
+[package]
+name = "hitokage-lua"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+hitokage-core = { path = "../hitokage-core/" }
+anyhow = { workspace = true }
+log = { workspace = true }
+simple_logger = { workspace = true }
+mlua = { workspace = true }
+lua-src = { workspace = true }
+luahelper = { workspace = true }
+relm4 = { workspace = true }
+serde = { workspace = true }
+
+[dependencies.windows]
+workspace = true
+features = [
+  "Win32_Graphics_Gdi",
+]

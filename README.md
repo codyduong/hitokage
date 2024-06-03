@@ -33,6 +33,12 @@ Build notes:
 * msys2 pkg-config sucks -> https://github.com/rust-lang/pkg-config-rs/issues/51#issuecomment-346300858
 -->
 
+## Acknowledgements
+- [`yasb`](https://github.com/da-rth/yasb) - The original inspiration for this status bar
+- [`komorebi`](https://github.com/LGUG2Z/komorebi) - The tiling manager used in conjunction with this status bar
+- [`ButteryTaskbar2`](https://github.com/LuisThiamNye/ButteryTaskbar2) - Hiding the default windows taskbar
+- [`wezterm`](https://github.com/wez/wezterm) - Code for various WinAPI and mlua utilities
+
 ## License
 
 MIT

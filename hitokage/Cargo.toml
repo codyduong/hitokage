@@ -4,15 +4,31 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+hitokage-core = { path = "../hitokage-core/" }
+hitokage-lua = { path = "../hitokage-lua/" }
+anyhow = { workspace = true }
+log = { workspace = true }
+simple_logger = { workspace = true }
+gdk4 = { workspace = true }
+gdk4-win32 = { workspace = true }
+glib = { workspace = true }
+gtk4 = { workspace = true }
+relm4 = { workspace = true }
+relm4-macros = { workspace = true }
+mlua = { workspace = true }
+lua-src = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
 chrono = "0.4.38"
-# gvsbuild is on GTK 4.14.4 -- https://github.com/wingtk/gvsbuild/releases
-gdk4 = { version = "0.8.2", features = ["v4_14"] }
-gdk4-win32 = { version = "0.8.2", features = ["v4_4", "win32"] }
-glib = "0.19.7"
-gtk4 = "0.8.2"
-relm4 = "0.8.1"
-relm4-macros = "0.8.1"
-windows = { version = "0.56.0", features = [
+tokio = { version = "1.0", features = ["full"] }
+# there is some issues with patching win32-display-data, so use this rev
+komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "3f6e19b8b48b27b77810c469b9baa3e5b25c9af9"}
+# komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.26"}
+color-eyre = "0.6"
+
+[dependencies.windows]
+features = [
   "Win32_UI_WindowsAndMessaging", # window management
   # "Win32_UI_Shell", # taskbar height
 
@@ -23,28 +39,4 @@ windows = { version = "0.56.0", features = [
   "Win32_System_IO",
   "Win32_System_Pipes",
   "Win32_Security",
-] }
-tokio = { version = "1.0", features = ["full"] }
-serde = { version = "1.0.117", features = ["derive"] }
-serde_json = { version = "1.0.117" }
-# there is some issues with patching win32-display-data, so use this rev
-komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "3f6e19b8b48b27b77810c469b9baa3e5b25c9af9"}
-# komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.26"}
-color-eyre = "0.6"
-lua-src = "546.0.2"
-anyhow = "1.0.86"
-log = "0.4.21"
-simple_logger = "5.0.0"
-
-[dependencies.mlua]
-version = "0.9.8"
-features = [
-  "lua54",
-  "serialize",
-  "vendored",
 ]
-
-# thank you wez from wezterm very cool
-[dependencies.luahelper]
-git = "https://github.com/wez/wezterm/"
-rev = "b8f94c474ce48ac195b51c1aeacf41ae049b774e"
