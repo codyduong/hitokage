@@ -950,10 +950,11 @@ dependencies = [
  "gdk4-win32",
  "glib",
  "gtk4",
+ "hitokage-core",
+ "hitokage-lua",
  "komorebi-client",
  "log",
  "lua-src",
- "luahelper",
  "mlua",
  "relm4",
  "relm4-macros",
@@ -961,6 +962,26 @@ dependencies = [
  "serde_json",
  "simple_logger",
  "tokio",
+ "windows 0.56.0",
+]
+
+[[package]]
+name = "hitokage-core"
+version = "0.1.0"
+
+[[package]]
+name = "hitokage-lua"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "hitokage-core",
+ "log",
+ "lua-src",
+ "luahelper",
+ "mlua",
+ "relm4",
+ "serde",
+ "simple_logger",
  "windows 0.56.0",
 ]
 
@@ -1300,6 +1321,7 @@ checksum = "e340c022072f3208a4105458286f4985ba5355bfe243c3073afe45cbe9ecf491"
 dependencies = [
  "bstr",
  "erased-serde",
+ "futures-util",
  "mlua-sys",
  "num-traits",
  "once_cell",

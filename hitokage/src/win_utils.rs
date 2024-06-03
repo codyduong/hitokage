@@ -1,7 +1,6 @@
 // use windows::Win32::UI::Shell::*;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
-
 // pub fn get_taskbar_height() -> i32 {
 //   unsafe {
 //       let mut appbar_data = APPBARDATA {
@@ -26,24 +25,22 @@ use windows::Win32::UI::WindowsAndMessaging::*;
 
 pub fn get_borders() -> (i32, i32) {
   unsafe {
-      // im not entirely sure what this is LOL -@codyduong
-      let caption_padding = GetSystemMetrics(SM_CXPADDEDBORDER);
+    // im not entirely sure what this is LOL -@codyduong
+    let caption_padding = GetSystemMetrics(SM_CXPADDEDBORDER);
 
-      // this is off by a factor of 1/2 on my machine, idk if this works for everyone LOL -@codyduong
-      // let x_border = 2 * (GetSystemMetrics(SM_CXSIZEFRAME) + caption_padding);
-      // let y_border = 2 * (GetSystemMetrics(SM_CYSIZEFRAME) + caption_padding);
+    // this is off by a factor of 1/2 on my machine, idk if this works for everyone LOL -@codyduong
+    // let x_border = 2 * (GetSystemMetrics(SM_CXSIZEFRAME) + caption_padding);
+    // let y_border = 2 * (GetSystemMetrics(SM_CYSIZEFRAME) + caption_padding);
 
-      println!("{:?}", (GetSystemMetrics(SM_CXFIXEDFRAME)));
+    println!("{:?}", (GetSystemMetrics(SM_CXFIXEDFRAME)));
 
-      let x_border = GetSystemMetrics(SM_CXEDGE);
-      let y_border = GetSystemMetrics(SM_CYSIZEFRAME);
-      
-      (x_border, y_border)
+    let x_border = GetSystemMetrics(SM_CXEDGE);
+    let y_border = GetSystemMetrics(SM_CYSIZEFRAME);
+
+    (x_border, y_border)
   }
 }
 
 pub fn get_primary_width() -> i32 {
-  unsafe {
-    GetSystemMetrics(SM_CXSCREEN)
-  }
+  unsafe { GetSystemMetrics(SM_CXSCREEN) }
 }

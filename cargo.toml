@@ -1,4 +1,44 @@
 [workspace]
+authors = [
+  "Cody Duong <cody.qd@gmail.com>"
+]
 
 resolver = "2"
-members = ["hitokage"]
+members = [
+  "hitokage",
+  "hitokage-core",
+  "hitokage-lua",
+]
+
+[workspace.dependencies]
+anyhow = "1.0.86"
+log = "0.4.21"
+simple_logger = "5.0.0"
+# gvsbuild is on GTK 4.14.4 -- https://github.com/wingtk/gvsbuild/releases
+gdk4 = { version = "0.8.2", features = ["v4_14"] }
+gdk4-win32 = { version = "0.8.2", features = ["v4_4", "win32"] }
+glib = "0.19.7"
+gtk4 = "0.8.2"
+relm4 = "0.8.1"
+relm4-macros = "0.8.1"
+serde = { version = "1.0.117", features = ["derive"] }
+serde_json = { version = "1.0.117" }
+
+[workspace.dependencies.windows]
+version = "0.56.0"
+
+[workspace.dependencies.mlua]
+version = "0.9.8"
+features = [
+  "lua54",
+  "serialize",
+  "vendored",
+  "async",
+]
+
+[workspace.dependencies.lua-src]
+version = "546.0.2"
+
+[workspace.dependencies.luahelper]
+git = "https://github.com/wez/wezterm/"
+rev = "b8f94c474ce48ac195b51c1aeacf41ae049b774e"
