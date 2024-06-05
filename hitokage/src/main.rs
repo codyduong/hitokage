@@ -4,68 +4,39 @@ use std::io::Read;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use bar::Bar;
 use chrono::Local;
 use gtk4::gdk;
 use gtk4::prelude::*;
 use log::trace;
 use relm4::prelude::*;
 use relm4::SharedState;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use windows::{core::*, Win32::Foundation::*, Win32::UI::WindowsAndMessaging::*};
 
+mod bar;
 mod luahelpers;
-mod pipes;
+mod socket;
 mod win_utils;
 
 #[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone)]
 pub struct PartialNotif {
   pub state: serde_json::Value,
   pub event: serde_json::Value,
 }
 
 // pub static STATE: SharedState<Option<komorebi_client::State>> = SharedState::new();
-pub static STATE: SharedState<Option<PartialNotif>> = SharedState::new();
-
-struct OtherModel {}
-
-#[relm4::component]
-impl SimpleComponent for OtherModel {
-  type Input = ();
-  type Output = ();
-  type Init = ();
-
-  view! {
-      gtk::ApplicationWindow {
-          set_decorated: true,
-          set_visible: true,
-
-          gtk::Box {
-              gtk::Label {
-                  set_label: "Foo, Bar!",
-              },
-          },
-
-      },
-  }
-
-  fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let model = OtherModel {};
-
-    // Insert the code generation of the view! macro here
-    let widgets = view_output!();
-
-    ComponentParts { model, widgets }
-  }
-
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {}
-}
+pub static STATE: SharedState<Vec<PartialNotif>> = SharedState::new();
+pub static NEW_STATE: SharedState<bool> = SharedState::new(); // if the state has changed since we last read the state
 
 #[derive(Debug)]
 pub enum LuaHookType {
   SubscribeState, // subscribe to a value in global state
   WriteState,     //
   ReadState,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateWidget,
+  CreateBar,
+  NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
 }
 
 impl fmt::Debug for LuaHook {
@@ -79,11 +50,11 @@ impl fmt::Debug for LuaHook {
 
 pub struct LuaHook {
   pub t: LuaHookType,
-  pub callback: Box<dyn Fn(mlua::Value) -> Result<()> + Send>,
+  pub callback: Box<dyn Fn(mlua::Value) -> Result<()> + Send + Sync>,
 }
 
 #[derive(Debug)]
-enum Msg {
+pub enum Msg {
   Komorebi(String),
   KomorebiErr(String),
   LuaHook(LuaHook),
@@ -92,98 +63,66 @@ enum Msg {
 
 const HITOKAGE_STATUSBAR_HEIGHT: i32 = 64;
 
-struct AppState {
+struct App {
   current_time: String,
   // state: Option<komorebi_client::State>,
+  // bar: Controller<Bar>,
 }
 
-struct AppInit {
-  lua: mlua::Lua,
-}
+// struct AppInit {
+//   lua: mlua::Lua,
+// }
 
 #[relm4::component]
-impl SimpleComponent for AppState {
+impl SimpleComponent for App {
   type Input = Msg;
   type Output = ();
-  type Init = AppInit;
-  type Widgets = AppWidgets;
+  type Init = ();
+  // type Widgets = AppWidgets;
+
+  // view! {
+  //   gtk::ApplicationWindow {
+  //     set_default_size: (0, 0),
+  //     set_resizable: false,
+  //     set_display: &gdk::Display::default().expect("Failed to get default display"),
+  //     set_decorated: false,
+  //     set_visible: false,
+
+  //     // gtk::Box {
+  //     //     set_orientation: gtk::Orientation::Vertical,
+  //     //     gtk::Label {
+  //     //         set_label: "Hello, World!",
+  //     //     },
+
+  //     //     gtk::Label {
+  //     //         #[watch]
+  //     //         set_label: &format!("{}", model.current_time),
+  //     //     },
+
+  //     //     gtk::Button {
+  //     //         set_label: "Test",
+  //     //         connect_clicked => move |window| {
+  //     //             println!("foobar");
+  //     //         }
+  //     //     },
+  //     // },
+  //   }
+  // }
 
   view! {
-      gtk::ApplicationWindow {
-          set_default_size: (0, 0),
-          set_resizable: false,
-          set_display: &gdk::Display::default().expect("Failed to get default display"),
-          set_decorated: false,
-          // set_visible: true,
+    gtk::ApplicationWindow {
+      set_visible: false,
 
-          gtk::Box {
-              set_orientation: gtk::Orientation::Vertical,
-              gtk::Label {
-                  set_label: "Hello, World!",
-              },
-
-              gtk::Label {
-                  #[watch]
-                  set_label: &format!("{}", model.current_time),
-              },
-
-              gtk::Button {
-                  set_label: "Test",
-                  connect_clicked => move |window| {
-                      println!("foobar");
-                  }
-              },
-          },
-
-          connect_realize => move |window| {
-              let x = win_utils::get_primary_width();
-              window.set_size_request(x, HITOKAGE_STATUSBAR_HEIGHT);
-          },
-
-          // this fails in realize, for what reason i have no clue LOL! @codyduong
-          connect_show => move |window| {
-              // Set Status bar to TOP or BOTTOM of screen
-
-              // https://discourse.gnome.org/t/set-absolut-window-position-in-gtk4/8552/4
-              let native = window.native().expect("Failed to get native");
-              let surface = native.surface().expect("Failed to get surface");
-
-              // specifically for windows -> https://discourse.gnome.org/t/how-to-center-gtkwindows-in-gtk4/3112/13
-              let handle = surface.downcast::<gdk4_win32::Win32Surface>().expect("Failed to get Win32Surface").handle();
-              let win_handle = HWND(handle.0);
-
-              println!("{:?}", win_handle);
-
-              unsafe {
-                  SetWindowPos(
-                      win_handle,
-                      HWND_TOPMOST,
-                      0,
-                      0,
-                      0,
-                      0,
-                      SWP_NOSIZE,
-                  )
-                  .ok();
-              }
-          }
+      // LOL! Is there a better way to prevent this from showing?
+      connect_show => move |window| {
+        window.set_visible(false)
       }
+    },
   }
 
-  fn init(init_params: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let model = AppState {
-      current_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-      // state: None,
-    };
-
-    // Insert the code generation of the view! macro here
-    let widgets = view_output!();
-
+  fn init(_: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     // start the lua hook
     let sender_clone = sender.clone();
-    let lua = init_params.lua;
-
-    let lua = luahelpers::augment(lua, sender_clone).unwrap();
 
     let lua_file_path = "./hitokage.lua";
     let mut file = File::open(lua_file_path).unwrap();
@@ -192,13 +131,29 @@ impl SimpleComponent for AppState {
 
     let lua_script = contents;
 
-    let lua_result = lua.load(lua_script).exec();
+    let _lua_thread = std::thread::spawn(move || {
+      let lua = hitokage_lua::make_lua().unwrap();
+      let lua = luahelpers::augment(lua, sender_clone).unwrap();
 
-    println!("{:?}", lua_result);
+      let co = lua
+        .create_thread(lua.load(lua_script).into_function().unwrap())
+        .unwrap();
+
+      loop {
+        match co.resume::<_, ()>(()) {
+          Ok(_) => (),
+          Err(err) => {
+            println!("Lua error: {:?}", err);
+            break;
+          }
+        }
+        // std::thread::sleep(std::time::Duration::from_millis(100)); // Small sleep to prevent tight loop
+      }
+    });
 
     // komorebi pipe
     let sender_clone = sender.clone();
-    pipes::start_async_reader(sender_clone);
+    socket::start_async_reader_new(sender_clone);
 
     // system clock
     let sender_clone = sender.clone();
@@ -209,10 +164,20 @@ impl SimpleComponent for AppState {
       glib::ControlFlow::Continue
     });
 
+    // bar.widget().realize();
+    // gtk4::prelude::WidgetExt::realize(bar.widget());
+
+    let model = App {
+      current_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+      // bar,
+    };
+
+    let widgets = view_output!();
+
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Msg, _sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: Msg, sender: ComponentSender<Self>) {
     match msg {
       // Komorebi States
       Msg::Komorebi(notif) => {
@@ -230,8 +195,23 @@ impl SimpleComponent for AppState {
         //   None
         // });
 
-        if notif.is_some() {
-          *STATE.write() = Some(notif.unwrap());
+        if let Some(notif_value) = notif {
+          // let mut result = {
+          //   let rg = STATE.read();
+          //   let result = rg.to_vec();
+          //   drop(rg);
+          //   result
+          // };
+          // result.push(notif_value);
+
+          // let mut r = Vec::new();
+          // r.push(notif_value);
+
+          // *STATE.write() = r;
+          let mut stwg = STATE.write();
+          stwg.push(notif_value);
+          drop(stwg);
+          *NEW_STATE.write() = true;
         }
 
         // println!("{:?}", &notif);
@@ -249,21 +229,29 @@ impl SimpleComponent for AppState {
 
       //
       Msg::LuaHook(info) => match info.t {
-        LuaHookType::CreateWidget => {
+        LuaHookType::CreateBar => {
           let app = relm4::main_application();
-          let builder = OtherModel::builder();
+          let builder = Bar::builder();
+
+          println!("bar created 2");
+
+          // app.add_window(&builder.root);
 
           app.add_window(&builder.root);
 
-          builder.launch(()).detach_runtime();
+          let bar = builder
+            .launch(())
+            .forward(sender.input_sender(), std::convert::identity);
 
           ()
         }
         LuaHookType::ReadState => {
-          println!("jeff");
+          *crate::STATE.write() = Vec::new();
+          *crate::NEW_STATE.write() = false;
 
           ()
         }
+        LuaHookType::NoAction => (),
         _ => {
           println!("todo");
 
@@ -279,10 +267,10 @@ impl SimpleComponent for AppState {
   }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
   simple_logger::SimpleLogger::new().init().unwrap();
-  let lua = hitokage_lua::make_lua().unwrap();
 
   let app = RelmApp::new("com.example.hitokage");
-  app.run::<AppState>(AppInit { lua: lua });
+  app.run::<App>(());
 }

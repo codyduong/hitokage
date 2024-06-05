@@ -13,6 +13,7 @@ lua-src = { workspace = true }
 luahelper = { workspace = true }
 relm4 = { workspace = true }
 serde = { workspace = true }
+smol = "2.0.0"
 
 [dependencies.windows]
 workspace = true
