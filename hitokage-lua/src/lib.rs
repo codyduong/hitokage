@@ -72,6 +72,13 @@ fn print_helper(args: Variadic<Value>) -> String {
   output
 }
 
+// https://github.com/wez/wezterm/blob/e4b18c41e650718b031dcc8ef0f93f23a1013aaa/lua-api-crates/time-funcs/src/lib.rs#L193
+async fn sleep_ms<'lua>(_: &'lua Lua, milliseconds: u64) -> mlua::Result<()> {
+  let duration = std::time::Duration::from_millis(milliseconds);
+  smol::Timer::after(duration).await;
+  Ok(())
+}
+
 mod display;
 
 pub fn make_lua() -> anyhow::Result<Lua> {
@@ -103,6 +110,8 @@ pub fn make_lua() -> anyhow::Result<Lua> {
         Ok(())
       })?,
     )?;
+
+    hitokage_mod.set("sleep_ms", lua.create_async_function(sleep_ms)?)?;
 
     globals.set("hitokage", hitokage_mod)?;
 
