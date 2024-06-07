@@ -1,4 +1,5 @@
 use anyhow::Result;
+use hitokage_lua::AppMsg;
 use std::io::BufRead;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -32,7 +33,7 @@ pub fn start_async_reader_new(sender: relm4::ComponentSender<crate::App>) {
                 _ => {
                   // TODO @codyduong LOL why did we convert to json just to convert to string then back to json in main.rs LOL!!
                   let line = notification.to_string();
-                  sender.input(crate::Msg::Komorebi(line));
+                  sender.input(AppMsg::Komorebi(line));
                 }
               }
             }

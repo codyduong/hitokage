@@ -1,12 +1,14 @@
-use crate::win_utils;
-use gdk4::ffi::GdkMonitor;
 use gtk4::prelude::*;
 use gtk4::ApplicationWindow;
+use hitokage_core::bar::BarPosition;
+use hitokage_core::bar::BarProps;
+use hitokage_core::common::MonitorGeometry;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use relm4::SimpleComponent;
-use serde::{Deserialize, Serialize};
+
+use crate::win_utils;
 
 fn setup_window_size(window: ApplicationWindow, props: &Bar) -> anyhow::Result<()> {
   window.set_size_request(props.geometry.width, crate::HITOKAGE_STATUSBAR_HEIGHT);
@@ -58,28 +60,16 @@ fn setup_window_pos(window: ApplicationWindow, props: &Bar) -> anyhow::Result<()
   Ok(())
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
-pub enum BarPosition {
-  Top,
-  Bottom,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct BarProps {
-  position: Option<BarPosition>,
-  geometry: Option<hitokage_lua::display::MonitorGeometry>,
-}
-
 #[derive(Clone, Copy)]
 pub struct Bar {
   position: Option<BarPosition>,
-  geometry: hitokage_lua::display::MonitorGeometry,
+  geometry: MonitorGeometry,
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for Bar {
   type Input = ();
-  type Output = crate::Msg;
+  type Output = crate::AppMsg;
   type Init = BarProps;
   type Widgets = AppWidgets;
 
@@ -125,7 +115,7 @@ impl SimpleComponent for Bar {
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let model = Bar {
       position: input.position,
-      geometry: input.geometry.unwrap_or(hitokage_lua::display::MonitorGeometry {
+      geometry: input.geometry.unwrap_or(MonitorGeometry {
         x: 0,
         y: 0,
         width: win_utils::get_primary_width(),

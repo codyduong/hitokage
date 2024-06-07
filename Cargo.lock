@@ -1151,6 +1151,26 @@ dependencies = [
 [[package]]
 name = "hitokage-core"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "color-eyre",
+ "gdk4",
+ "gdk4-win32",
+ "glib",
+ "gtk4",
+ "komorebi-client",
+ "log",
+ "lua-src",
+ "mlua",
+ "relm4",
+ "relm4-macros",
+ "serde",
+ "serde_json",
+ "simple_logger",
+ "tokio",
+ "windows 0.52.0",
+]
 
 [[package]]
 name = "hitokage-lua"
@@ -1159,6 +1179,7 @@ dependencies = [
  "anyhow",
  "gdk4",
  "gdk4-win32",
+ "gtk4",
  "hitokage-core",
  "log",
  "lua-src",

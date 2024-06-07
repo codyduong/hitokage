@@ -2,3 +2,39 @@
 name = "hitokage-core"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+log = { workspace = true }
+simple_logger = { workspace = true }
+gdk4 = { workspace = true }
+gdk4-win32 = { workspace = true }
+glib = { workspace = true }
+gtk4 = { workspace = true }
+relm4 = { workspace = true }
+relm4-macros = { workspace = true }
+mlua = { workspace = true }
+lua-src = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+chrono = "0.4.38"
+tokio = { version = "1.0", features = ["full"] }
+# there is some issues with patching win32-display-data, so use this rev
+komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "3f6e19b8b48b27b77810c469b9baa3e5b25c9af9"}
+# komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.26"}
+color-eyre = "0.6"
+
+[dependencies.windows]
+features = [
+  "Win32_UI_WindowsAndMessaging", # window management
+  # "Win32_UI_Shell", # taskbar height
+
+  # pipe stuff
+  "Win32_Foundation",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Threading",
+  "Win32_System_IO",
+  "Win32_System_Pipes",
+  "Win32_Security",
+]
