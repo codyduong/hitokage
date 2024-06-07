@@ -1,114 +1,28 @@
-use core::fmt;
+use chrono::Local;
+use gtk4::prelude::*;
+use hitokage_core::common::EventNotif;
+use hitokage_core::common::EVENT;
+use hitokage_core::common::NEW_EVENT;
+use hitokage_lua::AppMsg;
+use hitokage_lua::LuaHookType;
+use relm4::prelude::*;
 use std::fs::File;
 use std::io::Read;
-use std::sync::Arc;
-use std::sync::Mutex;
-
-use bar::Bar;
-use bar::BarProps;
-use chrono::Local;
-use gtk4::gdk;
-use gtk4::prelude::*;
-use log::trace;
-use relm4::prelude::*;
-use relm4::SharedState;
-use serde::{Deserialize, Serialize};
-use windows::{core::*, Win32::Foundation::*, Win32::UI::WindowsAndMessaging::*};
-
 mod bar;
-mod luahelpers;
 mod socket;
 mod win_utils;
-
-#[derive(Debug, Deserialize, Serialize)]
-#[derive(Clone)]
-pub struct PartialNotif {
-  pub state: serde_json::Value,
-  pub event: serde_json::Value,
-}
-
-// pub static STATE: SharedState<Option<komorebi_client::State>> = SharedState::new();
-pub static STATE: SharedState<Vec<PartialNotif>> = SharedState::new();
-pub static NEW_STATE: SharedState<bool> = SharedState::new(); // if the state has changed since we last read the state
-
-#[derive(Debug)]
-pub enum LuaHookType {
-  SubscribeState, // subscribe to a value in global state
-  WriteState,     //
-  ReadState,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateBar(BarProps),
-  NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
-}
-
-impl fmt::Debug for LuaHook {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("LuaHook")
-      .field("t", &self.t)
-      .field("callback", &"<function>")
-      .finish()
-  }
-}
-
-pub struct LuaHook {
-  pub t: LuaHookType,
-  pub callback: Box<dyn Fn(mlua::Value) -> Result<()> + Send>,
-}
-
-#[derive(Debug)]
-pub enum Msg {
-  Komorebi(String),
-  KomorebiErr(String),
-  LuaHook(LuaHook),
-  Tick, // system clock
-}
 
 const HITOKAGE_STATUSBAR_HEIGHT: i32 = 64;
 
 struct App {
   current_time: String,
-  // state: Option<komorebi_client::State>,
-  // bar: Controller<Bar>,
 }
 
-// struct AppInit {
-//   lua: mlua::Lua,
-// }
-
-#[relm4::component]
+#[relm4::component(pub)]
 impl SimpleComponent for App {
-  type Input = Msg;
+  type Input = hitokage_lua::AppMsg;
   type Output = ();
   type Init = ();
-  // type Widgets = AppWidgets;
-
-  // view! {
-  //   gtk::ApplicationWindow {
-  //     set_default_size: (0, 0),
-  //     set_resizable: false,
-  //     set_display: &gdk::Display::default().expect("Failed to get default display"),
-  //     set_decorated: false,
-  //     set_visible: false,
-
-  //     // gtk::Box {
-  //     //     set_orientation: gtk::Orientation::Vertical,
-  //     //     gtk::Label {
-  //     //         set_label: "Hello, World!",
-  //     //     },
-
-  //     //     gtk::Label {
-  //     //         #[watch]
-  //     //         set_label: &format!("{}", model.current_time),
-  //     //     },
-
-  //     //     gtk::Button {
-  //     //         set_label: "Test",
-  //     //         connect_clicked => move |window| {
-  //     //             println!("foobar");
-  //     //         }
-  //     //     },
-  //     // },
-  //   }
-  // }
 
   view! {
     gtk::ApplicationWindow {
@@ -123,7 +37,6 @@ impl SimpleComponent for App {
 
   fn init(_: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     // start the lua hook
-    let sender_clone = sender.clone();
 
     let lua_file_path = "./hitokage.lua";
     let mut file = File::open(lua_file_path).unwrap();
@@ -132,9 +45,9 @@ impl SimpleComponent for App {
 
     let lua_script = contents;
 
+    let sender_clone = sender.clone();
     let _lua_thread = std::thread::spawn(move || {
-      let lua = hitokage_lua::make_lua().unwrap();
-      let lua = luahelpers::augment(lua, sender_clone).unwrap();
+      let lua = hitokage_lua::make(sender_clone).unwrap();
 
       let co = lua
         .create_thread(lua.load(lua_script).into_function().unwrap())
@@ -161,7 +74,7 @@ impl SimpleComponent for App {
     // "Precise timing is not guaranteed, the timeout may be delayed by other events."
     // so yeah, use 500ms increment, if we skip a second we have bigger problems performance wise...
     glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-      sender_clone.input(Msg::Tick);
+      sender_clone.input(AppMsg::Tick);
       glib::ControlFlow::Continue
     });
 
@@ -178,12 +91,12 @@ impl SimpleComponent for App {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Msg, sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: AppMsg, sender: ComponentSender<Self>) {
     match msg {
       // Komorebi States
-      Msg::Komorebi(notif) => {
+      AppMsg::Komorebi(notif) => {
         // println!("{:?}", &notif);
-        let notif: Option<PartialNotif> = serde_json::from_str(&notif).unwrap_or_else(|err| {
+        let notif: Option<EventNotif> = serde_json::from_str(&notif).unwrap_or_else(|err| {
           log::warn!("Failed to read notification from komorebic: {:?}", err);
 
           None
@@ -209,10 +122,10 @@ impl SimpleComponent for App {
           // r.push(notif_value);
 
           // *STATE.write() = r;
-          let mut sswg = STATE.write();
+          let mut sswg = EVENT.write();
           sswg.push(notif_value);
           drop(sswg);
-          *NEW_STATE.write() = true;
+          *NEW_EVENT.write() = true;
         }
 
         // println!("{:?}", &notif);
@@ -220,7 +133,7 @@ impl SimpleComponent for App {
         // self.output.push_str(&notif);
         // self.output.push('\n');
       }
-      Msg::KomorebiErr(line) => {
+      AppMsg::KomorebiErr(line) => {
         println!("{:?}", &line);
         // self.output = String::new();
         // self.output.push_str("ERROR!");
@@ -229,10 +142,10 @@ impl SimpleComponent for App {
       }
 
       //
-      Msg::LuaHook(info) => match info.t {
+      AppMsg::LuaHook(info) => match info.t {
         LuaHookType::CreateBar(props) => {
           let app = relm4::main_application();
-          let builder = Bar::builder();
+          let builder = bar::Bar::builder();
 
           // app.add_window(&builder.root);
 
@@ -244,9 +157,9 @@ impl SimpleComponent for App {
 
           ()
         }
-        LuaHookType::ReadState => {
-          *crate::STATE.write() = Vec::new();
-          *crate::NEW_STATE.write() = false;
+        LuaHookType::ReadEvent => {
+          *crate::EVENT.write() = Vec::new();
+          *crate::NEW_EVENT.write() = false;
 
           ()
         }
@@ -259,7 +172,7 @@ impl SimpleComponent for App {
       },
 
       // Primary Program Loop
-      Msg::Tick => {
+      AppMsg::Tick => {
         self.current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
       }
     }
@@ -274,5 +187,5 @@ async fn main() {
 
   let app = RelmApp::new("com.example.hitokage");
   let _ = app.set_global_css_from_file(style_file_path);
-  app.run::<App>(());  
+  app.run::<App>(());
 }

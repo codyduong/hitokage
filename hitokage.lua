@@ -17,10 +17,10 @@ end
 while true do
   -- read subscriptions we setup earlier
   -- run subscriptions by checking diff
-  local new = hitokage.new_state();
+  local new = hitokage.event.new();
   -- if there is a new state please read it
   if new then
-    local unread_states = hitokage.read_state();
+    local unread_states = hitokage.event.read();
     for _, state in pairs(unread_states) do
       -- hitokage.debug("wo")
       hitokage.debug("checking " .. state.event.type);

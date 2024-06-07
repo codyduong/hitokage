@@ -16,4 +16,5 @@ serde = { workspace = true }
 smol = "2.0.0"
 gdk4 = { workspace = true }
 gdk4-win32 = { workspace = true }
+gtk4 = { workspace = true }
 
