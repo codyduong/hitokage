@@ -35,6 +35,7 @@ features = [
   "vendored",
   "async",
   "unstable",
+  "send",
 ]
 
 [workspace.dependencies.lua-src]

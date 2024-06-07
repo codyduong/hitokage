@@ -1,121 +1,200 @@
-use mlua::{Lua, LuaSerdeExt, Value, Variadic};
-use serde::Serialize;
-use windows::{
-  core::PCWSTR,
-  Win32::{
-    Foundation::{BOOL, LPARAM},
-    Graphics::Gdi::{
-      EnumDisplayDevicesW, EnumDisplaySettingsW, GetDeviceCaps, GetMonitorInfoW, DEVMODEW,
-      DISPLAY_DEVICEW, ENUM_CURRENT_SETTINGS, HDC, HORZRES, MONITORINFOEXW, VERTRES,
-    },
-  },
+use gdk4::{
+  glib::{self, object::Cast},
+  prelude::*,
 };
+use mlua::{
+  Lua, LuaSerdeExt,
+  Value::{self, Nil},
+  Variadic,
+};
+use serde::{Deserialize, Serialize};
 
-#[repr(C)]
-#[derive(Debug)]
-struct MonitorInfoExtern {
-  width: u32,
-  height: u32,
-  name: [u16; 32],
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+pub struct MonitorGeometry {
+  pub x: i32,
+  pub y: i32,
+  pub width: i32,
+  pub height: i32,
 }
 
-#[derive(Serialize)]
-struct MonitorInfo {
-  width: u32,
-  height: u32,
-  id: u32,
-  name: String,
-}
-
-fn all() -> Vec<MonitorInfo> {
-  let mut monitors: Vec<MonitorInfo> = Vec::new();
-  unsafe {
-    for monitor in unsafe_all() {
-      monitors.push(MonitorInfo {
-        width: monitor.width,
-        height: monitor.height,
-        id: 0,
-        name: String::from_utf16_lossy(&monitor.name),
-      })
+impl From<gdk4::Rectangle> for MonitorGeometry {
+  fn from(item: gdk4::Rectangle) -> Self {
+    MonitorGeometry {
+      x: item.x(),
+      y: item.y(),
+      width: item.width(),
+      height: item.height(),
     }
   }
-  return monitors;
 }
 
-unsafe extern "system" fn unsafe_all() -> Vec<MonitorInfoExtern> {
-  let mut monitors = Vec::new();
-  let mut device_num = 0;
-  let mut display_device: DISPLAY_DEVICEW = std::mem::zeroed();
-  display_device.cb = std::mem::size_of::<DISPLAY_DEVICEW>() as u32;
+#[derive(Deserialize, Serialize)]
+pub struct Monitor {
+  connecter: Option<String>,
+  description: Option<String>,
+  geometry: MonitorGeometry,
+  manufacturer: Option<String>,
+  model: Option<String>,
+  refresh_rate: i32,
+  is_primary: bool,
+}
 
-  while EnumDisplayDevicesW(PCWSTR::null(), device_num, &mut display_device, 0).as_bool() {
-    let mut dev_mode: DEVMODEW = std::mem::zeroed();
-    dev_mode.dmSize = std::mem::size_of::<DEVMODEW>() as u16;
-
-    if EnumDisplaySettingsW(
-      PCWSTR(display_device.DeviceName.as_ptr()),
-      ENUM_CURRENT_SETTINGS,
-      &mut dev_mode,
+fn get_monitors() -> impl Iterator<Item = Monitor> {
+  let display = gdk4::Display::default().expect("Failed to get default display");
+  let monitors: Vec<_> = display.monitors().iter().collect();
+  let iter = monitors.into_iter().filter_map(|result| {
+    result.ok().and_then(
+      |item: glib::Object| match item.downcast::<gdk4_win32::Win32Monitor>().ok() {
+        Some(monitor) => {
+          let geometry: MonitorGeometry = monitor.geometry().into();
+          Some(Monitor {
+            connecter: monitor.connector().map(|s| s.to_string()),
+            description: monitor.description().map(|s| s.to_string()),
+            geometry,
+            manufacturer: monitor.manufacturer().map(|s| s.to_string()),
+            model: monitor.model().map(|s| s.to_string()),
+            refresh_rate: monitor.refresh_rate(),
+            is_primary: geometry.x == 0 && geometry.y == 0,
+          })
+        }
+        _ => None,
+      },
     )
-    .as_bool()
-    {
-      let width = dev_mode.dmPelsWidth;
-      let height = dev_mode.dmPelsHeight;
-
-      monitors.push(MonitorInfoExtern {
-        width,
-        height,
-        name: display_device.DeviceName,
-        // @codyduong - TODO add primary here from reading display_device.StateFlags
-      });
-    }
-
-    device_num += 1;
-  }
-
-  monitors
+  });
+  iter
 }
 
-unsafe extern "system" fn monitor_enum_proc(
-  hmonitor: windows::Win32::Graphics::Gdi::HMONITOR,
-  hdc: HDC,
-  _lprect: *mut windows::Win32::Foundation::RECT,
-  _lparam: LPARAM,
-) -> BOOL {
-  let mut monitor_info: MONITORINFOEXW = std::mem::zeroed();
-  monitor_info.monitorInfo.cbSize = std::mem::size_of::<MONITORINFOEXW>() as u32;
+fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
+  let monitors_vec: Vec<Monitor> = get_monitors().collect();
 
-  if GetMonitorInfoW(hmonitor, &mut monitor_info as *mut MONITORINFOEXW as *mut _).as_bool() {
-    let device_name = PCWSTR::from_raw(monitor_info.szDevice.as_ptr());
-    let width = GetDeviceCaps(hdc, HORZRES);
-    let height = GetDeviceCaps(hdc, VERTRES);
+  let res = lua.to_value(&monitors_vec)?;
 
-    println!("Monitor: {:?}", device_name);
-    println!("Width: {}", width);
-    println!("Height: {}", height);
-  }
-
-  true.into()
+  Ok(res)
 }
 
 fn current() {}
 
-fn primary() {}
+fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
+  let monitors_vec: Option<Monitor> = get_monitors().find(|m| m.geometry.x == 0 && m.geometry.y == 0);
+
+  let res = lua.to_value(&monitors_vec)?;
+
+  Ok(res)
+}
 
 pub fn make_display<'lua>(lua: &'lua Lua) -> anyhow::Result<mlua::Table<'lua>> {
   let hitokage_display = lua.create_table()?;
 
-  hitokage_display.set(
-    "all",
-    lua.create_function(|lua, _args: Variadic<Value>| {
-      let repr = all();
-      Ok(lua.to_value(&repr))
-    })?,
-  )?;
+  hitokage_display.set("all", lua.create_function(all)?)?;
 
-  hitokage_display.set("current", lua.create_function(|_, _args: Variadic<Value>| Ok(()))?)?;
+  // hitokage_display.set("current", lua.create_function(|_, _args: Variadic<Value>| Ok(()))?)?;
 
-  hitokage_display.set("primary", lua.create_function(|_, _args: Variadic<Value>| Ok(()))?)?;
+  hitokage_display.set("primary", lua.create_function(primary)?)?;
 
   Ok(hitokage_display)
+}
+
+// tests
+#[cfg(test)]
+mod tests {
+  use mlua::{Function, Integer, Lua, Result, String, Table, Value};
+
+  trait FromLuaValue<'lua>: Sized {
+    fn from_lua_value(value: Value<'lua>) -> Result<Self>;
+  }
+
+  impl<'lua> FromLuaValue<'lua> for Table<'lua> {
+    fn from_lua_value(value: Value<'lua>) -> Result<Self> {
+      match value {
+        Value::Table(table) => Ok(table),
+        _ => Err(mlua::Error::FromLuaConversionError {
+          from: value.type_name(),
+          to: "Table",
+          message: None,
+        }),
+      }
+    }
+  }
+
+  impl<'lua> FromLuaValue<'lua> for Function<'lua> {
+    fn from_lua_value(value: Value<'lua>) -> Result<Self> {
+      match value {
+        Value::Function(function) => Ok(function),
+        _ => Err(mlua::Error::FromLuaConversionError {
+          from: value.type_name(),
+          to: "Function",
+          message: None,
+        }),
+      }
+    }
+  }
+
+  impl<'lua> FromLuaValue<'lua> for String<'lua> {
+    fn from_lua_value(value: Value<'lua>) -> Result<Self> {
+      match value {
+        Value::String(string) => Ok(string),
+        _ => Err(mlua::Error::FromLuaConversionError {
+          from: value.type_name(),
+          to: "String",
+          message: None,
+        }),
+      }
+    }
+  }
+
+  impl<'lua> FromLuaValue<'lua> for Integer {
+    fn from_lua_value(value: Value<'lua>) -> Result<Self> {
+      match value {
+        Value::Integer(integer) => Ok(integer),
+        _ => Err(mlua::Error::FromLuaConversionError {
+          from: value.type_name(),
+          to: "Integer",
+          message: None,
+        }),
+      }
+    }
+  }
+
+  impl<'lua> FromLuaValue<'lua> for bool {
+    fn from_lua_value(value: Value<'lua>) -> Result<Self> {
+      match value {
+        Value::Boolean(boolean) => Ok(boolean),
+        _ => Err(mlua::Error::FromLuaConversionError {
+          from: value.type_name(),
+          to: "Boolean",
+          message: None,
+        }),
+      }
+    }
+  }
+
+  // Macro to assert the type of a Lua value and return the inner value if it matches
+  macro_rules! assert_lua_type {
+    ($value:expr, $type:ty) => {
+      <$type as FromLuaValue>::from_lua_value($value)
+        .expect(&format!("Expected Lua value to be of type {}", stringify!($type)))
+    };
+  }
+
+  fn load_display(lua: &Lua) -> anyhow::Result<Table> {
+    return super::make_display(lua);
+  }
+
+  #[test]
+  fn test_all() -> anyhow::Result<()> {
+    {
+      let lua = Lua::new();
+      let table = load_display(&lua)?;
+      lua.globals().set("display", table)?;
+      let value: Value = lua.globals().get("display")?;
+
+      let table: Table = assert_lua_type!(value, Table);
+      assert_lua_type!(table.get::<&str, Value>("all")?, mlua::Function);
+      assert_lua_type!(table.get::<&str, Value>("primary")?, mlua::Function);
+      assert_eq!(table.len()?, 0);
+      assert_eq!(table.pairs::<String, Value>().count(), 2);
+    }
+
+    Ok(())
+  }
 }

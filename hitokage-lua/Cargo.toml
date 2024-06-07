@@ -14,9 +14,6 @@ luahelper = { workspace = true }
 relm4 = { workspace = true }
 serde = { workspace = true }
 smol = "2.0.0"
+gdk4 = { workspace = true }
+gdk4-win32 = { workspace = true }
 
-[dependencies.windows]
-workspace = true
-features = [
-  "Win32_Graphics_Gdi",
-]

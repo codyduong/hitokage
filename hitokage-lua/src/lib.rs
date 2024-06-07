@@ -79,7 +79,7 @@ async fn sleep_ms<'lua>(_: &'lua Lua, milliseconds: u64) -> mlua::Result<()> {
   Ok(())
 }
 
-mod display;
+pub mod display;
 
 pub fn make_lua() -> anyhow::Result<Lua> {
   let lua = Lua::new();
@@ -90,7 +90,7 @@ pub fn make_lua() -> anyhow::Result<Lua> {
     let hitokage_mod = get_or_create_module(&lua, "hitokage")?;
     let display_mod = display::make_display(&lua)?;
 
-    hitokage_mod.set("display", display_mod)?;
+    hitokage_mod.set("monitor", display_mod)?;
 
     hitokage_mod.set(
       // https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/lua-api-crates/logging/src/lib.rs#L17

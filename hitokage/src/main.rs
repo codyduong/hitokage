@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use bar::Bar;
+use bar::BarProps;
 use chrono::Local;
 use gtk4::gdk;
 use gtk4::prelude::*;
@@ -35,7 +36,7 @@ pub enum LuaHookType {
   SubscribeState, // subscribe to a value in global state
   WriteState,     //
   ReadState,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateBar,
+  CreateBar(BarProps),
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
 }
 
@@ -50,7 +51,7 @@ impl fmt::Debug for LuaHook {
 
 pub struct LuaHook {
   pub t: LuaHookType,
-  pub callback: Box<dyn Fn(mlua::Value) -> Result<()> + Send + Sync>,
+  pub callback: Box<dyn Fn(mlua::Value) -> Result<()> + Send>,
 }
 
 #[derive(Debug)]
@@ -208,9 +209,9 @@ impl SimpleComponent for App {
           // r.push(notif_value);
 
           // *STATE.write() = r;
-          let mut stwg = STATE.write();
-          stwg.push(notif_value);
-          drop(stwg);
+          let mut sswg = STATE.write();
+          sswg.push(notif_value);
+          drop(sswg);
           *NEW_STATE.write() = true;
         }
 
@@ -229,18 +230,16 @@ impl SimpleComponent for App {
 
       //
       Msg::LuaHook(info) => match info.t {
-        LuaHookType::CreateBar => {
+        LuaHookType::CreateBar(props) => {
           let app = relm4::main_application();
           let builder = Bar::builder();
-
-          println!("bar created 2");
 
           // app.add_window(&builder.root);
 
           app.add_window(&builder.root);
 
           let bar = builder
-            .launch(())
+            .launch(props)
             .forward(sender.input_sender(), std::convert::identity);
 
           ()
@@ -271,6 +270,9 @@ impl SimpleComponent for App {
 async fn main() {
   simple_logger::SimpleLogger::new().init().unwrap();
 
+  let style_file_path = "./styles.css";
+
   let app = RelmApp::new("com.example.hitokage");
-  app.run::<App>(());
+  let _ = app.set_global_css_from_file(style_file_path);
+  app.run::<App>(());  
 }
