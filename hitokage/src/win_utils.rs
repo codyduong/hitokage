@@ -44,3 +44,7 @@ pub fn get_borders() -> (i32, i32) {
 pub fn get_primary_width() -> i32 {
   unsafe { GetSystemMetrics(SM_CXSCREEN) }
 }
+
+pub fn get_primary_height() -> i32 {
+  unsafe { GetSystemMetrics(SM_CYSCREEN) }
+}

@@ -1157,6 +1157,8 @@ name = "hitokage-lua"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "gdk4",
+ "gdk4-win32",
  "hitokage-core",
  "log",
  "lua-src",
@@ -1166,7 +1168,6 @@ dependencies = [
  "serde",
  "simple_logger",
  "smol",
- "windows 0.56.0",
 ]
 
 [[package]]

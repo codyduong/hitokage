@@ -1,6 +1,13 @@
-use mlua::{Function, IntoLua, Lua, LuaSerdeExt, Value::{self, Nil}};
+use gtk4::prelude::*;
+use mlua::{
+  Function, IntoLua, Lua, LuaSerdeExt,
+  Value::{self, Nil},
+};
 use relm4::ComponentSender;
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+
+use crate::bar::BarProps;
 
 struct LuaFunctionHolder {
   func: Arc<Mutex<Function<'static>>>,
@@ -22,10 +29,6 @@ impl LuaFunctionHolder {
 
 // We need to further augment the lua modules here, since otherwise we have a cylic dependency
 pub fn augment(lua: Lua, sender: ComponentSender<crate::App>) -> anyhow::Result<std::rc::Rc<Lua>> {
-  let sender1 = sender.clone();
-  let sender2 = sender.clone();
-  let sender3 = sender.clone();
-
   let lua = std::rc::Rc::new(lua);
 
   let binding = lua.clone();
@@ -36,69 +39,115 @@ pub fn augment(lua: Lua, sender: ComponentSender<crate::App>) -> anyhow::Result<
     // hitokage.bar.*
     bar_mod.set(
       "create",
-      lua.create_function(move |_, ()| {
-        sender1.input(crate::Msg::LuaHook(crate::LuaHook {
-          t: (crate::LuaHookType::CreateBar),
-          callback: Box::new(|_| Ok(())),
-        }));
-        Ok(())
+      lua.create_function({
+        let sender = sender.clone();
+        move |lua_inner, value: Value| {
+          let props: BarProps = lua_inner.from_value(value)?;
+          sender.input(crate::Msg::LuaHook(crate::LuaHook {
+            t: crate::LuaHookType::CreateBar(props),
+            callback: Box::new(|_| Ok(())),
+          }));
+          Ok(())
+        }
       })?,
     )?;
 
     // hitokage.*
     hitokage_mod.set(
       "read_state",
-      lua.create_function(move |lua2, f: Value| {
-        sender2.input(crate::Msg::LuaHook(crate::LuaHook {
-          t: crate::LuaHookType::ReadState,
-          callback: Box::new(|_| Ok(())),
-        }));
-        let args = crate::STATE.read();
+      lua.create_function({
+        let sender = sender.clone();
+        move |lua_inner, f: Value| {
+          sender.input(crate::Msg::LuaHook(crate::LuaHook {
+            t: crate::LuaHookType::ReadState,
+            callback: Box::new(|_| Ok(())),
+          }));
+          let args = crate::STATE.read();
 
-        let lua_args = lua2.to_value(std::ops::Deref::deref(&args));
-    
-        match f {
-          Value::Function(func) => {
-            func.call::<_, ()>(lua_args.clone())?
+          let lua_args = lua_inner.to_value(std::ops::Deref::deref(&args));
+
+          match f {
+            Value::Function(func) => func.call::<_, ()>(lua_args.clone())?,
+            Value::Nil => (),
+            _ => {
+              return Err(mlua::Error::FromLuaConversionError {
+                from: f.type_name(),
+                to: "Function or Nil",
+                message: Some("Expected a function or nil".to_string()),
+              })
+            }
           }
-          Value::Nil => (),
-          _ => return Err(mlua::Error::FromLuaConversionError {
-            from: f.type_name(),
-            to: "Function or Nil",
-            message: Some("Expected a function or nil".to_string()),
-          }),
+
+          Ok(lua_args)
         }
-    
-        Ok(lua_args)
       })?,
     )?;
 
     hitokage_mod.set(
       "new_state",
-      lua.create_function(move |lua2, f: Value| {
-        sender3.input(crate::Msg::LuaHook(crate::LuaHook {
-          t: crate::LuaHookType::NoAction,
-          callback: Box::new(|_| Ok(())),
-        }));
-        let args = crate::NEW_STATE.read();
-    
-        let lua_args = lua2.to_value(std::ops::Deref::deref(&args));
-    
-        match f {
-          Value::Function(func) => {
-            func.call::<_, ()>(lua_args.clone())?;
+      lua.create_function({
+        let sender = sender.clone();
+        move |lua_inner, f: Value| {
+          sender.input(crate::Msg::LuaHook(crate::LuaHook {
+            t: crate::LuaHookType::NoAction,
+            callback: Box::new(|_| Ok(())),
+          }));
+          let args = crate::NEW_STATE.read();
+
+          let lua_args = lua_inner.to_value(std::ops::Deref::deref(&args));
+
+          match f {
+            Value::Function(func) => {
+              func.call::<_, ()>(lua_args.clone())?;
+            }
+            Value::Nil => (),
+            _ => {
+              return Err(mlua::Error::FromLuaConversionError {
+                from: f.type_name(),
+                to: "Function or Nil",
+                message: Some("Expected a function or nil".to_string()),
+              })
+            }
           }
-          Value::Nil => (),
-          _ => return Err(mlua::Error::FromLuaConversionError {
-            from: f.type_name(),
-            to: "Function or Nil",
-            message: Some("Expected a function or nil".to_string()),
-          }),
+
+          Ok(lua_args)
         }
-    
-        Ok(lua_args)
       })?,
     )?;
+
+    // hitokage_mod.set(
+    //   "subscribe_state",
+    //   lua.create_function({
+    //     let sender = sender.clone();
+    //     move |lua_inner, value: Value| {
+          
+    //       let args = crate::NEW_STATE.read();
+
+    //       let lua_args = lua_inner.to_value(std::ops::Deref::deref(&args));
+
+    //       match value {
+    //         Value::Function(func) => {
+    //           sender.input(crate::Msg::LuaHook(crate::LuaHook {
+    //             t: crate::LuaHookType::NoAction,
+    //             callback: Box::new(|arg| {
+    //               func.call::<_, ()>(arg);
+    //               Ok(())
+    //             }),
+    //           }));
+    //         }
+    //         _ => {
+    //           return Err(mlua::Error::FromLuaConversionError {
+    //             from: value.type_name(),
+    //             to: "Function",
+    //             message: Some("Expected a function".to_string()),
+    //           })
+    //         }
+    //       }
+
+    //       Ok(lua_args)
+    //     }
+    //   })?,
+    // )?;
 
     // TOOD @codyduong
     // subscriptions should be a sugar syntax around the subscription loop

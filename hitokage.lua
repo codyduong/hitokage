@@ -1,17 +1,18 @@
-local displays = hitokage.display.all()
+hitokage.debug(hitokage);
 
-hitokage.debug(displays)
+local monitors = hitokage.monitor.all()
+local primary = hitokage.monitor.primary()
 
-hitokage.bar.create()
+hitokage.debug(monitors, primary)
 
-for _, display in pairs(displays) do
-  -- hitokage.debug(display)
-  -- hitokage.create_widget();
-  -- hitokage.bar.create() --// @TODO @codyduong
+for _, display in pairs(monitors) do
+  hitokage.bar.create({
+    geometry = display.geometry
+  })
 end
 
-local s = hitokage.read_state()
-hitokage.debug(s);
+-- local s = hitokage.read_state()
+-- hitokage.debug(s);
 
 while true do
   -- read subscriptions we setup earlier
