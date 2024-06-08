@@ -1,3 +1,4 @@
+use crate::win_utils;
 use gtk4::prelude::*;
 use gtk4::ApplicationWindow;
 use hitokage_core::bar::BarPosition;
@@ -7,8 +8,7 @@ use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use relm4::SimpleComponent;
-
-use crate::win_utils;
+use crate::flowbox::RelmContainerExtManual;
 
 fn setup_window_size(window: ApplicationWindow, props: &Bar) -> anyhow::Result<()> {
   window.set_size_request(props.geometry.width, crate::HITOKAGE_STATUSBAR_HEIGHT);
@@ -54,7 +54,7 @@ fn setup_window_pos(window: ApplicationWindow, props: &Bar) -> anyhow::Result<()
         .and_then(|item: glib::Object| item.downcast::<gdk4_win32::Win32Monitor>().ok())
     })
     .collect();
-  println!("{:?}", monitors_vec[0].model());
+  // println!("{:?}", monitors_vec[0].model());
   // window.set_display();
 
   Ok(())
@@ -75,29 +75,27 @@ impl SimpleComponent for Bar {
 
   view! {
     gtk::ApplicationWindow {
-      set_default_size: (900, 64),
+      set_default_size: (900, 24),
       set_resizable: false,
       set_display: &gdk4::Display::default().expect("Failed to get default display"),
       set_decorated: false,
       set_visible: false, // We can't instantiate before we have hooked our connect_* on, so this should always be false
 
       gtk::Box {
-        set_orientation: gtk::Orientation::Vertical,
+        set_orientation: gtk::Orientation::Horizontal,
+        set_hexpand: true,
+        set_vexpand: true,
+
         gtk::Label {
           set_label: "Hello, World!",
         },
+
+
 
         // gtk::Label {
         //   #[watch]
         //   set_label: &format!("{}", model.current_time),
         // },
-
-        gtk::Button {
-          set_label: "Test",
-          connect_clicked => move |window| {
-            println!("foobar");
-          }
-        },
       },
 
       connect_realize => move |window| {

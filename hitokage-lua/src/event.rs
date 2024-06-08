@@ -11,7 +11,7 @@ where
 
   {
     table.set(
-      "read",
+      "unread",
       lua.create_function({
         let sender = sender.clone();
         move |lua_inner, f: Value| {
@@ -41,7 +41,7 @@ where
     )?;
 
     table.set(
-      "new",
+      "has_unread",
       lua.create_function({
         let sender = sender.clone();
         move |lua_inner, f: Value| {

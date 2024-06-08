@@ -1,7 +1,7 @@
 use std::fmt;
 
 use luahelper::ValuePrinter;
-use mlua::{Lua, Table, Value, Variadic};
+use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender, SimpleComponent, Worker};
 
 #[derive(Debug)]
@@ -127,7 +127,7 @@ where
     let globals = lua.globals();
     globals.set("loaded", lua.create_table()?)?;
     let hitokage_mod = get_or_create_module(&lua, "hitokage")?;
-    let monitor: Table = monitor::make(&lua)?;
+    let monitor: AnyUserData = monitor::make(&lua)?;
     let bar: Table = bar::make(&lua, &sender)?;
     let event: Table = event::make(&lua, &sender)?;
 
@@ -137,10 +137,29 @@ where
 
     hitokage_mod.set(
       // https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/lua-api-crates/logging/src/lib.rs#L17
-      "debug",
+      "info",
       lua.create_function(|_, args: Variadic<Value>| {
         let output = print_helper(args);
         log::info!("lua: {}", output);
+        Ok(())
+      })?,
+    )?;
+
+    hitokage_mod.set(
+      // https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/lua-api-crates/logging/src/lib.rs#L17
+      "debug",
+      lua.create_function(|_, args: Variadic<Value>| {
+        let output = print_helper(args);
+        log::debug!("lua: {}", output);
+        Ok(())
+      })?,
+    )?;
+
+    hitokage_mod.set(
+      "error",
+      lua.create_function(|_, args: Variadic<Value>| {
+        let output = print_helper(args);
+        log::error!("lua: {}", output);
         Ok(())
       })?,
     )?;
@@ -234,6 +253,19 @@ impl<'lua> FromLuaValue<'lua> for bool {
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
         to: "Boolean",
+        message: None,
+      }),
+    }
+  }
+}
+
+impl<'lua> FromLuaValue<'lua> for AnyUserData<'lua> {
+  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self> {
+    match value {
+      Value::UserData(userdata) => Ok(userdata),
+      _ => Err(mlua::Error::FromLuaConversionError {
+        from: value.type_name(),
+        to: "UserData",
         message: None,
       }),
     }
