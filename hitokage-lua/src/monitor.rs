@@ -3,10 +3,7 @@ use gdk4::{
   prelude::*,
 };
 use hitokage_core::common::{Monitor, MonitorGeometry};
-use mlua::{
-  Lua, LuaSerdeExt,
-  Value::{self},
-};
+use mlua::{AnyUserData, Lua, LuaSerdeExt, MetaMethod, UserData, UserDataMethods, Value};
 
 fn get_monitors() -> impl Iterator<Item = Monitor> {
   let display = gdk4::Display::default().expect("Failed to get default display");
@@ -33,6 +30,23 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
   iter
 }
 
+struct MonitorUserData {}
+
+impl MonitorUserData {
+  fn new() -> Self {
+    MonitorUserData {}
+  }
+}
+
+impl UserData for MonitorUserData {
+  fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+    methods.add_function("all", all);
+    methods.add_meta_function(MetaMethod::Call, all);
+
+    methods.add_function("primary", primary);
+  }
+}
+
 fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
   let monitors_vec: Vec<Monitor> = get_monitors().collect();
 
@@ -52,26 +66,22 @@ fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
   Ok(res)
 }
 
-pub fn make<'lua>(lua: &'lua Lua) -> anyhow::Result<mlua::Table<'lua>> {
-  let table = lua.create_table()?;
+pub fn make<'lua>(lua: &'lua Lua) -> anyhow::Result<AnyUserData<'lua>> {
+  let userdata = lua
+    .create_userdata(MonitorUserData::new())
+    .unwrap();
 
-  table.set("all", lua.create_function(all)?)?;
-
-  // hitokage_display.set("current", lua.create_function(|_, _args: Variadic<Value>| Ok(()))?)?;
-
-  table.set("primary", lua.create_function(primary)?)?;
-
-  Ok(table)
+  Ok(userdata)
 }
 
 // tests
 #[cfg(test)]
 mod tests {
-  use mlua::{Lua, Table, Value};
+  use mlua::{AnyUserData, AnyUserDataExt, Lua, Table, UserData, Value};
 
   use crate::assert_lua_type;
 
-  fn create_table(lua: &Lua) -> anyhow::Result<Table> {
+  fn create_userdata(lua: &Lua) -> anyhow::Result<AnyUserData> {
     return super::make(lua);
   }
 
@@ -79,15 +89,17 @@ mod tests {
   fn test_all() -> anyhow::Result<()> {
     {
       let lua = Lua::new();
-      let table = create_table(&lua)?;
-      lua.globals().set("table", table)?;
-      let value: Value = lua.globals().get("table")?;
+      let userdata = create_userdata(&lua)?;
+      lua.globals().set("userdata", userdata)?;
+      let value: Value = lua.globals().get("userdata")?;
 
-      let table: Table = assert_lua_type!(value, mlua::Table);
-      assert_lua_type!(table.get::<&str, Value>("all")?, mlua::Function);
-      assert_lua_type!(table.get::<&str, Value>("primary")?, mlua::Function);
-      assert_eq!(table.len()?, 0);
-      assert_eq!(table.pairs::<String, Value>().count(), 2);
+      let userdata: AnyUserData = assert_lua_type!(value, AnyUserData);
+      let metatable = userdata.get_metatable()?;
+      assert_lua_type!(userdata.get::<&str, Value>("all")?, mlua::Function);
+      assert_lua_type!(userdata.get::<&str, Value>("primary")?, mlua::Function);
+      assert_lua_type!(metatable.get("__call")?, mlua::Function);
+      // assert_eq!(table.len()?, 0);
+      // assert_eq!(table.pairs::<String, Value>().count(), 2);
     }
 
     Ok(())

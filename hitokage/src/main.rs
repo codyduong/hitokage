@@ -8,14 +8,25 @@ use hitokage_lua::LuaHookType;
 use relm4::prelude::*;
 use std::fs::File;
 use std::io::Read;
-mod bar;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
+use std::time::Instant;
+use widgets::bar;
+// use windows::Win32::Foundation::CloseHandle;
+// use windows::Win32::Foundation::HANDLE;
+// use windows::Win32::System::Threading::{OpenThread, TerminateThread, THREAD_TERMINATE};
+mod flowbox;
 mod socket;
+mod widgets;
 mod win_utils;
 
-const HITOKAGE_STATUSBAR_HEIGHT: i32 = 64;
+const HITOKAGE_STATUSBAR_HEIGHT: i32 = 24;
 
 struct App {
   current_time: String,
+  bar_controllers: Vec<Controller<widgets::bar::Bar>>,
 }
 
 #[relm4::component(pub)]
@@ -43,25 +54,118 @@ impl SimpleComponent for App {
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
 
-    let lua_script = contents;
+    let user_script = contents;
 
     let sender_clone = sender.clone();
-    let _lua_thread = std::thread::spawn(move || {
+
+    let preventer_called = Arc::new(Mutex::new(false));
+    let preventer_called_clone = Arc::clone(&preventer_called);
+
+    let is_stopped = Arc::new(Mutex::new(false));
+    let is_stopped_clone = Arc::clone(&is_stopped);
+
+    let lua_thread_id = Arc::new(Mutex::new(0));
+    let lua_thread_id_clone = Arc::clone(&lua_thread_id);
+
+    let _lua_handle = std::thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
       let lua = hitokage_lua::make(sender_clone).unwrap();
 
-      let co = lua
-        .create_thread(lua.load(lua_script).into_function().unwrap())
+      {
+        let mut thread_id = lua_thread_id.lock().unwrap();
+        *thread_id = win_utils::get_current_thread_id();
+      }
+
+      {
+        let globals = lua.globals();
+
+        let preventer_fn = lua.create_function(move |_, ()| {
+          let mut called = preventer_called.lock().unwrap();
+          *called = true;
+          Ok(())
+        })?;
+
+        globals.set("_not_deadlocked", preventer_fn)?;
+
+        Ok::<(), mlua::Error>(())
+      }?;
+
+      let coroutine = lua
+        .create_thread(lua.load(user_script).into_function().unwrap())
         .unwrap();
 
       loop {
-        match co.resume::<_, ()>(()) {
+        match coroutine.resume::<_, ()>(()) {
           Ok(_) => (),
+          // Err(mlua::Error::CoroutineInactive) => {
+          //   let mut is_stopped = is_stopped.lock().unwrap();
+          //   *is_stopped = true;
+          //   break Ok(());
+          // }
           Err(err) => {
-            println!("Lua error: {:?}", err);
+            log::error!("Lua error: {:?}", err);
+            break Err(err);
+          }
+        }
+      }
+    });
+
+    let _monitor_handle = thread::spawn(move || {
+      let mut start_time = Instant::now();
+
+      loop {
+        {
+          let is_stopped = is_stopped_clone.lock().unwrap();
+
+          if *is_stopped {
+            log::debug!("Lua execution finished, stopping lua watcher");
             break;
           }
         }
-        // std::thread::sleep(std::time::Duration::from_millis(100)); // Small sleep to prevent tight loop
+
+        if start_time.elapsed() >= Duration::from_secs(5) {
+          log::error!(
+            "There was a possible infinite loop or deadlock detected in your hitokage.lua! Did you mean to use hitokage.loop(): "
+          ); //@codyduong add a link to user-end docs
+
+          let _thread_id = *lua_thread_id_clone.lock().unwrap();
+
+          // I'm sure there are no leaks or problems here LOL /s - @codyduong
+          // log::debug!("Attempting to terminate lua thread with id: {:?}", thread_id);
+          // if thread_id != 0 {
+          //   unsafe {
+          //     let handle = OpenThread(THREAD_TERMINATE, false, thread_id).unwrap();
+
+          //     if handle != HANDLE(0) {
+          //       let result = TerminateThread(handle, 1);
+
+          //       if let Err(result) = result {
+          //         // let error_code = windows::Win32::Foundation::GetLastError();
+          //         log::error!("Failed to terminate thread: {:?}", result);
+          //       } else {
+          //         log::debug!("Successfully terminated thread");
+          //       }
+
+          //       let _ = CloseHandle(handle);
+          //     } else {
+          //       let error_code = windows::Win32::Foundation::GetLastError();
+          //       log::error!("Failed to open thread handle: {:?}", error_code);
+          //     }
+          //   }
+          // }
+
+          break;
+        }
+
+        {
+          let mut called = preventer_called_clone.lock().unwrap();
+
+          if *called {
+            *called = false;
+            start_time = Instant::now();
+          };
+        }
+
+        thread::sleep(Duration::from_millis(500));
       }
     });
 
@@ -83,6 +187,7 @@ impl SimpleComponent for App {
 
     let model = App {
       current_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+      bar_controllers: Vec::new(),
       // bar,
     };
 

@@ -1128,7 +1128,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "color-eyre",
  "gdk4",
  "gdk4-win32",
  "glib",
