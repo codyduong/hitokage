@@ -1,4 +1,4 @@
-use hitokage_core::common::{EVENT, NEW_EVENT};
+use hitokage_core::lua::event::{EVENT, NEW_EVENT};
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 
@@ -17,7 +17,7 @@ where
         move |lua_inner, f: Value| {
           sender.input(crate::AppMsg::LuaHook(crate::LuaHook {
             t: crate::LuaHookType::ReadEvent,
-            callback: Box::new(|_| Ok(())),
+            // callback: Box::new(|_| Ok(())),
           }));
           let args = EVENT.read();
 
@@ -47,7 +47,7 @@ where
         move |lua_inner, f: Value| {
           sender.input(crate::AppMsg::LuaHook(crate::LuaHook {
             t: crate::LuaHookType::NoAction,
-            callback: Box::new(|_| Ok(())),
+            // callback: Box::new(|_| Ok(())),
           }));
           let args = NEW_EVENT.read();
 

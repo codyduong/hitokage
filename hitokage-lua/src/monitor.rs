@@ -2,7 +2,7 @@ use gdk4::{
   glib::{self, object::Cast},
   prelude::*,
 };
-use hitokage_core::common::{Monitor, MonitorGeometry};
+use hitokage_core::lua::monitor::{Monitor, MonitorGeometry};
 use mlua::{AnyUserData, Lua, LuaSerdeExt, MetaMethod, UserData, UserDataMethods, Value};
 
 fn get_monitors() -> impl Iterator<Item = Monitor> {

@@ -2,14 +2,13 @@ use std::fmt;
 
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
-use relm4::{Component, ComponentSender, SimpleComponent, Worker};
+use relm4::{Component, ComponentSender};
 
 #[derive(Debug)]
 pub enum AppMsg {
   Komorebi(String),
   KomorebiErr(String),
   LuaHook(LuaHook),
-  Tick, // system clock
 }
 
 #[derive(Debug)]
@@ -17,13 +16,16 @@ pub enum LuaHookType {
   SubscribeState, // subscribe to a value in global state
   WriteState,     //
   ReadEvent,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateBar(hitokage_core::bar::BarProps),
+  CreateBar(hitokage_core::widgets::bar::BarProps),
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
 }
 
 pub struct LuaHook {
   pub t: LuaHookType,
-  pub callback: Box<dyn Fn(mlua::Value) -> mlua::Result<()> + Send>,
+
+  // @codyduong TODO, we can't box lua so idk if we need a callback (if we can only modify rust, then
+  // i have yet to forsee why we wouldn't do it immediately based on `t` field
+  // pub callback: Box<dyn Fn(mlua::Value) -> mlua::Result<()> + Send>,
 }
 
 pub enum LuaHookInput {
@@ -34,7 +36,7 @@ impl fmt::Debug for LuaHook {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.debug_struct("LuaHook")
       .field("t", &self.t)
-      .field("callback", &"<function>")
+      // .field("callback", &"<function>")
       .finish()
   }
 }

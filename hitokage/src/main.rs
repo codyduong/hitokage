@@ -1,10 +1,11 @@
-use chrono::Local;
 use gtk4::prelude::*;
-use hitokage_core::common::EventNotif;
-use hitokage_core::common::EVENT;
-use hitokage_core::common::NEW_EVENT;
+use hitokage_core::lua::event::EventNotif;
+use hitokage_core::lua::event::{EVENT, NEW_EVENT};
+use hitokage_core::{widgets, win_utils};
+use hitokage_core::widgets::bar;
 use hitokage_lua::AppMsg;
 use hitokage_lua::LuaHookType;
+use relm4::component::Connector;
 use relm4::prelude::*;
 use std::fs::File;
 use std::io::Read;
@@ -13,20 +14,13 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
-use widgets::bar;
 // use windows::Win32::Foundation::CloseHandle;
 // use windows::Win32::Foundation::HANDLE;
 // use windows::Win32::System::Threading::{OpenThread, TerminateThread, THREAD_TERMINATE};
-mod flowbox;
 mod socket;
-mod widgets;
-mod win_utils;
-
-const HITOKAGE_STATUSBAR_HEIGHT: i32 = 24;
 
 struct App {
-  current_time: String,
-  bar_controllers: Vec<Controller<widgets::bar::Bar>>,
+  bars: Vec<Connector<widgets::bar::Bar>>,
 }
 
 #[relm4::component(pub)]
@@ -96,11 +90,11 @@ impl SimpleComponent for App {
       loop {
         match coroutine.resume::<_, ()>(()) {
           Ok(_) => (),
-          // Err(mlua::Error::CoroutineInactive) => {
-          //   let mut is_stopped = is_stopped.lock().unwrap();
-          //   *is_stopped = true;
-          //   break Ok(());
-          // }
+          Err(mlua::Error::CoroutineInactive) => {
+            let mut is_stopped = is_stopped.lock().unwrap();
+            *is_stopped = true;
+            break Ok(());
+          }
           Err(err) => {
             log::error!("Lua error: {:?}", err);
             break Err(err);
@@ -173,21 +167,11 @@ impl SimpleComponent for App {
     let sender_clone = sender.clone();
     socket::start_async_reader_new(sender_clone);
 
-    // system clock
-    let sender_clone = sender.clone();
-    // "Precise timing is not guaranteed, the timeout may be delayed by other events."
-    // so yeah, use 500ms increment, if we skip a second we have bigger problems performance wise...
-    glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-      sender_clone.input(AppMsg::Tick);
-      glib::ControlFlow::Continue
-    });
-
     // bar.widget().realize();
     // gtk4::prelude::WidgetExt::realize(bar.widget());
 
     let model = App {
-      current_time: Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-      bar_controllers: Vec::new(),
+      bars: Vec::new(),
       // bar,
     };
 
@@ -215,18 +199,6 @@ impl SimpleComponent for App {
         // });
 
         if let Some(notif_value) = notif {
-          // let mut result = {
-          //   let rg = STATE.read();
-          //   let result = rg.to_vec();
-          //   drop(rg);
-          //   result
-          // };
-          // result.push(notif_value);
-
-          // let mut r = Vec::new();
-          // r.push(notif_value);
-
-          // *STATE.write() = r;
           let mut sswg = EVENT.write();
           sswg.push(notif_value);
           drop(sswg);
@@ -257,14 +229,16 @@ impl SimpleComponent for App {
           app.add_window(&builder.root);
 
           let bar = builder
-            .launch(props)
-            .forward(sender.input_sender(), std::convert::identity);
+            .launch(props);
+            // .forward(sender.input_sender(), std::convert::identity);
+
+          self.bars.push(bar);
 
           ()
         }
         LuaHookType::ReadEvent => {
-          *crate::EVENT.write() = Vec::new();
-          *crate::NEW_EVENT.write() = false;
+          *EVENT.write() = Vec::new();
+          *NEW_EVENT.write() = false;
 
           ()
         }
@@ -275,11 +249,6 @@ impl SimpleComponent for App {
           ()
         }
       },
-
-      // Primary Program Loop
-      AppMsg::Tick => {
-        self.current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-      }
     }
   }
 }
