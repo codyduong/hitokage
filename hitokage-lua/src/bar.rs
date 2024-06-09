@@ -1,4 +1,4 @@
-use hitokage_core::bar::BarProps;
+use hitokage_core::widgets::bar::BarProps;
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 
@@ -18,8 +18,14 @@ where
           let props: BarProps = lua_inner.from_value(value)?;
           sender.input(<C as Component>::Input::LuaHook(crate::LuaHook {
             t: crate::LuaHookType::CreateBar(props),
-            callback: Box::new(|_| Ok(())),
+            // callback: Box::new(|_| Ok(())),
           }));
+          // have a function that returns a table with a sender to the bar object?
+          // how to???
+          // 1. Create bar in parent app?
+          // 2. Have parent app send shared state to lua?
+          // 3. Read the shared lua?
+
           Ok(())
         }
       })?,

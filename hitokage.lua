@@ -7,7 +7,10 @@ hitokage.debug(monitors, primary)
 
 for _, display in pairs(monitors) do
   hitokage.bar.create({
-    geometry = display.geometry
+    geometry = display.geometry,
+    widgets = {
+      {Clock = {format = "your_format_string"}},
+    },
   })
 end
 
