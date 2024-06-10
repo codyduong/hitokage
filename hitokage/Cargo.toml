@@ -19,18 +19,12 @@ mlua = { workspace = true }
 lua-src = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+komorebi-client = {workspace = true}
 
 chrono = "0.4.38"
-tokio = { version = "1.0", features = ["full"] }
-# there is some issues with patching win32-display-data, so use this rev
-komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "3f6e19b8b48b27b77810c469b9baa3e5b25c9af9"}
 # komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.26"}
-# color-eyre = "0.6"
 
 [dependencies.windows]
 features = [
-  "Win32_UI_WindowsAndMessaging", # window management
-  # "Win32_UI_Shell", # taskbar height
-
   "Win32_System_Threading",
 ]

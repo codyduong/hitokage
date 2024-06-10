@@ -253,8 +253,7 @@ impl SimpleComponent for App {
   }
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
   simple_logger::SimpleLogger::new().init().unwrap();
 
   let style_file_path = "./styles.css";
