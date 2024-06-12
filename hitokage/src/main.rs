@@ -1,8 +1,8 @@
 use gtk4::prelude::*;
 use hitokage_core::lua::event::EventNotif;
 use hitokage_core::lua::event::{EVENT, NEW_EVENT};
-use hitokage_core::{widgets, win_utils};
 use hitokage_core::widgets::bar;
+use hitokage_core::{widgets, win_utils};
 use hitokage_lua::AppMsg;
 use hitokage_lua::LuaHookType;
 use relm4::component::Connector;
@@ -224,13 +224,10 @@ impl SimpleComponent for App {
           let app = relm4::main_application();
           let builder = bar::Bar::builder();
 
-          // app.add_window(&builder.root);
-
           app.add_window(&builder.root);
 
-          let bar = builder
-            .launch(props);
-            // .forward(sender.input_sender(), std::convert::identity);
+          let bar = builder.launch(props);
+          // .forward(sender.input_sender(), std::convert::identity);
 
           self.bars.push(bar);
 
@@ -257,6 +254,15 @@ fn main() {
   simple_logger::SimpleLogger::new().init().unwrap();
 
   let style_file_path = "./styles.css";
+
+  gtk::init().unwrap();
+  if let Some(settings) = gtk::Settings::default() {
+    // TODO @codyduong we need a primer/FAQ on blurry text
+    settings.set_property("gtk-xft-antialias", &0);
+    settings.set_property("gtk-xft-hinting", &1);
+    settings.set_property("gtk-xft-hintstyle", &"hintfull");
+    settings.set_property("gtk-xft-rgba", &"rgb");
+  }
 
   let app = RelmApp::new("com.example.hitokage");
   let _ = app.set_global_css_from_file(style_file_path);
