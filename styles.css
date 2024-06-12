@@ -1,3 +1,28 @@
 window {
-  background-color: #8d8d8d96;
+  background-color: rgba(29, 32, 33, 0.3);
+  color: #f2e5bc;
+  
+  font-family: 'MesloLGS NF', 'Courier New', 'Bars', 'Font Awesome 5 Free';
+  font-size: 12px;
+}
+
+flowbox {
+  padding: 4px 0 0 8px;
+}
+
+flowboxchild {
+  margin: 0 4px 0 0;
+  border: 1px solid rgba(168, 153, 132, 0.4);
+
+  color: #f2e5bc;
+  background-color: rgba(60, 56, 54, 0.4);
+
+  font-size: 12px;
+  border-radius: 2px;
+}
+
+flowboxchild:selected {
+  background-color: #f2e5bc;
+  color: #333333;
+  font-weight: bold;
 }

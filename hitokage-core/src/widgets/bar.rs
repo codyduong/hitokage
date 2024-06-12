@@ -1,4 +1,7 @@
+use super::{Widget, WidgetController};
 use crate::lua::monitor::MonitorGeometry;
+use crate::widgets::clock::Clock;
+use crate::widgets::workspace::Workspace;
 use crate::win_utils;
 use gtk4::prelude::*;
 use gtk4::ApplicationWindow;
@@ -8,24 +11,6 @@ use relm4::SharedState;
 use relm4::SimpleComponent;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
-pub enum BarPosition {
-  Top,
-  Bottom,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct BarProps {
-  pub position: Option<BarPosition>,
-  pub geometry: Option<MonitorGeometry>,
-  pub widgets: Vec<super::Widgets>,
-}
-
-#[derive(Debug)]
-pub enum BarMsg {
-  Tick,
-}
 
 pub struct BarLuaShared<'a, C>
 where
@@ -87,11 +72,29 @@ fn setup_window_pos(window: ApplicationWindow, geometry: &MonitorGeometry) -> an
   Ok(())
 }
 
+#[derive(Debug)]
+pub enum BarMsg {
+  Tick,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum BarPosition {
+  Top,
+  Bottom,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BarProps {
+  pub position: Option<BarPosition>,
+  pub geometry: Option<MonitorGeometry>,
+  pub widgets: Vec<Widget>,
+}
+
 pub struct Bar {
   position: Option<BarPosition>,
   geometry: MonitorGeometry,
   current_time: String,
-  widgets: Vec<crate::widgets::Widgets>,
+  widgets: Vec<WidgetController>,
 }
 
 #[relm4::component(pub)]
@@ -109,25 +112,12 @@ impl SimpleComponent for Bar {
       set_decorated: false,
       set_visible: false, // We can't instantiate before we have hooked our connect_* on, so this should always be false
 
+      #[name = "main_box"]
       gtk::Box {
         set_orientation: gtk::Orientation::Horizontal,
         set_hexpand: true,
         set_vexpand: true,
         set_homogeneous: true,
-
-        gtk::Label {
-          set_hexpand: true,
-          set_label: "Hello, World!",
-        },
-
-        gtk::Label {
-          set_hexpand: true,
-          #[watch]
-          set_label: &format!("{}", model.current_time),
-        },
-
-        // placeholder label
-        gtk::Label {}
       },
 
       connect_realize => move |window| {
@@ -143,7 +133,7 @@ impl SimpleComponent for Bar {
   }
 
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let model = Bar {
+    let mut model = Bar {
       current_time: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
       position: input.position,
       geometry: input.geometry.unwrap_or(MonitorGeometry {
@@ -152,8 +142,31 @@ impl SimpleComponent for Bar {
         width: win_utils::get_primary_width(),
         height: win_utils::get_primary_height(),
       }),
-      widgets: input.widgets,
+      widgets: Vec::new(),
     };
+
+    let widgets = view_output!();
+
+    for widget in input.widgets {
+      match widget {
+        Widget::Clock(props) => {
+          let mut connector = Clock::builder().launch(props);
+          widgets.main_box.append(connector.widget());
+          connector.detach_runtime();
+          // Clock does not need to communicate so detach_runtime();
+        }
+        Widget::Workspace(props) => {
+          let controller = Workspace::builder().launch(props).detach();
+          widgets.main_box.append(controller.widget());
+          model.widgets.push(WidgetController::Workspace(controller));
+        }
+        Widget::Box(props) => {
+          let mut connector = crate::widgets::r#box::Box::builder().launch(props);
+          widgets.main_box.append(connector.widget());
+          connector.detach_runtime();
+        }
+      }
+    }
 
     // Timer
     let sender_clone = sender.clone();
@@ -161,8 +174,6 @@ impl SimpleComponent for Bar {
       sender_clone.input(BarMsg::Tick);
       glib::ControlFlow::Continue
     });
-
-    let widgets = view_output!();
 
     // manually realize/show
     root.show();

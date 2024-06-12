@@ -1,45 +1,51 @@
-use serde::{Deserialize, Serialize};
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use relm4::SimpleComponent;
-
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ClockProps {
-  format: String,
-}
-
-
-pub struct Clock {
-  current_time: String,
-}
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub enum ClockMsg {
   Tick,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ClockProps {
+  format: String,
+}
+
+pub struct Clock {
+  current_time: String,
+}
+
+impl Clock {
+  pub fn new() -> Self {
+    Self {
+      current_time: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+    }
+  }
+}
+
 #[relm4::component(pub)]
 impl SimpleComponent for Clock {
   type Input = ClockMsg;
   type Output = ();
-  type Init = ();
+  type Init = ClockProps;
   type Widgets = ClockWidgets;
 
   view! {
+    gtk::Box {
       gtk::Label {
-          set_hexpand: true,
-          #[watch]
-          set_label: &model.current_time,
-      }
+        set_hexpand: true,
+        #[watch]
+        set_label: &model.current_time,
+      },
+    }
   }
 
-  fn init(_: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let model = Clock {
-      current_time: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-    };
+  fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
+    let model = Clock::new();
 
     // Timer
     let sender_clone = sender.clone();

@@ -22,7 +22,6 @@ pub enum LuaHookType {
 
 pub struct LuaHook {
   pub t: LuaHookType,
-
   // @codyduong TODO, we can't box lua so idk if we need a callback (if we can only modify rust, then
   // i have yet to forsee why we wouldn't do it immediately based on `t` field
   // pub callback: Box<dyn Fn(mlua::Value) -> mlua::Result<()> + Send>,

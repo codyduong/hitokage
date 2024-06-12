@@ -9,7 +9,9 @@ for _, display in pairs(monitors) do
   hitokage.bar.create({
     geometry = display.geometry,
     widgets = {
+      {Workspace = {}},
       {Clock = {format = "your_format_string"}},
+      {Box = {}},
     },
   })
 end
