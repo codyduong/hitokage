@@ -11,20 +11,36 @@ pub enum AppMsg {
   LuaHook(LuaHook),
 }
 
-#[derive(Debug)]
 pub enum LuaHookType {
   SubscribeState, // subscribe to a value in global state
   WriteState,     //
   ReadEvent,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateBar(hitokage_core::widgets::bar::BarProps),
+  CreateBar(hitokage_core::widgets::bar::BarProps, u32, Box<dyn Fn(ComponentSender<hitokage_core::widgets::bar::Bar>) -> () + Send>),
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
+}
+
+impl std::fmt::Debug for LuaHookType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+      match self {
+          LuaHookType::SubscribeState => write!(f, "SubscribeState"),
+          LuaHookType::WriteState => write!(f, "WriteState"),
+          LuaHookType::ReadEvent => write!(f, "ReadEvent"),
+          LuaHookType::CreateBar(props, id, _) => f
+              .debug_struct("CreateBar")
+              .field("props", props)
+              .field("id", id)
+              .field("callback", &"<function>")
+              .finish(),
+          LuaHookType::NoAction => write!(f, "NoAction"),
+      }
+  }
 }
 
 pub struct LuaHook {
   pub t: LuaHookType,
   // @codyduong TODO, we can't box lua so idk if we need a callback (if we can only modify rust, then
   // i have yet to forsee why we wouldn't do it immediately based on `t` field
-  // pub callback: Box<dyn Fn(mlua::Value) -> mlua::Result<()> + Send>,
+  // pub callback: Box<dyn Fn() -> mlua::Result<()> + Send>,
 }
 
 pub enum LuaHookInput {

@@ -40,10 +40,10 @@ impl MonitorUserData {
 
 impl UserData for MonitorUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-    methods.add_function("all", all);
+    methods.add_function("get_all", all);
     methods.add_meta_function(MetaMethod::Call, all);
 
-    methods.add_function("primary", primary);
+    methods.add_function("get_primary", primary);
   }
 }
 
@@ -93,8 +93,8 @@ mod tests {
 
       let userdata: AnyUserData = assert_lua_type!(value, AnyUserData);
       let metatable = userdata.get_metatable()?;
-      assert_lua_type!(userdata.get::<&str, Value>("all")?, mlua::Function);
-      assert_lua_type!(userdata.get::<&str, Value>("primary")?, mlua::Function);
+      assert_lua_type!(userdata.get::<&str, Value>("get_all")?, mlua::Function);
+      assert_lua_type!(userdata.get::<&str, Value>("get_primary")?, mlua::Function);
       assert_lua_type!(metatable.get("__call")?, mlua::Function);
       // assert_eq!(table.len()?, 0);
       // assert_eq!(table.pairs::<String, Value>().count(), 2);

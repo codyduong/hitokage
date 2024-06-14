@@ -88,6 +88,7 @@ impl SimpleComponent for App {
         .unwrap();
 
       loop {
+        let time = Instant::now();
         match coroutine.resume::<_, ()>(()) {
           Ok(_) => (),
           Err(mlua::Error::CoroutineInactive) => {
@@ -97,8 +98,13 @@ impl SimpleComponent for App {
           }
           Err(err) => {
             log::error!("Lua error: {:?}", err);
+            let mut is_stopped = is_stopped.lock().unwrap();
+            *is_stopped = true;
             break Err(err);
           }
+        }
+        if time.elapsed() <= Duration::from_millis(100) {
+          std::thread::sleep(Duration::from_millis(100) - time.elapsed())
         }
       }
     });
@@ -220,13 +226,13 @@ impl SimpleComponent for App {
 
       //
       AppMsg::LuaHook(info) => match info.t {
-        LuaHookType::CreateBar(props) => {
+        LuaHookType::CreateBar(props, id, callback) => {
           let app = relm4::main_application();
           let builder = bar::Bar::builder();
 
           app.add_window(&builder.root);
 
-          let bar = builder.launch(props);
+          let bar = builder.launch((props, id, callback));
           // .forward(sender.input_sender(), std::convert::identity);
 
           self.bars.push(bar);
