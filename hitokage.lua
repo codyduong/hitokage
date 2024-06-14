@@ -33,7 +33,7 @@ end
 --   local new = hitokage.event.has_unread();
 --   -- if there is a new state please read it
 --   if new then
---     local unread_states = hitokage.event.unread();
+--     local unread_states = hitokage.event.get_unread();
 --     for _, state in pairs(unread_states) do
 --       -- hitokage.debug("wo")
 --       hitokage.debug("checking " .. state.event.type);
@@ -140,7 +140,7 @@ komorebic_coroutine = coroutine.create(
     while true do
       local new = hitokage.event.has_unread();
       if new then
-        local unread_states = hitokage.event.unread();
+        local unread_states = hitokage.event.get_unread();
         -- for _, state in pairs(unread_states) do
         --   hitokage.debug("checking " .. state.event.type);
         --   if state.event.type == "FocusWorkspaceNumber" then
