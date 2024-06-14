@@ -11,7 +11,7 @@ where
 
   {
     table.set(
-      "unread",
+      "get_unread",
       lua.create_function({
         let sender = sender.clone();
         move |lua_inner, f: Value| {
