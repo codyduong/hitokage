@@ -11,16 +11,9 @@ use relm4::SharedState;
 use relm4::SimpleComponent;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-pub struct BarLuaShared<'a, C>
-where
-  C: Component<Input = BarMsg>,
-  <C as Component>::Output: std::marker::Send,
-{
-  sender: &'a ComponentSender<C>,
-}
-
-pub static BAR: SharedState<Vec<BarLuaShared<Bar>>> = SharedState::new();
+pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
 
 fn setup_window_size(window: ApplicationWindow, geometry: &MonitorGeometry) -> anyhow::Result<()> {
   window.set_size_request(geometry.width, crate::common::HITOKAGE_STATUSBAR_HEIGHT);
@@ -55,20 +48,6 @@ fn setup_window_pos(window: ApplicationWindow, geometry: &MonitorGeometry) -> an
     .ok();
   }
 
-  // Set to the correct display according to props
-  // let displays = displays.iter().find(|d| d.name() == '');
-  // let monitors = gdk4::DisplayManager::get().default_display().expect("").monitors();
-  // let monitors_vec: Vec<gdk4_win32::Win32Monitor> = monitors
-  //   .iter()
-  //   .filter_map(|result| {
-  //     result
-  //       .ok()
-  //       .and_then(|item: glib::Object| item.downcast::<gdk4_win32::Win32Monitor>().ok())
-  //   })
-  //   .collect();
-  // println!("{:?}", monitors_vec[0].model());
-  // window.set_display();
-
   Ok(())
 }
 
@@ -93,15 +72,15 @@ pub struct BarProps {
 pub struct Bar {
   position: Option<BarPosition>,
   geometry: MonitorGeometry,
-  current_time: String,
   widgets: Vec<WidgetController>,
+  id: u32,
 }
 
 #[relm4::component(pub)]
 impl SimpleComponent for Bar {
   type Input = BarMsg;
   type Output = ();
-  type Init = BarProps;
+  type Init = (BarProps, u32, Box<dyn Fn(ComponentSender<Bar>) -> () + Send>);
   type Widgets = AppWidgets;
 
   view! {
@@ -133,21 +112,29 @@ impl SimpleComponent for Bar {
   }
 
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
+    let (props, id, callback) = input;
+
+    callback(sender.clone());
+
     let mut model = Bar {
-      current_time: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
-      position: input.position,
-      geometry: input.geometry.unwrap_or(MonitorGeometry {
+      position: props.position,
+      geometry: props.geometry.unwrap_or(MonitorGeometry {
         x: 0,
         y: 0,
         width: win_utils::get_primary_width(),
         height: win_utils::get_primary_height(),
       }),
       widgets: Vec::new(),
+      id: id,
     };
+
+    let mut sswg = BAR.write();
+    sswg.insert(id, sender);
+    drop(sswg);
 
     let widgets = view_output!();
 
-    for widget in input.widgets {
+    for widget in props.widgets {
       match widget {
         Widget::Clock(props) => {
           let mut connector = Clock::builder().launch(props);
@@ -168,24 +155,11 @@ impl SimpleComponent for Bar {
       }
     }
 
-    // Timer
-    let sender_clone = sender.clone();
-    glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-      sender_clone.input(BarMsg::Tick);
-      glib::ControlFlow::Continue
-    });
-
     // manually realize/show
     root.show();
 
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
-    match msg {
-      BarMsg::Tick => {
-        self.current_time = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-      }
-    }
-  }
+  fn update(&mut self, _msg: Self::Input, _sender: ComponentSender<Self>) {}
 }

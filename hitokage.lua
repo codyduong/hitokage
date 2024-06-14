@@ -1,19 +1,27 @@
 hitokage.debug(hitokage);
 
-local monitors = hitokage.monitor.all()
-local primary = hitokage.monitor.primary()
+local monitors = hitokage.monitor.get_all()
+local primary = hitokage.monitor.get_primary()
 
-hitokage.debug(monitors, primary)
+-- hitokage.debug(monitors, primary)
 
-for _, display in pairs(monitors) do
-  hitokage.bar.create({
-    geometry = display.geometry,
+local bars = {}
+for _, monitor in pairs(monitors) do
+  table.insert(bars, hitokage.bar.create({
+    geometry = monitor.geometry,
     widgets = {
       {Workspace = {}},
       {Clock = {format = "your_format_string"}},
       {Box = {}},
     },
-  })
+  }))
+end
+for i, bar in ipairs(bars) do
+  while not bar:is_ready() do
+    hitokage.debug("waiting", i)
+    coroutine.yield() -- yield ensures minimum of 100ms
+  end
+  hitokage.debug("ready", bar)
 end
 
 -- local s = hitokage.read_state()
@@ -93,7 +101,7 @@ function dispatcher(threads)
       break
     end
 
-    local start_time = os.clock()
+    -- local start_time = os.clock()
 
     local connections = {}
     for i=1, n do
@@ -110,13 +118,13 @@ function dispatcher(threads)
       end
     end
 
-    local elapsed_time = (os.clock() - start_time) * 1000
-    local remaining_time = min_time_ms - elapsed_time
+    -- local elapsed_time = (os.clock() - start_time) * 1000
+    -- local remaining_time = min_time_ms - elapsed_time
 
-    if remaining_time > 0 then
-      -- hitokage.debug("Yielding back " .. remaining_time)
-      hitokage.sleep_ms(remaining_time)
-    end
+    -- if remaining_time > 0 then
+    --   -- hitokage.debug("Yielding back " .. remaining_time)
+    --   hitokage.sleep_ms(remaining_time)
+    -- end
 
     _not_deadlocked();
   end
