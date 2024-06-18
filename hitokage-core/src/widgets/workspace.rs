@@ -118,7 +118,7 @@ fn get_workspaces(state: &serde_json::Value, monitor_id: u32) -> anyhow::Result<
         .and_then(|v| v.as_array())
         .map_or(false, |floating| !floating.is_empty());
 
-        workspaces_vec.push((name, false, has_content));
+    workspaces_vec.push((name, false, has_content));
   }
 
   if let Some(focused) = workspaces.get("focused").and_then(|v| v.as_u64()).map(|v| v as usize) {
@@ -139,14 +139,26 @@ fn update_workspaces(root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> 
         prev = Some(child.clone());
         match workspaces.get(i) {
           Some(workspace) => match workspace {
-            (_, true, _) => {
+            (name, true, _) => {
+              child
+                .first_child()
+                .unwrap()
+                .downcast::<gtk4::Label>()
+                .unwrap()
+                .set_label(&name.clone().unwrap_or(i.to_string()));
               child.set_visible(true);
               root.select_child(&child)
-            },
-            (_, false, is_visible) => {
+            }
+            (name, false, is_visible) => {
+              child
+                .first_child()
+                .unwrap()
+                .downcast::<gtk4::Label>()
+                .unwrap()
+                .set_label(&name.clone().unwrap_or(i.to_string()));
               child.set_visible(*is_visible);
               root.unselect_child(&child)
-            },
+            }
           },
           None => root.remove(&child),
         };
