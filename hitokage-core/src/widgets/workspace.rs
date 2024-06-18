@@ -1,8 +1,14 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::Mutex;
+
 use crate::lua::event::EVENT;
 use crate::lua::event::STATE;
 use crate::RelmContainerExtManual;
 use anyhow::Context;
 use gtk4::prelude::*;
+use gtk4::EventControllerFocus;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -14,6 +20,7 @@ type WorkspaceState = (Option<String>, bool, bool);
 #[derive(Debug, Clone)]
 pub enum WorkspaceMsg {
   Workspaces(Vec<WorkspaceState>),
+  FocusWorkspace(usize),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -21,8 +28,8 @@ pub struct WorkspaceProps {}
 
 pub struct Workspace {
   root: gtk4::FlowBox,
-  // id: u32, // win id
-  // workspaces: Vec<WorkspaceState>,
+  id: u32, // win id
+           // workspaces: Vec<WorkspaceState>,
 }
 
 #[relm4::component(pub)]
@@ -34,16 +41,33 @@ impl SimpleComponent for Workspace {
   view! {
     gtk::FlowBox {
       set_height_request: 16,
+
     }
   }
 
   fn init(propst: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let (_props, id) = propst;
 
-    let model = Workspace {
-      root: root.clone(),
-      // id
-    };
+    {
+      let sender = sender.clone();
+      root.connect_selected_children_changed(move |root| {
+        if let Some(child) = root
+          .clone()
+          .downcast::<gtk::FlowBox>()
+          .unwrap()
+          .selected_children()
+          .first()
+        {
+          let workspace_index = child.index();
+
+          sender.input(WorkspaceMsg::FocusWorkspace(workspace_index as usize))
+        }
+
+        ()
+      });
+    }
+
+    let model = Workspace { root: root.clone(), id };
 
     let widgets = view_output!();
 
@@ -61,7 +85,23 @@ impl SimpleComponent for Workspace {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
     match msg {
       WorkspaceMsg::Workspaces(workspaces) => {
-        update_workspaces(&self.root, &workspaces);
+        update_workspaces(self, &self.root, &workspaces);
+      }
+      WorkspaceMsg::FocusWorkspace(i) => {
+        let state = STATE.read();
+        if let Some((workspace_index, _)) = get_workspaces(&state, self.id)
+          .unwrap()
+          .iter()
+          .enumerate()
+          .find(|(_, workspace)| workspace.1 == true)
+        {
+          if workspace_index != i {
+            log::info!("hitokage is focusing workspace {}", i);
+            let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::FocusWorkspaceNumber(i));
+          }
+        } else {
+          log::error!("We failed to find any focused workspace? What happened!")
+        }
       }
     }
   }
@@ -130,13 +170,11 @@ fn get_workspaces(state: &serde_json::Value, monitor_id: u32) -> anyhow::Result<
   Ok(workspaces_vec)
 }
 
-fn update_workspaces(root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> () {
+fn update_workspaces(model: &Workspace, root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> () {
   let mut i = 0;
-  let mut prev: Option<gtk4::FlowBoxChild> = None;
   loop {
     match root.child_at_index(i as i32) {
       Some(child) => {
-        prev = Some(child.clone());
         match workspaces.get(i) {
           Some(workspace) => match workspace {
             (name, true, _) => {
@@ -147,7 +185,7 @@ fn update_workspaces(root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> 
                 .unwrap()
                 .set_label(&name.clone().unwrap_or(i.to_string()));
               child.set_visible(true);
-              root.select_child(&child)
+              root.select_child(&child);
             }
             (name, false, is_visible) => {
               child
@@ -157,7 +195,7 @@ fn update_workspaces(root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> 
                 .unwrap()
                 .set_label(&name.clone().unwrap_or(i.to_string()));
               child.set_visible(*is_visible);
-              root.unselect_child(&child)
+              root.unselect_child(&child);
             }
           },
           None => root.remove(&child),
