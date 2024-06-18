@@ -50,12 +50,6 @@ fn load_monitor_information() -> anyhow::Result<Vec<MonitorTemp>> {
     let name = display.device_name.trim_start_matches(r"\\.\").to_string();
     let name = name.split('\\').collect::<Vec<_>>()[0].to_string();
 
-    // for monitor in monitors.elements() {
-    //     if device_id.eq(monitor.device_id()) {
-    //         continue 'read;
-    //     }
-    // }
-
     let m = MonitorTemp {
       hmonitor: display.hmonitor,
       // size: display.size.into(), TODO @codyduong this is broken, probably vers mismatch
@@ -66,18 +60,14 @@ fn load_monitor_information() -> anyhow::Result<Vec<MonitorTemp>> {
         width: display.size.right - display.size.left,
         height: display.size.bottom - display.size.top,
       },
-      // work_area: MonitorGeometry {
-      //   x: display.work_area_size.left,
-      //   y: display.work_area_size.top,
-      //   width: display.work_area_size.right - display.work_area_size.left,
-      //   height: display.work_area_size.bottom - display.work_area_size.top,
-      // },
-      name,
+      name: name.clone(),
       device,
       device_id,
     };
 
-    monitors.push(m)
+    match monitors.binary_search_by(|monitor: &MonitorTemp| monitor.name.cmp(&name)) {
+      Ok(pos) | Err(pos) => monitors.insert(pos, m),
+    }
   }
 
   Ok(monitors)
