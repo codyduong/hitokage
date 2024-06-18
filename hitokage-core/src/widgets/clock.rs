@@ -5,7 +5,7 @@ use relm4::ComponentSender;
 use relm4::SimpleComponent;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ClockMsg {
   Tick,
 }
@@ -15,16 +15,19 @@ pub struct ClockProps {
   format: String,
 }
 
-pub struct Clock {
-  current_time: String,
-}
-
-impl Clock {
-  pub fn new() -> Self {
-    Self {
-      current_time: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+impl From<ClockProps> for Clock {
+  fn from(props: ClockProps) -> Self {
+    Clock {
+      format: props.format.clone(),
+      current_time: chrono::Local::now().format(&props.format).to_string(),
     }
   }
+}
+
+#[derive(Clone)]
+pub struct Clock {
+  format: String,
+  current_time: String,
 }
 
 #[relm4::component(pub)]
@@ -45,7 +48,7 @@ impl SimpleComponent for Clock {
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let model = Clock::new();
+    let model: Clock = props.into();
 
     // Timer
     let sender_clone = sender.clone();
@@ -62,7 +65,7 @@ impl SimpleComponent for Clock {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
     match msg {
       ClockMsg::Tick => {
-        self.current_time = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        self.current_time = chrono::Local::now().format(&self.format).to_string();
       }
     }
   }

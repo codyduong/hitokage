@@ -3,25 +3,44 @@ hitokage.debug(hitokage);
 local monitors = hitokage.monitor.get_all()
 local primary = hitokage.monitor.get_primary()
 
--- hitokage.debug(monitors, primary)
+hitokage.debug(monitors)
 
 local bars = {}
-for _, monitor in pairs(monitors) do
+for index, monitor in ipairs(monitors) do
+  if (monitor.model == "LG SDQHD") then
+    goto continue
+  end
+
+  -- TODO better idiomatic syntax
+  -- monitor.create_bar({
+  --   widgets = {
+  --     {Workspace = {}},
+  --     {Clock = {format = "%Y-%m-%d %H:%M:%S"}},
+  --     {Box = {}},
+  --   }
+  -- })
+
   table.insert(bars, hitokage.bar.create({
+    monitor = index - 1,
     geometry = monitor.geometry,
     widgets = {
       {Workspace = {}},
-      {Clock = {format = "your_format_string"}},
+      {Clock = {format = "%Y-%m-%d %H:%M:%S"}},
       {Box = {}},
     },
+    scale_factor = monitor.scale_factor,
+    id = monitor.id
   }))
+  ::continue::
 end
 for i, bar in ipairs(bars) do
   while not bar:is_ready() do
-    hitokage.debug("waiting", i)
+    hitokage.debug("waiting for bar to instantiate", i)
     coroutine.yield() -- yield ensures minimum of 100ms
   end
-  hitokage.debug("ready", bar)
+  hitokage.debug("ready", bar.ready)
+  hitokage.debug("widgets", bar:get_widgets())
+  hitokage.debug("geometry", bar.geometry)
 end
 
 -- local s = hitokage.read_state()
@@ -47,6 +66,9 @@ end
 -- end
 
 _subscribers = {"komorebi"}
+_subscriptions = {
+  komorebic = {}
+}
 
 function subscribe(name, callback)
   local is_subscriber = false
@@ -69,23 +91,24 @@ function subscribe(name, callback)
   rawset(_G, "_subscriptions", subscriptions)
 end
 
-subscribe("komorebi", function (unread_states)
-  for _, state in pairs(unread_states) do
-    hitokage.debug("checking " .. state.event.type);
-    if state.event.type == "FocusWorkspaceNumber" then
-      hitokage.debug("we changed workspaces to " .. state.event.content);
-    end
-  end
-end)
+-- subscribe("komorebi", function (unread_states)
+--   for _, state in pairs(unread_states) do
+--     hitokage.debug("checking " .. state.event.type);
+--     if state.event.type == "FocusWorkspaceNumber" then
+--       hitokage.debug("we changed workspaces to " .. state.event.content);
+--     end
+--   end
+-- end)
 
-subscribe("komorebi", function (unread_states)
-  for _, state in pairs(unread_states) do
-    hitokage.debug("checking " .. state.event.type);
-    if state.event.type == "TitleUpdate" then
-      hitokage.debug("we updated title to", state.event.content);
-    end
-  end
-end)
+-- subscribe("komorebi", function (unread_states)
+--   -- for _, state in pairs(unread_states) do
+--   --   hitokage.debug("checking " .. state.event.type);
+--   --   if state.event.type == "TitleUpdate" then
+--   --     hitokage.debug("we updated title to", state.event.content);
+--   --   end
+--   -- end
+--   hitokage.debug(unread_states[#unread_states])
+-- end)
 
 function is_connection(obj)
   return type(obj) == "table" and obj.send ~= nil and obj.receive ~= nil
@@ -127,6 +150,7 @@ function dispatcher(threads)
     -- end
 
     _not_deadlocked();
+    coroutine.yield()
   end
 end
 
@@ -150,7 +174,7 @@ komorebic_coroutine = coroutine.create(
         for id, callback in pairs(subscriptions) do
           local status, res = pcall(callback, unread_states)
           if status == false then
-            hitokage.error("Error running callback {" .. id .. "}:", res)
+            hitokage.error("Error running subscription callback {" .. id .. "}:", res)
           end
         end
       end
@@ -159,7 +183,7 @@ komorebic_coroutine = coroutine.create(
   end
 )
 
-dispatcher({
-  -- hitokage.loop.coroutine(),
-  komorebic_coroutine,
-})
+-- dispatcher({
+--   -- hitokage.loop.coroutine(),
+--   komorebic_coroutine,
+-- })

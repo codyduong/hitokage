@@ -1,14 +1,7 @@
-// Wrapper around gtk4 box
-
-use crate::lua::monitor::MonitorGeometry;
-use crate::win_utils;
-use gtk4::prelude::*;
-use gtk4::ApplicationWindow;
 use relm4::prelude::*;
 use relm4::ComponentParts;
-use relm4::SharedState;
 use relm4::SimpleComponent;
-use relm4::{Component, ComponentSender};
+use relm4::ComponentSender;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -29,7 +22,7 @@ impl SimpleComponent for Box {
     }
   }
 
-  fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
+  fn init(_props: Self::Init, root: Self::Root, _sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let model = Box {};
 
     let widgets = view_output!();

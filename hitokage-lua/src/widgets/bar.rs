@@ -1,16 +1,44 @@
-use std::sync::{Arc, Mutex};
-
-use hitokage_core::widgets::bar::{Bar, BarProps, BAR};
-use mlua::{Lua, LuaSerdeExt, UserData, UserDataMethods, Value};
+use hitokage_core::lua::monitor::MonitorGeometry;
+use hitokage_core::widgets::bar::BarLuaHook::{RequestGeometry, RequestWidgets};
+use hitokage_core::widgets::bar::{Bar, BarMsg, BarProps};
+use hitokage_core::widgets::WidgetSender;
+use mlua::{
+  Lua, LuaSerdeExt, UserData, UserDataMethods,
+  Value::{self},
+};
 use relm4::{Component, ComponentSender};
+use std::sync::{mpsc, Arc, Mutex};
 
-struct BarInstance {
+struct BarInstanceUserData {
   id: u32,
-  // sender: Option<ComponentSender<Bar>>,
   sender: Arc<Mutex<Option<ComponentSender<Bar>>>>,
+  widgets: Arc<Mutex<Vec<WidgetSender>>>,
+  geometry: Arc<Mutex<MonitorGeometry>>,
 }
 
-impl BarInstance {
+macro_rules! impl_getter_fn {
+  ($fn_name:ident, $field:ident, $request_enum:expr, $ret:ty) => {
+    fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
+      let sender = self.assert_ready()?;
+
+      let (tx, rx) = mpsc::channel::<()>();
+      let arc = Arc::clone(&self.$field);
+      sender.input(BarMsg::LuaHook($request_enum(arc, tx)));
+      rx.recv().unwrap();
+      let lock = self.$field.lock().unwrap();
+
+      let ret_val: $ret = if std::any::TypeId::of::<$ret>() == std::any::TypeId::of::<Vec<WidgetSender>>() {
+        lock.clone() as $ret
+      } else {
+        (*lock).clone() as $ret
+      };
+
+      Ok(ret_val)
+    }
+  };
+}
+
+impl BarInstanceUserData {
   fn is_ready(&self) -> bool {
     let sender = self.sender.lock().unwrap();
     if sender.is_some() {
@@ -18,15 +46,52 @@ impl BarInstance {
     }
     return false;
   }
+
+  fn assert_ready(&self) -> Result<ComponentSender<Bar>, crate::HitokageError> {
+    let sender = self.sender.lock().unwrap();
+
+    match &*sender {
+      Some(sender) => Ok(sender.clone()),
+      None => Err(crate::HitokageError::RustError(
+        "Bar is not ready, did we wait for BarInstance.ready or BarInstance:is_ready()".to_string(),
+      )),
+    }
+  }
+
+  impl_getter_fn!(get_widgets, widgets, RequestWidgets, Vec<WidgetSender>);
+  impl_getter_fn!(get_geometry, geometry, RequestGeometry, MonitorGeometry);
 }
 
-impl UserData for BarInstance {
+impl UserData for BarInstanceUserData {
+  fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(_fields: &mut F) {}
+
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get_id", |_, instance, ()| Ok(instance.id.clone()));
 
-    methods.add_method("is_ready", |_, instance, ()| {
-      Ok(instance.is_ready())
+    methods.add_method("is_ready", |_, instance, ()| Ok(instance.is_ready()));
+
+    methods.add_method("get_widgets", |lua, instance, ()| {
+      Ok(lua.pack(instance.get_widgets()?)?)
     });
+
+    methods.add_method("get_geometry", |lua, instance, ()| {
+      Ok(lua.to_value(&instance.get_geometry()?)?)
+    });
+
+    methods.add_meta_method(
+      "__index",
+      |lua, instance, value| -> Result<mlua::Value<'lua>, mlua::Error> {
+        match value {
+          Value::String(s) => match s.to_str()? {
+            "ready" => Ok(lua.to_value(&instance.is_ready())?),
+            "widgets" => Ok(lua.pack(instance.get_widgets()?)?),
+            "geometry" => Ok(lua.to_value(&instance.get_geometry()?)?),
+            _ => Ok(Value::Nil),
+          },
+          _ => Ok(Value::Nil),
+        }
+      },
+    )
   }
 }
 
@@ -59,17 +124,14 @@ where
                 })
               }
             }),
-            // callback: Box::new(|_| Ok(())),
           }));
-          // let bar_sender_l = bar_sender.lock().unwrap();
 
-          let bar_instance = BarInstance {
+          let bar_instance = BarInstanceUserData {
             id: *id_l,
-            // sender: bar_sender_l.clone(),
             sender: bar_sender,
+            widgets: Arc::new(Mutex::new(Vec::new())),
+            geometry: Arc::new(Mutex::new(MonitorGeometry::default())),
           };
-
-          // println!("maybebar {:?}", bar_sender_l.is_some());
 
           *id_l += 1;
           drop(id_l);

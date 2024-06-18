@@ -17,4 +17,10 @@ smol = "2.0.0"
 gdk4 = { workspace = true }
 gdk4-win32 = { workspace = true }
 gtk4 = { workspace = true }
+win32-display-data = { workspace = true }
+
+[dependencies.windows]
+features = [
+  "Win32_Graphics_Gdi",
+]
 
