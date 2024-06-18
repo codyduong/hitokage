@@ -1,8 +1,12 @@
-use std::fmt;
-
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
+use std::fmt;
+use widgets::bar;
+
+pub mod event;
+pub mod monitor;
+pub mod widgets;
 
 #[derive(Debug)]
 pub enum AppMsg {
@@ -15,24 +19,28 @@ pub enum LuaHookType {
   SubscribeState, // subscribe to a value in global state
   WriteState,     //
   ReadEvent,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateBar(hitokage_core::widgets::bar::BarProps, u32, Box<dyn Fn(ComponentSender<hitokage_core::widgets::bar::Bar>) -> () + Send>),
+  CreateBar(
+    hitokage_core::widgets::bar::BarProps,
+    u32,
+    Box<dyn Fn(ComponentSender<hitokage_core::widgets::bar::Bar>) -> () + Send>,
+  ),
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
 }
 
 impl std::fmt::Debug for LuaHookType {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-      match self {
-          LuaHookType::SubscribeState => write!(f, "SubscribeState"),
-          LuaHookType::WriteState => write!(f, "WriteState"),
-          LuaHookType::ReadEvent => write!(f, "ReadEvent"),
-          LuaHookType::CreateBar(props, id, _) => f
-              .debug_struct("CreateBar")
-              .field("props", props)
-              .field("id", id)
-              .field("callback", &"<function>")
-              .finish(),
-          LuaHookType::NoAction => write!(f, "NoAction"),
-      }
+    match self {
+      LuaHookType::SubscribeState => write!(f, "SubscribeState"),
+      LuaHookType::WriteState => write!(f, "WriteState"),
+      LuaHookType::ReadEvent => write!(f, "ReadEvent"),
+      LuaHookType::CreateBar(props, id, _) => f
+        .debug_struct("CreateBar")
+        .field("props", props)
+        .field("id", id)
+        .field("callback", &"<function>")
+        .finish(),
+      LuaHookType::NoAction => write!(f, "NoAction"),
+    }
   }
 }
 
@@ -129,10 +137,6 @@ async fn sleep_ms<'lua>(_: &'lua Lua, milliseconds: u64) -> mlua::Result<()> {
   Ok(())
 }
 
-pub mod bar;
-pub mod event;
-pub mod monitor;
-
 pub fn make<C>(sender: ComponentSender<C>) -> anyhow::Result<Lua>
 where
   C: Component<Input = crate::AppMsg>,
@@ -177,15 +181,6 @@ where
       lua.create_function(|_, args: Variadic<Value>| {
         let output = print_helper(args);
         log::error!("lua: {}", output);
-        Ok(())
-      })?,
-    )?;
-
-    hitokage_mod.set(
-      "position",
-      lua.create_function(|_, args: Variadic<Value>| {
-        let output = print_helper(args);
-        log::info!("lua: {}", output);
         Ok(())
       })?,
     )?;
@@ -296,4 +291,25 @@ macro_rules! assert_lua_type {
     <$type as crate::FromLuaValue>::from_lua_value($value)
       .expect(&format!("Expected Lua value to be of type {}", stringify!($type)))
   };
+}
+
+#[derive(Debug)]
+enum HitokageError {
+  RustError(String),
+}
+
+impl fmt::Display for HitokageError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+      match self {
+          HitokageError::RustError(msg) => write!(f, "{}", msg),
+      }
+  }
+}
+
+impl std::error::Error for HitokageError {}
+
+impl From<HitokageError> for mlua::Error {
+  fn from(err: HitokageError) -> mlua::Error {
+    mlua::Error::ExternalError(std::sync::Arc::new(err))
+  }
 }

@@ -1,5 +1,5 @@
 use gtk4::prelude::*;
-use hitokage_core::lua::event::EventNotif;
+use hitokage_core::lua::event::{EventNotif, STATE};
 use hitokage_core::lua::event::{EVENT, NEW_EVENT};
 use hitokage_core::widgets::bar;
 use hitokage_core::{widgets, win_utils};
@@ -18,6 +18,7 @@ use std::time::Instant;
 // use windows::Win32::Foundation::HANDLE;
 // use windows::Win32::System::Threading::{OpenThread, TerminateThread, THREAD_TERMINATE};
 mod socket;
+use windows::Win32::UI::HiDpi::{SetProcessDpiAwareness, PROCESS_PER_MONITOR_DPI_AWARE};
 
 struct App {
   bars: Vec<Connector<widgets::bar::Bar>>,
@@ -186,7 +187,7 @@ impl SimpleComponent for App {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: AppMsg, sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: AppMsg, _sender: ComponentSender<Self>) {
     match msg {
       // Komorebi States
       AppMsg::Komorebi(notif) => {
@@ -206,22 +207,14 @@ impl SimpleComponent for App {
 
         if let Some(notif_value) = notif {
           let mut sswg = EVENT.write();
-          sswg.push(notif_value);
+          sswg.push(notif_value.clone());
           drop(sswg);
+          *STATE.write() = notif_value.state;
           *NEW_EVENT.write() = true;
         }
-
-        // println!("{:?}", &notif);
-        // self.output = String::new();
-        // self.output.push_str(&notif);
-        // self.output.push('\n');
       }
       AppMsg::KomorebiErr(line) => {
         println!("{:?}", &line);
-        // self.output = String::new();
-        // self.output.push_str("ERROR!");
-        // self.output.push_str(&line);
-        // self.output.push('\n');
       }
 
       //
@@ -258,6 +251,10 @@ impl SimpleComponent for App {
 
 fn main() {
   simple_logger::SimpleLogger::new().init().unwrap();
+
+  unsafe {
+    SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE).expect("Failed to set process DPI awareness");
+  }
 
   let style_file_path = "./styles.css";
 

@@ -1,4 +1,4 @@
-use relm4::{ComponentSender, SharedState};
+use relm4::SharedState;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

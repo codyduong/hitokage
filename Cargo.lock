@@ -1159,6 +1159,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_logger",
+ "win32-display-data",
  "windows 0.52.0",
 ]
 
@@ -1179,6 +1180,8 @@ dependencies = [
  "serde",
  "simple_logger",
  "smol",
+ "win32-display-data",
+ "windows 0.54.0",
 ]
 
 [[package]]
