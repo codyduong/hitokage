@@ -65,8 +65,6 @@ fn load_monitor_information() -> anyhow::Result<Vec<MonitorTemp>> {
       device_id,
     };
 
-    println!("{:?}", m.size);
-
     match monitors.binary_search_by(|monitor: &MonitorTemp| monitor.name.cmp(&name)) {
       Ok(pos) | Err(pos) => monitors.insert(pos, m),
     }

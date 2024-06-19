@@ -22,10 +22,7 @@ pub fn get_windows_version() -> u32 {
     (*os_info_ptr).dwOSVersionInfoSize = std::mem::size_of::<OSVERSIONINFOW>() as u32;
 
     if RtlGetVersion(os_info_ptr).is_ok() {
-      let info = os_info.assume_init();
-      println!("{:?}", info);
-      let build = info.dwBuildNumber;
-      println!("{}", build);
+      let build = os_info.assume_init().dwBuildNumber;
       if build >= 22000 {
         11
       } else if build >= 10240 {
