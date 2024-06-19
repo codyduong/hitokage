@@ -1,3 +1,5 @@
+use std::ops::{Div, Mul};
+
 use crate::win_utils;
 use serde::{Deserialize, Serialize};
 
@@ -48,6 +50,19 @@ impl PartialEq for MonitorGeometry {
   }
 }
 
+impl Div<MonitorScaleFactor> for MonitorGeometry {
+  type Output = MonitorGeometry;
+
+  fn div(self, scale: MonitorScaleFactor) -> MonitorGeometry {
+      MonitorGeometry {
+          x: (self.x as f32 / scale.x).round() as i32,
+          y: (self.y as f32 / scale.y).round() as i32,
+          width: (self.width as f32 / scale.x).round() as i32,
+          height: (self.height as f32 / scale.y).round() as i32,
+      }
+  }
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct Monitor {
   pub connecter: Option<String>,
@@ -61,7 +76,7 @@ pub struct Monitor {
   pub device_id: String,
   pub id: isize,
   pub name: String,
-  pub scale_factor: Option<MonitorScaleFactor>,
+  pub scale_factor: MonitorScaleFactor,
   // @codyduong If this ends up being something someone needs... but you can usually just match with a komorebi state if you really need this...
   // pub size: windows::Win32::Foundation::RECT,
   // pub work_area_size: windows::Win32::Foundation::RECT,
@@ -71,4 +86,13 @@ pub struct Monitor {
 pub struct MonitorScaleFactor {
   pub x: f32,
   pub y: f32,
+}
+
+impl Default for MonitorScaleFactor {
+  fn default() -> Self {
+    MonitorScaleFactor {
+      x: 1.0,
+      y: 1.0,
+    }
+  }
 }

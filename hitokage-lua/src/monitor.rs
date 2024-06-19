@@ -65,6 +65,8 @@ fn load_monitor_information() -> anyhow::Result<Vec<MonitorTemp>> {
       device_id,
     };
 
+    println!("{:?}", m.size);
+
     match monitors.binary_search_by(|monitor: &MonitorTemp| monitor.name.cmp(&name)) {
       Ok(pos) | Err(pos) => monitors.insert(pos, m),
     }
@@ -90,25 +92,31 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
   let iter = monitors.into_iter().filter_map(move |monitor| {
     let geometry: MonitorGeometry = monitor.size;
 
+    let hmonitor = HMONITOR(monitor.hmonitor);
+
+    let mut scale_factor: MonitorScaleFactor = MonitorScaleFactor::default();
+
+    match get_monitor_scaling(hmonitor) {
+      Ok(scaling) => scale_factor = scaling,
+      Err(_) => {
+        log::error!("Failed to get DPI for {}", monitor.name.clone())
+      }
+    }
+
+    println!("{:?}", monitor);
+    println!("{:?}", scale_factor);
+    println!("{:?}", Into::<MonitorGeometry>::into(other_monitors.get(0).unwrap().geometry()));
+    // println!("{:?}", Into::<MonitorGeometry>::into(other_monitors.get(0).unwrap().geometry()) / scale_factor);
+
     // Find matching MonitorTemp based on MonitorGeometry
     if let Some(other_monitor) = other_monitors
       .iter()
-      .find(|&m| Into::<MonitorGeometry>::into(m.geometry()) == geometry)
+      .find(|&m| Into::<MonitorGeometry>::into(m.geometry()) == geometry / scale_factor)
     {
-      let hmonitor = HMONITOR(monitor.hmonitor);
-      let mut scale_factor: Option<MonitorScaleFactor> = None;
-
-      match get_monitor_scaling(hmonitor) {
-        Ok(scaling) => scale_factor = Some(scaling),
-        Err(_) => {
-          log::error!("Failed to get DPI for {}", monitor.name.clone())
-        }
-      }
-
       Some(Monitor {
         connecter: other_monitor.connector().map(|s| s.to_string()),
         description: other_monitor.description().map(|s| s.to_string()),
-        geometry,
+        geometry: geometry / scale_factor,
         manufacturer: other_monitor.manufacturer().map(|s| s.to_string()),
         model: other_monitor.model().map(|s| s.to_string()),
         refresh_rate: other_monitor.refresh_rate(),
