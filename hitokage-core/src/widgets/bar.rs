@@ -3,7 +3,7 @@ use super::{WidgetController, WidgetProps};
 use crate::lua::monitor::{MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
-use crate::win_utils;
+use crate::win_utils::{self, get_windows_version};
 use gtk4::prelude::*;
 use gtk4::ApplicationWindow;
 use relm4::prelude::*;
@@ -20,7 +20,13 @@ use std::sync::Mutex;
 pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
 
 fn setup_window_size(window: ApplicationWindow, geometry: &MonitorGeometry, scale_factor: &MonitorScaleFactor) -> anyhow::Result<()> {
-  window.set_size_request(geometry.width, (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 * scale_factor.y) as i32);
+  let mut height = (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 * scale_factor.y) as i32;
+
+  if get_windows_version() < 11 {
+    height = (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 / scale_factor.y).round() as i32;
+  }
+
+  window.set_size_request(geometry.width, height);
 
   Ok(())
 }
@@ -131,10 +137,12 @@ impl SimpleComponent for Bar {
       connect_show => move |window| {
         // Surfaces aren't ready in realize, but they are ready for consumption here
         let _ = setup_window_pos(window.clone(), &model.geometry);
-        // reserve_space(&model);
+        // regardless of win version komorebi is consistent unlike gdk4
+        let height = (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 * &model.scale_factor.y) as i32;
+
         let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
           model.index,
-          komorebi_client::Rect { left: 0, top: crate::common::HITOKAGE_STATUSBAR_HEIGHT, right: 0, bottom: crate::common::HITOKAGE_STATUSBAR_HEIGHT }
+          komorebi_client::Rect { left: 0, top: height, right: 0, bottom: height }
         ));
       }
     }

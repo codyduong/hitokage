@@ -20,6 +20,7 @@ gtk4 = { workspace = true }
 win32-display-data = { workspace = true }
 
 [dependencies.windows]
+workspace = true
 features = [
   "Win32_Graphics_Gdi",
 ]
