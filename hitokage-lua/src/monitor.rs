@@ -2,7 +2,7 @@ use gdk4::{
   glib::{self, object::Cast},
   prelude::*,
 };
-use hitokage_core::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
+use hitokage_core::{lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor}, win_utils::get_windows_version};
 use mlua::{AnyUserData, Lua, LuaSerdeExt, MetaMethod, UserData, UserDataMethods, Value};
 use windows::Win32::{
   Graphics::Gdi::HMONITOR,
@@ -90,7 +90,7 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
     .collect();
 
   let iter = monitors.into_iter().filter_map(move |monitor| {
-    let geometry: MonitorGeometry = monitor.size;
+    let mut geometry: MonitorGeometry = monitor.size;
 
     let hmonitor = HMONITOR(monitor.hmonitor);
 
@@ -103,20 +103,20 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
       }
     }
 
-    println!("{:?}", monitor);
-    println!("{:?}", scale_factor);
-    println!("{:?}", Into::<MonitorGeometry>::into(other_monitors.get(0).unwrap().geometry()));
-    // println!("{:?}", Into::<MonitorGeometry>::into(other_monitors.get(0).unwrap().geometry()) / scale_factor);
+    // Due to how gdk4 handles Win10 vs Win11
+    if get_windows_version() == 10 {
+      geometry /= scale_factor;
+    }
 
     // Find matching MonitorTemp based on MonitorGeometry
     if let Some(other_monitor) = other_monitors
       .iter()
-      .find(|&m| Into::<MonitorGeometry>::into(m.geometry()) == geometry / scale_factor)
+      .find(|&m| Into::<MonitorGeometry>::into(m.geometry()) == geometry)
     {
       Some(Monitor {
         connecter: other_monitor.connector().map(|s| s.to_string()),
         description: other_monitor.description().map(|s| s.to_string()),
-        geometry: geometry / scale_factor,
+        geometry,
         manufacturer: other_monitor.manufacturer().map(|s| s.to_string()),
         model: other_monitor.model().map(|s| s.to_string()),
         refresh_rate: other_monitor.refresh_rate(),

@@ -1,7 +1,6 @@
-use std::ops::{Div, Mul};
-
 use crate::win_utils;
 use serde::{Deserialize, Serialize};
+use std::ops::DivAssign;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
 pub struct MonitorGeometry {
@@ -50,16 +49,12 @@ impl PartialEq for MonitorGeometry {
   }
 }
 
-impl Div<MonitorScaleFactor> for MonitorGeometry {
-  type Output = MonitorGeometry;
-
-  fn div(self, scale: MonitorScaleFactor) -> MonitorGeometry {
-      MonitorGeometry {
-          x: (self.x as f32 / scale.x).round() as i32,
-          y: (self.y as f32 / scale.y).round() as i32,
-          width: (self.width as f32 / scale.x).round() as i32,
-          height: (self.height as f32 / scale.y).round() as i32,
-      }
+impl DivAssign<MonitorScaleFactor> for MonitorGeometry {
+  fn div_assign(&mut self, scale: MonitorScaleFactor) {
+    self.x = (self.x as f32 / scale.x).round() as i32;
+    self.y = (self.y as f32 / scale.y).round() as i32;
+    self.width = (self.width as f32 / scale.x).round() as i32;
+    self.height = (self.height as f32 / scale.y).round() as i32;
   }
 }
 
@@ -90,9 +85,6 @@ pub struct MonitorScaleFactor {
 
 impl Default for MonitorScaleFactor {
   fn default() -> Self {
-    MonitorScaleFactor {
-      x: 1.0,
-      y: 1.0,
-    }
+    MonitorScaleFactor { x: 1.0, y: 1.0 }
   }
 }
