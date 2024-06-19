@@ -2,7 +2,7 @@ use gdk4::{
   glib::{self, object::Cast},
   prelude::*,
 };
-use hitokage_core::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
+use hitokage_core::{lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor}, win_utils::get_windows_version};
 use mlua::{AnyUserData, Lua, LuaSerdeExt, MetaMethod, UserData, UserDataMethods, Value};
 use windows::Win32::{
   Graphics::Gdi::HMONITOR,
@@ -88,23 +88,29 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
     .collect();
 
   let iter = monitors.into_iter().filter_map(move |monitor| {
-    let geometry: MonitorGeometry = monitor.size;
+    let mut geometry: MonitorGeometry = monitor.size;
+
+    let hmonitor = HMONITOR(monitor.hmonitor);
+
+    let mut scale_factor: MonitorScaleFactor = MonitorScaleFactor::default();
+
+    match get_monitor_scaling(hmonitor) {
+      Ok(scaling) => scale_factor = scaling,
+      Err(_) => {
+        log::error!("Failed to get DPI for {}", monitor.name.clone())
+      }
+    }
+
+    // Due to how gdk4 handles Win10 vs Win11
+    if get_windows_version() < 11 {
+      geometry /= scale_factor;
+    }
 
     // Find matching MonitorTemp based on MonitorGeometry
     if let Some(other_monitor) = other_monitors
       .iter()
       .find(|&m| Into::<MonitorGeometry>::into(m.geometry()) == geometry)
     {
-      let hmonitor = HMONITOR(monitor.hmonitor);
-      let mut scale_factor: Option<MonitorScaleFactor> = None;
-
-      match get_monitor_scaling(hmonitor) {
-        Ok(scaling) => scale_factor = Some(scaling),
-        Err(_) => {
-          log::error!("Failed to get DPI for {}", monitor.name.clone())
-        }
-      }
-
       Some(Monitor {
         connecter: other_monitor.connector().map(|s| s.to_string()),
         description: other_monitor.description().map(|s| s.to_string()),

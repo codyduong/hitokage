@@ -183,7 +183,7 @@ fn update_workspaces(model: &Workspace, root: &gtk4::FlowBox, workspaces: &Vec<W
                 .unwrap()
                 .downcast::<gtk4::Label>()
                 .unwrap()
-                .set_label(&name.clone().unwrap_or(i.to_string()));
+                .set_label(&name.clone().unwrap_or((i+1).to_string()));
               child.set_visible(true);
               root.select_child(&child);
             }
@@ -193,7 +193,7 @@ fn update_workspaces(model: &Workspace, root: &gtk4::FlowBox, workspaces: &Vec<W
                 .unwrap()
                 .downcast::<gtk4::Label>()
                 .unwrap()
-                .set_label(&name.clone().unwrap_or(i.to_string()));
+                .set_label(&name.clone().unwrap_or((i+1).to_string()));
               child.set_visible(*is_visible);
               root.unselect_child(&child);
             }
