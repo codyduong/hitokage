@@ -1,5 +1,6 @@
 use std::mem::MaybeUninit;
-use windows::Win32::System::SystemInformation::{GetVersionExW, OSVERSIONINFOW};
+use windows::Wdk::System::SystemServices::RtlGetVersion;
+use windows::Win32::System::SystemInformation::OSVERSIONINFOW;
 use windows::Win32::{System::Threading::GetCurrentThreadId, UI::WindowsAndMessaging::*};
 
 pub fn get_primary_width() -> i32 {
@@ -20,15 +21,15 @@ pub fn get_windows_version() -> u32 {
     let os_info_ptr = os_info.as_mut_ptr();
     (*os_info_ptr).dwOSVersionInfoSize = std::mem::size_of::<OSVERSIONINFOW>() as u32;
 
-    if GetVersionExW(os_info_ptr).is_ok() {
-      let build = os_info.assume_init().dwBuildNumber;
+    if RtlGetVersion(os_info_ptr).is_ok() {
+      let info = os_info.assume_init();
+      println!("{:?}", info);
+      let build = info.dwBuildNumber;
       println!("{}", build);
       if build >= 22000 {
         11
       } else if build >= 10240 {
         10
-      } else if build >= 9200 {
-        8
       } else {
         0
       }
