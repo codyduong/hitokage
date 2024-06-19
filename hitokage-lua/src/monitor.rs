@@ -103,8 +103,8 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
       }
     }
 
-    // Due to how gdk4 handles Win10 vs Win11
-    if get_windows_version() == 10 {
+    // Due to how gdk4 handles Win8/Win10 vs Win11
+    if get_windows_version() < 11 {
       geometry /= scale_factor;
     }
 

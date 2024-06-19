@@ -22,10 +22,13 @@ pub fn get_windows_version() -> u32 {
 
     if GetVersionExW(os_info_ptr).is_ok() {
       let build = os_info.assume_init().dwBuildNumber;
+      println!("{}", build);
       if build >= 22000 {
         11
       } else if build >= 10240 {
         10
+      } else if build >= 9200 {
+        8
       } else {
         0
       }
