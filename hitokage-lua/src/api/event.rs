@@ -71,6 +71,14 @@ where
         }
       })?,
     )?;
+
+    let configuration = lua.create_table()?;
+
+    configuration.set("changed", lua.create_function(move|_lua_inner,_value: Value| {
+      Ok(Value::Boolean(true))
+    })?)?;
+
+    table.set("configuration", configuration)?;
   }
 
   Ok(table)

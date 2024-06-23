@@ -5,8 +5,10 @@ use hitokage_core::widgets::bar;
 use hitokage_core::{widgets, win_utils};
 use hitokage_lua::AppMsg;
 use hitokage_lua::LuaHookType;
+use mlua::LuaSerdeExt;
 use relm4::component::Connector;
 use relm4::prelude::*;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Read;
 use std::sync::Arc;
@@ -19,6 +21,12 @@ use std::time::Instant;
 // use windows::Win32::System::Threading::{OpenThread, TerminateThread, THREAD_TERMINATE};
 mod socket;
 use windows::Win32::UI::HiDpi::{SetProcessDpiAwareness, PROCESS_PER_MONITOR_DPI_AWARE};
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+enum LuaCoroutineMessage {
+  Suspend,
+  Reload,
+}
 
 struct App {
   bars: Vec<Connector<widgets::bar::Bar>>,
@@ -44,7 +52,7 @@ impl SimpleComponent for App {
   fn init(_: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     // start the lua hook
 
-    let lua_file_path = "./hitokage.lua";
+    let lua_file_path = "./example/init.lua";
     let mut file = File::open(lua_file_path).unwrap();
     let mut contents = String::new();
     file.read_to_string(&mut contents).unwrap();
@@ -90,8 +98,43 @@ impl SimpleComponent for App {
 
       loop {
         let time = Instant::now();
-        match coroutine.resume::<_, ()>(()) {
-          Ok(_) => (),
+        match coroutine.resume::<_, mlua::Value>(()) {
+          Ok(value) => match value {
+            mlua::Value::Nil => (),
+            mlua::Value::Boolean(_) => (),
+            _ => {
+              let props: mlua::Result<LuaCoroutineMessage> = lua.from_value(value.clone());
+
+              match props {
+                Ok(msg) => {
+                  match msg {
+                    LuaCoroutineMessage::Suspend => {
+                      log::info!("Received suspend from lua coroutine");
+                      let mut is_stopped = is_stopped.lock().unwrap();
+                      *is_stopped = true;
+                      break Ok(());
+                    }
+                    LuaCoroutineMessage::Reload => {
+                      log::info!("Received reload from lua coroutine");
+                      let _ = coroutine.reset(lua.create_function(move |_, _: mlua::Value| {
+                        log::info!("Reloading init.lua");
+  
+                        // @codyduong TODO lol
+                        Ok(())
+                      })?);
+                      ()
+                    }
+                  }
+                },
+                Err(err) => {
+                  log::error!("Received unknown coroutine return, {:?}, {:?}", err, value);
+                  let mut is_stopped = is_stopped.lock().unwrap();
+                  *is_stopped = true;
+                  break Err(err);
+                }
+              }
+            }
+          },
           Err(mlua::Error::CoroutineInactive) => {
             let mut is_stopped = is_stopped.lock().unwrap();
             *is_stopped = true;
@@ -256,7 +299,7 @@ fn main() {
     SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE).expect("Failed to set process DPI awareness");
   }
 
-  let style_file_path = "./styles.css";
+  let style_file_path = "./example/styles.css";
 
   gtk::init().unwrap();
   if let Some(settings) = gtk::Settings::default() {
