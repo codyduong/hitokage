@@ -1,0 +1,9 @@
+{
+  "Lua.diagnostics.disable": [
+    "missing-return"
+  ],
+  "Lua.workspace.library": [
+    // "https://raw.githubusercontent.com/codyduong/hitokage/feat-dev-add-config/hitokage.lua",
+    "https://raw.githubusercontent.com/codyduong/hitokage/hitokage.lua"
+  ],
+}
