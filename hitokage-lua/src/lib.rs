@@ -2,11 +2,12 @@ use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
 use std::fmt;
-use widgets::bar;
 
-pub mod event;
-pub mod monitor;
+pub mod api;
 pub mod widgets;
+
+use api::{event, monitor};
+use widgets::bar;
 
 #[derive(Debug)]
 pub enum AppMsg {
@@ -300,9 +301,9 @@ enum HitokageError {
 
 impl fmt::Display for HitokageError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-      match self {
-          HitokageError::RustError(msg) => write!(f, "{}", msg),
-      }
+    match self {
+      HitokageError::RustError(msg) => write!(f, "{}", msg),
+    }
   }
 }
 

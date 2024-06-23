@@ -67,7 +67,7 @@ end
 
 _subscribers = {"komorebi"}
 _subscriptions = {
-  komorebic = {}
+  komorebi = {}
 }
 
 function subscribe(name, callback)
@@ -128,18 +128,30 @@ function dispatcher(threads)
 
     local connections = {}
     for i=1, n do
-      local status, res = coroutine.resume(threads[i])
-      if not status then
-        hitokage.debug("Thread " .. i .. " exited:", res)
-        table.remove(threads, i)
-        break
-      elseif is_connection(res) then
-        table.insert(connections, res)
+      local status, res_array = coroutine.resume(threads[i])
+      
+      if status and res_array then
+        -- immediately sending any message means we reset the cooldown timer
+        _not_deadlocked();
+        coroutine.yield(res_array);
+      elseif not status then
+        if res_array then
+          hitokage.debug("Thread " .. i .. " exited:", res)
+          table.remove(threads, i)
+          break
+        end
       end
-      if #connections == n then
-        socket.select(connections)
-      end
+      -- elseif is_connection(res) then
+      --   table.insert(connections, res)
+      -- end
+      -- if #connections == n then
+      --   socket.select(connections)
+      -- end
     end
+
+    -- ensure a minimum wait time of 100ms
+    _not_deadlocked();
+    coroutine.yield();
 
     -- local elapsed_time = (os.clock() - start_time) * 1000
     -- local remaining_time = min_time_ms - elapsed_time
@@ -149,12 +161,12 @@ function dispatcher(threads)
     --   hitokage.sleep_ms(remaining_time)
     -- end
 
-    _not_deadlocked();
-    coroutine.yield()
+    -- _not_deadlocked();
+    -- coroutine.yield()
   end
 end
 
-komorebic_coroutine = coroutine.create(
+local komorebic_coroutine = coroutine.create(
   function ()
     local subscriptions = rawget(rawget(_G, "_subscriptions"), "komorebi")
     if #subscriptions == 0 then
@@ -183,7 +195,21 @@ komorebic_coroutine = coroutine.create(
   end
 )
 
--- dispatcher({
---   -- hitokage.loop.coroutine(),
---   komorebic_coroutine,
--- })
+local file_watcher = coroutine.create(
+  function()
+    while true do
+      local new = hitokage.event.configuration.changed()
+      if new then
+        coroutine.yield("Reload")
+        -- stop running lua, then it will be passed to rust to reload this lua
+      end
+      coroutine.yield()
+    end
+  end
+)
+
+dispatcher({
+  -- hitokage.loop.coroutine(),
+  file_watcher,
+  komorebic_coroutine,
+})
