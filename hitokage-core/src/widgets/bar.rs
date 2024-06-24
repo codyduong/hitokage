@@ -1,6 +1,7 @@
+use super::clock::ClockMsg;
 use super::WidgetSender;
 use super::{WidgetController, WidgetProps};
-use crate::lua::monitor::{MonitorGeometry, MonitorScaleFactor};
+use crate::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::{self, get_windows_version};
@@ -13,13 +14,18 @@ use relm4::SimpleComponent;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::mpsc::Sender;
+use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::thread;
 
 pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
 
-fn setup_window_size(window: ApplicationWindow, geometry: &MonitorGeometry, scale_factor: &MonitorScaleFactor) -> anyhow::Result<()> {
+fn setup_window_size(
+  window: ApplicationWindow,
+  geometry: &MonitorGeometry,
+  scale_factor: &MonitorScaleFactor,
+) -> anyhow::Result<()> {
   let mut height = (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 * scale_factor.y) as i32;
 
   if get_windows_version() < 11 {
@@ -78,7 +84,8 @@ impl std::fmt::Debug for BarLuaHook {
 
 #[derive(Debug)]
 pub enum BarMsg {
-  Destroy,
+  Destroy(Sender<()>),
+  DestroyActual,
   LuaHook(BarLuaHook),
 }
 
@@ -91,17 +98,13 @@ pub enum BarPosition {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BarProps {
   pub position: Option<BarPosition>,
-  pub geometry: Option<MonitorGeometry>,
   pub widgets: Vec<WidgetProps>,
-  pub monitor: usize,
-  pub scale_factor: MonitorScaleFactor,
-  pub id: u32, // win id
 }
 
 pub struct Bar {
   position: Option<BarPosition>,
   geometry: MonitorGeometry,
-  widgets: Vec<WidgetController>,
+  pub widgets: Vec<WidgetController>,
   id: u32,
   index: usize,
   scale_factor: MonitorScaleFactor,
@@ -111,7 +114,7 @@ pub struct Bar {
 impl SimpleComponent for Bar {
   type Input = BarMsg;
   type Output = ();
-  type Init = (BarProps, u32, Box<dyn Fn(ComponentSender<Bar>) -> () + Send>);
+  type Init = (Monitor, BarProps, u32, Box<dyn Fn(ComponentSender<Bar>) -> () + Send>);
   type Widgets = AppWidgets;
 
   view! {
@@ -149,7 +152,7 @@ impl SimpleComponent for Bar {
   }
 
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let (props, id, callback) = input;
+    let (monitor, props, id, callback) = input;
 
     // root.connect_scale_factor_notify(move |win| {
     //   // todo @codyduong, needed for if users change scaling on the go
@@ -159,12 +162,12 @@ impl SimpleComponent for Bar {
 
     let mut model = Bar {
       position: props.position,
-      geometry: props.geometry.unwrap_or(MonitorGeometry::default()),
+      geometry: monitor.geometry,
       widgets: Vec::new(),
       id: id, //hitokage id
       // windows id
-      index: props.monitor,
-      scale_factor: props.scale_factor,
+      index: monitor.index,
+      scale_factor: monitor.scale_factor,
     };
 
     let mut sswg = BAR.write();
@@ -181,7 +184,7 @@ impl SimpleComponent for Bar {
           model.widgets.push(WidgetController::Clock(controller));
         }
         WidgetProps::Workspace(inner_props) => {
-          let controller = Workspace::builder().launch((inner_props, props.id)).detach();
+          let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
           widgets.main_box.append(controller.widget());
           model.widgets.push(WidgetController::Workspace(controller));
         }
@@ -199,9 +202,8 @@ impl SimpleComponent for Bar {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
     match msg {
-      BarMsg::Destroy => {} // todo
       BarMsg::LuaHook(hook) => match hook {
         BarLuaHook::RequestWidgets(arc, tx) => {
           let mut lock = arc.lock().unwrap();
@@ -216,6 +218,40 @@ impl SimpleComponent for Bar {
           tx.send(()).unwrap();
         }
       },
+      BarMsg::Destroy(tx) => {
+        let mut rxv: Vec<std::sync::mpsc::Receiver<()>> = vec![];
+
+        for widget in &self.widgets {
+          match widget {
+            WidgetController::Clock(component) => {
+              let sender = component.sender().clone();
+              let (inner_tx, inner_rx) = channel::<()>();
+
+              let _ = sender.send(ClockMsg::Destroy(inner_tx));
+
+              rxv.push(inner_rx)
+            }
+            // @codyduong only clock needs a dedicated cleanup, since it has a timer
+            WidgetController::Workspace(component) => {
+              // let _ = component.sender().send(WorkspaceMsg::Destroy);
+            }
+            WidgetController::Box(component) => {
+              // let _ = component.sender().send(BoxMsg::Destroy);
+            }
+          }
+        }
+
+        thread::spawn(move || {
+          for rx in &rxv {
+            // we can sometimes close the channel early so don't unwrap...
+            let _ = rx.recv().unwrap();
+          }
+          let _ = tx.send(());
+        });
+      }
+      BarMsg::DestroyActual => {
+        log::error!("deprecated @codyduong")
+      }
     }
   }
 }

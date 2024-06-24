@@ -1128,6 +1128,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
+ "dirs",
  "gdk4",
  "gdk4-win32",
  "glib",
@@ -1138,6 +1139,7 @@ dependencies = [
  "log",
  "lua-src",
  "mlua",
+ "notify",
  "relm4",
  "relm4-macros",
  "serde",

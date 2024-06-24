@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+notify = "6.1.1"
+dirs = "5.0.1"
 hitokage-core = { path = "../hitokage-core/" }
 hitokage-lua = { path = "../hitokage-lua/" }
 anyhow = { workspace = true }
@@ -30,3 +32,6 @@ features = [
   "Win32_System_Threading",
   "Win32_UI_HiDpi",
 ]
+
+[features]
+development = []

@@ -1,13 +1,14 @@
 --- @meta hitokage
 
+--- This is the global module for [hitokage](https://github.com/codyduong/hitokage)
 ---
----
----
---- [View documents]()
+--- [View documentation](https://codyduong.dev/hitokage/lua/hitokage)
 ---
 --- @class hitokagelib
 _G.hitokage = {}
 _G._not_deadlocked = function() end
+_G._subscribers = {}
+_G._subscriptions = {}
 
 -------------------------------------------------------------------------------
 --- generic global functions
@@ -27,6 +28,12 @@ function hitokage.sleep_ms(ms) end
 --- Represents the bar module
 --- @class bar
 local bar = {}
+
+--- Creates a new bar
+--- @param monitor Monitor
+--- @param bar_props BarProps
+--- @return BarInstance
+function bar.create(monitor, bar_props) end
 
 --- Links to WorkspaceProps in 'hitokage-core\src\widgets\workspace.rs'
 --- @class WorkspaceProps
@@ -55,7 +62,7 @@ local bar = {}
 --- Wrapper around bar:is_ready()
 --- @field ready boolean
 --- Wrapper around bar:get_widgets()
---- @field widgets boolean -- @codyduong TODO fix this return type
+--- @field widgets any -- @codyduong TODO fix this return type
 --- Wrapper around bar:get_geometry()
 --- @field geometry boolean
 local bar_instance = {}
@@ -78,15 +85,16 @@ function bar_instance:get_widgets() end
 --- @return MonitorGeometry
 function bar_instance:get_geometry() end
 
---- Creates a new bar
---- @param args BarProps
---- @return BarInstance
-function bar.create(args) end
-
 -------------------------------------------------------------------------------
 --- Represents the monitor module
 --- @class monitor
 local monitor = {}
+
+--- @return MonitorVec
+function monitor.get_all() end
+
+--- @return Monitor
+function monitor.get_primary() end
 
 --- Links to 'pub struct MonitorGeometry' in 'hitokage-core\src\lua\monitor.rs'
 --- @class MonitorGeometry
@@ -117,12 +125,6 @@ local monitor = {}
 --- @class MonitorScaleFactor
 --- @field x number,
 --- @field y number,
-
---- @return MonitorVec
-function monitor.get_all() end
-
---- @return Monitor
-function monitor.get_primary() end
 
 -------------------------------------------------------------------------------
 --- Compose all the modules

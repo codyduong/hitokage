@@ -5,8 +5,9 @@ local primary = hitokage.monitor.get_primary()
 
 hitokage.debug(monitors)
 
+--- @type BarInstanceArray
 local bars = {}
-for index, monitor in ipairs(monitors) do
+for _, monitor in ipairs(monitors) do
   if (monitor.model == "LG SDQHD") then
     goto continue
   end
@@ -20,16 +21,12 @@ for index, monitor in ipairs(monitors) do
   --   }
   -- })
 
-  table.insert(bars, hitokage.bar.create({
-    monitor = index - 1,
-    geometry = monitor.geometry,
+  table.insert(bars, hitokage.bar.create(monitor, {
     widgets = {
-      {Workspace = {}},
-      {Clock = {format = "%Y-%m-%d %H:%M:%S"}},
-      {Box = {}},
+      { Workspace = {} },
+      { Clock = { format = "%Y-%m-%d %H:%M:%S" } },
+      { Box = {} },
     },
-    scale_factor = monitor.scale_factor,
-    id = monitor.id
   }))
   ::continue::
 end
@@ -65,12 +62,12 @@ end
 --   hitokage.sleep_ms(100);
 -- end
 
-_subscribers = {"komorebi"}
+_subscribers = { "komorebi" }
 _subscriptions = {
   komorebi = {}
 }
 
-function subscribe(name, callback)
+local subscribe = function(name, callback)
   local is_subscriber = false
   for _, approvedName in ipairs(_subscribers) do
     if name == approvedName then
@@ -110,16 +107,16 @@ end
 --   hitokage.debug(unread_states[#unread_states])
 -- end)
 
-function is_connection(obj)
+local is_connection = function(obj)
   return type(obj) == "table" and obj.send ~= nil and obj.receive ~= nil
 end
 
-function dispatcher(threads)
+local dispatcher = function(threads)
   local min_time_ms = 100
 
   while true do
     local n = #threads
-    
+
     if n == 0 then
       break
     end
@@ -127,16 +124,16 @@ function dispatcher(threads)
     -- local start_time = os.clock()
 
     local connections = {}
-    for i=1, n do
+    for i = 1, n do
       local status, res_array = coroutine.resume(threads[i])
-      
+
       if status and res_array then
         -- immediately sending any message means we reset the cooldown timer
         _not_deadlocked();
         coroutine.yield(res_array);
       elseif not status then
         if res_array then
-          hitokage.debug("Thread " .. i .. " exited:", res)
+          hitokage.debug("Thread " .. i .. " exited:", res_array)
           table.remove(threads, i)
           break
         end
@@ -167,7 +164,7 @@ function dispatcher(threads)
 end
 
 local komorebic_coroutine = coroutine.create(
-  function ()
+  function()
     local subscriptions = rawget(rawget(_G, "_subscriptions"), "komorebi")
     if #subscriptions == 0 then
       return
