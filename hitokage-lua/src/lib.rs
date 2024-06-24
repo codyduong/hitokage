@@ -29,6 +29,7 @@ pub enum LuaHookType {
     u32,
     Box<dyn Fn(ComponentSender<hitokage_core::widgets::bar::Bar>) -> () + Send>,
   ),
+  CheckConfigUpdate,
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
 }
 
@@ -45,6 +46,7 @@ impl std::fmt::Debug for LuaHookType {
         .field("id", id)
         .field("callback", &"<function>")
         .finish(),
+      &LuaHookType::CheckConfigUpdate => write!(f, "CheckConfigUpdate"),
       LuaHookType::NoAction => write!(f, "NoAction"),
     }
   }
