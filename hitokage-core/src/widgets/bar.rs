@@ -6,7 +6,7 @@ use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::{self, get_windows_version};
 use gtk4::prelude::*;
-use gtk4::ApplicationWindow;
+use gtk4::Window;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::SharedState;
@@ -22,7 +22,7 @@ use std::thread;
 pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
 
 fn setup_window_size(
-  window: ApplicationWindow,
+  window: Window,
   geometry: &MonitorGeometry,
   scale_factor: &MonitorScaleFactor,
 ) -> anyhow::Result<()> {
@@ -37,7 +37,7 @@ fn setup_window_size(
   Ok(())
 }
 
-fn setup_window_pos(window: ApplicationWindow, geometry: &MonitorGeometry) -> anyhow::Result<()> {
+fn setup_window_pos(window: Window, geometry: &MonitorGeometry) -> anyhow::Result<()> {
   // https://discourse.gnome.org/t/set-absolut-window-position-in-gtk4/8552/4
   let native = window.native().expect("Failed to get native");
   let surface = native.surface().expect("Failed to get surface");
@@ -114,11 +114,11 @@ pub struct Bar {
 impl SimpleComponent for Bar {
   type Input = BarMsg;
   type Output = ();
-  type Init = (Monitor, BarProps, u32, Box<dyn Fn(ComponentSender<Bar>) -> () + Send>);
+  type Init = (Monitor, BarProps, u32, Box<dyn Fn(ComponentSender<Bar>) -> () + Send>, gtk::ApplicationWindow);
   type Widgets = AppWidgets;
 
   view! {
-    gtk::ApplicationWindow {
+    Window {
       set_default_size: (1920, crate::common::HITOKAGE_STATUSBAR_HEIGHT),
       set_resizable: false,
       set_display: &gdk4::Display::default().expect("Failed to get default display"),
@@ -152,7 +152,9 @@ impl SimpleComponent for Bar {
   }
 
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let (monitor, props, id, callback) = input;
+    let (monitor, props, id, callback, application_root) = input;
+
+    root.set_transient_for(Some(&application_root));
 
     // root.connect_scale_factor_notify(move |win| {
     //   // todo @codyduong, needed for if users change scaling on the go
