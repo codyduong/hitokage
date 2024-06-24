@@ -80,7 +80,7 @@ where
         let sender = sender.clone();
         move |lua_inner, _value: Value| {
           sender.input(crate::AppMsg::LuaHook(crate::LuaHook {
-            t: crate::LuaHookType::NoAction,
+            t: crate::LuaHookType::CheckConfigUpdate,
             // callback: Box::new(|_| Ok(())),
           }));
           let args = CONFIG_UPDATE.read();
