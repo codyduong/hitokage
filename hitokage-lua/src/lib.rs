@@ -1,3 +1,4 @@
+use hitokage_core::lua::monitor::Monitor;
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
@@ -14,6 +15,8 @@ pub enum AppMsg {
   Komorebi(String),
   KomorebiErr(String),
   LuaHook(LuaHook),
+  Destroy(std::sync::mpsc::Sender<()>),
+  DestroyActual,
 }
 
 pub enum LuaHookType {
@@ -21,6 +24,7 @@ pub enum LuaHookType {
   WriteState,     //
   ReadEvent,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
   CreateBar(
+    Monitor,
     hitokage_core::widgets::bar::BarProps,
     u32,
     Box<dyn Fn(ComponentSender<hitokage_core::widgets::bar::Bar>) -> () + Send>,
@@ -34,8 +38,9 @@ impl std::fmt::Debug for LuaHookType {
       LuaHookType::SubscribeState => write!(f, "SubscribeState"),
       LuaHookType::WriteState => write!(f, "WriteState"),
       LuaHookType::ReadEvent => write!(f, "ReadEvent"),
-      LuaHookType::CreateBar(props, id, _) => f
+      LuaHookType::CreateBar(monitor, props, id, _) => f
         .debug_struct("CreateBar")
+        .field("monitor", monitor)
         .field("props", props)
         .field("id", id)
         .field("callback", &"<function>")

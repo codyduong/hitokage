@@ -58,7 +58,7 @@ impl DivAssign<MonitorScaleFactor> for MonitorGeometry {
   }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Monitor {
   pub connecter: Option<String>,
   pub description: Option<String>,
@@ -72,6 +72,7 @@ pub struct Monitor {
   pub id: isize,
   pub name: String,
   pub scale_factor: MonitorScaleFactor,
+  pub index: usize,
   // @codyduong If this ends up being something someone needs... but you can usually just match with a komorebi state if you really need this...
   // pub size: windows::Win32::Foundation::RECT,
   // pub work_area_size: windows::Win32::Foundation::RECT,
