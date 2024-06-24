@@ -31,6 +31,7 @@ enum LuaCoroutineMessage {
 }
 
 struct App {
+  root: gtk::ApplicationWindow,
   bars: Vec<Connector<widgets::bar::Bar>>,
   file_last_checked_at: Arc<Mutex<Instant>>,
   // keep alive for lifetime of app
@@ -39,10 +40,11 @@ struct App {
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for App {
+impl Component for App {
   type Input = hitokage_lua::AppMsg;
   type Output = ();
   type Init = ();
+  type CommandOutput = ();
 
   view! {
     gtk::ApplicationWindow {
@@ -190,6 +192,7 @@ impl SimpleComponent for App {
     // gtk4::prelude::WidgetExt::realize(bar.widget());
 
     let model = App {
+      root: root.clone(),
       bars: Vec::new(),
       file_last_checked_at,
       _debouncer: debouncer,
@@ -202,7 +205,7 @@ impl SimpleComponent for App {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: AppMsg, _sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: AppMsg, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       // Komorebi States
       AppMsg::Komorebi(notif) => {
@@ -234,12 +237,9 @@ impl SimpleComponent for App {
 
       AppMsg::LuaHook(info) => match info.t {
         LuaHookType::CreateBar(monitor, props, id, callback) => {
-          let app = relm4::main_application();
           let builder = bar::Bar::builder();
 
-          app.add_window(&builder.root);
-
-          let bar = builder.launch((monitor, props, id, callback));
+          let bar = builder.launch((monitor, props, id, callback, root.clone()));
           // .forward(sender.input_sender(), std::convert::identity);
 
           self.bars.push(bar);
