@@ -7,6 +7,7 @@ hitokage.debug(monitors)
 
 --- @type BarInstanceArray
 local bars = {}
+
 for _, monitor in ipairs(monitors) do
   if (monitor.model == "LG SDQHD") then
     goto continue
@@ -207,6 +208,6 @@ local file_watcher = coroutine.create(
 
 dispatcher({
   -- hitokage.loop.coroutine(),
-  file_watcher,
+  -- file_watcher,
   komorebic_coroutine,
 })
