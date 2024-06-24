@@ -7,7 +7,7 @@ use std::{
   io::Read,
   path::PathBuf,
   sync::{mpsc::Sender, Arc, Mutex},
-  thread,
+  thread::{self},
   time::{Duration, Instant},
 };
 use windows::Win32::Foundation::CloseHandle;
@@ -28,7 +28,6 @@ pub fn create_lua_handle(
   lua_thread_id: Arc<Mutex<u32>>,
   preventer_called: Arc<Mutex<bool>>,
   is_stopped: Arc<Mutex<bool>>,
-  reload_called: Arc<Mutex<bool>>,
   file_last_checked_at: Arc<Mutex<Instant>>,
   tx: Sender<bool>,
 ) -> std::thread::JoinHandle<Result<(), mlua::Error>> {
@@ -63,37 +62,42 @@ pub fn create_lua_handle(
     let tx_clone = tx.clone();
 
     // file-watcher is injected through a hook to ensure we are polling it through other means as well
-    let file_path_clone = file_path.clone();
     coroutine.set_hook(mlua::HookTriggers::new().every_nth_instruction(500), {
       let file_last_checked_at = Arc::clone(&file_last_checked_at);
       move |lua, _| {
         let valid_status = match lua.current_thread().status() {
-            mlua::ThreadStatus::Resumable => true,
-            mlua::ThreadStatus::Unresumable => false,
-            mlua::ThreadStatus::Error => false,
+          mlua::ThreadStatus::Resumable => true,
+          mlua::ThreadStatus::Unresumable => false,
+          mlua::ThreadStatus::Error => false,
         };
         let mut guard = file_last_checked_at.lock().unwrap();
         // skip if we havent passed enough time, or we aren't invalid status
-        if ((*guard).elapsed() <= Duration::from_millis(100)) || valid_status {
+        // @codyduong this is super fragile, we can double run this on accident, instead use a different method to check
+        if ((*guard).elapsed() <= Duration::from_millis(250)) || valid_status {
           drop(guard);
           return Ok(());
         }
-        *guard = Instant::now();
-        drop(guard);
-        let has_update = *CONFIG_UPDATE.read();
-        if has_update {
+
+        let mut update_guard = CONFIG_UPDATE.write();
+        if *update_guard {
+          *update_guard = false;
+          drop(update_guard);
+
           lua.remove_hook();
 
-          let thread_id = lua_thread_id.lock().unwrap();
-          drop(thread_id); // drop it so we can pick it up so rlock can acquire as soon as possible
-
-          let mut rlock = reload_called.lock().unwrap();
-          *rlock = true;
-          drop(rlock);
+          {
+            let lua_thread_id = lua_thread_id.clone();
+            thread::spawn(move || {
+              terminate_thread(lua_thread_id.clone());
+            });
+          }
 
           // safe reload not possible!
-          tx_clone.send(false);
+          tx_clone.send(false).unwrap();
         }
+
+        *guard = Instant::now();
+        drop(guard);
 
         Ok(())
       }
@@ -124,8 +128,8 @@ pub fn create_lua_handle(
                   *sswg = false;
                   let user_script = load_content(file_path.clone());
                   let _ = coroutine.reset(lua.load(user_script).into_function().unwrap());
-                  tx.send(true); // safe reload success
                   drop(sswg);
+                  tx.send(true).unwrap(); // safe reload success
                   ()
                 }
               },
@@ -161,7 +165,6 @@ pub fn create_watcher_handle(
   lua_thread_id: Arc<Mutex<u32>>,
   preventer_called: Arc<Mutex<bool>>,
   is_stopped: Arc<Mutex<bool>>,
-  reload_called: Arc<Mutex<bool>>,
 ) -> std::thread::JoinHandle<()> {
   return thread::spawn(move || {
     let mut start_time = Instant::now();
@@ -177,47 +180,12 @@ pub fn create_watcher_handle(
       }
 
       let overrun = start_time.elapsed() >= Duration::from_secs(5);
-      let mut rcam = reload_called.lock().unwrap();
 
-      if overrun || *rcam {
-        if overrun {
-          log::error!(
-            "There was a possible infinite loop or deadlock detected in your hitokage.lua! Did you mean to use hitokage.loop(): "
-          ); //@codyduong add a link to user-end docs
-          start_time = Instant::now();
-        }
-        let thread_id = *lua_thread_id.lock().unwrap();
-
-        // I'm sure there are no leaks or problems here LOL /s - @codyduong
-        if *rcam {
-          log::debug!("Attempting to terminate lua thread with id: {:?}", thread_id);
-          if thread_id != 0 {
-            unsafe {
-              let handle = OpenThread(THREAD_TERMINATE, false, thread_id).unwrap();
-
-              if handle != HANDLE(0) {
-                let result = TerminateThread(handle, 1);
-
-                if let Err(result) = result {
-                  // let error_code = windows::Win32::Foundation::GetLastError();
-                  log::error!("Failed to terminate thread: {:?}", result);
-                } else {
-                  log::debug!("Successfully terminated thread");
-                }
-
-                let _ = CloseHandle(handle);
-              } else {
-                let error_code = windows::Win32::Foundation::GetLastError();
-                log::error!("Failed to open thread handle: {:?}", error_code);
-              }
-            }
-          } else {
-            log::warn!("thread_id was 0, how'd this happen...")
-          }
-          // todo spawn a thread to do this, if it fails within time then explode!
-
-          *rcam = false;
-        }
+      if overrun {
+        log::error!(
+          "There was a possible infinite loop or deadlock detected in your hitokage.lua! Did you mean to use hitokage.loop(): "
+        ); //@codyduong add a link to user-end docs
+        start_time = Instant::now();
       }
 
       {
@@ -232,4 +200,31 @@ pub fn create_watcher_handle(
       thread::sleep(Duration::from_millis(100));
     }
   });
+}
+
+pub fn terminate_thread(id_arc: Arc<Mutex<u32>>) {
+  let mut id_guard = id_arc.lock().unwrap();
+  log::debug!("Attempting to terminate lua thread with id: {:?}", id_guard);
+  if *id_guard != 0 {
+    unsafe {
+      let handle = OpenThread(THREAD_TERMINATE, false, *id_guard).unwrap();
+
+      if handle != HANDLE(0) {
+        let result = TerminateThread(handle, 1);
+
+        if let Err(result) = result {
+          // let error_code = windows::Win32::Foundation::GetLastError();
+          log::error!("Failed to terminate thread: {:?}", result);
+        } else {
+          log::debug!("Successfully terminated thread");
+        }
+
+        let _ = CloseHandle(handle);
+      } else {
+        let error_code = windows::Win32::Foundation::GetLastError();
+        log::error!("Failed to open thread handle: {:?}", error_code);
+      }
+    }
+  }
+  *id_guard = 0;
 }

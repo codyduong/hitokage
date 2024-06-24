@@ -1,9 +1,11 @@
-hitokage.debug(hitokage);
+hitokage.debug("5");
+
+-- hitokage.debug(hitokage);
 
 local monitors = hitokage.monitor.get_all()
 local primary = hitokage.monitor.get_primary()
 
-hitokage.debug(monitors)
+-- hitokage.debug(monitors)
 
 --- @type BarInstanceArray
 local bars = {}
@@ -31,15 +33,16 @@ for _, monitor in ipairs(monitors) do
   }))
   ::continue::
 end
-for i, bar in ipairs(bars) do
-  while not bar:is_ready() do
-    hitokage.debug("waiting for bar to instantiate", i)
-    coroutine.yield() -- yield ensures minimum of 100ms
-  end
-  hitokage.debug("ready", bar.ready)
-  hitokage.debug("widgets", bar:get_widgets())
-  hitokage.debug("geometry", bar.geometry)
-end
+
+-- for i, bar in ipairs(bars) do
+--   while not bar:is_ready() do
+--     hitokage.debug("waiting for bar to instantiate", i)
+--     coroutine.yield() -- yield ensures minimum of 100ms
+--   end
+--   hitokage.debug("ready", bar.ready)
+--   hitokage.debug("widgets", bar:get_widgets())
+--   hitokage.debug("geometry", bar.geometry)
+-- end
 
 -- local s = hitokage.read_state()
 -- hitokage.debug(s);
@@ -208,6 +211,6 @@ local file_watcher = coroutine.create(
 
 dispatcher({
   -- hitokage.loop.coroutine(),
-  -- file_watcher,
+  file_watcher,
   komorebic_coroutine,
 })

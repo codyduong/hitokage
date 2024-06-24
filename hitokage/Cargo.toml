@@ -24,6 +24,7 @@ serde_json = { workspace = true }
 komorebi-client = {workspace = true}
 
 chrono = "0.4.38"
+notify-debouncer-full = "0.3.1"
 # komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", tag = "v0.1.26"}
 
 [dependencies.windows]
