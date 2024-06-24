@@ -1,21 +1,17 @@
-use glib::translate::Borrowed;
 use gtk4::prelude::*;
 use hitokage_core::lua::event::{EventNotif, CONFIG_UPDATE, STATE};
 use hitokage_core::lua::event::{EVENT, NEW_EVENT};
+use hitokage_core::widgets;
+use hitokage_core::widgets::bar;
 use hitokage_core::widgets::bar::BarMsg;
-use hitokage_core::widgets::clock::ClockMsg;
-use hitokage_core::widgets::{bar, WidgetController};
-use hitokage_core::{widgets, win_utils};
 use hitokage_lua::AppMsg;
 use hitokage_lua::LuaHookType;
-use mlua::LuaSerdeExt;
-use notify::{RecommendedWatcher, Watcher};
+use notify::Watcher;
+use notify_debouncer_full::new_debouncer;
 use relm4::component::Connector;
 use relm4::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::borrow::BorrowMut;
-use std::fs::{self, File};
-use std::io::Read;
+use std::fs::{self};
 use std::path::Path;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;
@@ -36,10 +32,9 @@ enum LuaCoroutineMessage {
 
 struct App {
   bars: Vec<Connector<widgets::bar::Bar>>,
-  // keep alive for lifetime of app
-  _filewatcher: notify::ReadDirectoryChangesWatcher,
   file_last_checked_at: Arc<Mutex<Instant>>,
   // keep alive for lifetime of app
+  _debouncer: notify_debouncer_full::Debouncer<notify::ReadDirectoryChangesWatcher, notify_debouncer_full::FileIdMap>,
   _tx_lua: Sender<bool>,
 }
 
@@ -76,8 +71,6 @@ impl SimpleComponent for App {
     let preventer_called = Arc::new(Mutex::new(false));
     let is_stopped = Arc::new(Mutex::new(false));
     let lua_thread_id = Arc::new(Mutex::new(0));
-    let last_processed = Arc::new(Mutex::new(None)); // when we last checked for configuration update
-    let reload_called = Arc::new(Mutex::new(false)); // used for forceful termination of unbehvaing lua
     let file_last_checked_at = Arc::new(Mutex::new(Instant::now())); // when did we last check for a config update through any means?
 
     // these names suck, these are for sending to create a new luahandle for forceful termination
@@ -91,28 +84,20 @@ impl SimpleComponent for App {
       lua_thread_id.clone(),
       preventer_called.clone(),
       is_stopped.clone(),
-      reload_called.clone(),
       file_last_checked_at.clone(),
       tx_lua.clone(),
     );
 
-    let _monitor_handle = config::create_watcher_handle(
-      lua_thread_id.clone(),
-      preventer_called.clone(),
-      is_stopped.clone(),
-      reload_called.clone(),
-    );
+    let _monitor_handle =
+      config::create_watcher_handle(lua_thread_id.clone(), preventer_called.clone(), is_stopped.clone());
 
     let (tx, rx) = channel();
 
-    let config = notify::Config::default()
-      .with_poll_interval(Duration::from_millis(500))
-      .with_compare_contents(true);
-
-    let mut filewatcher: RecommendedWatcher = Watcher::new(tx.clone(), config).expect("Failed to start file watcher");
-    filewatcher
+    let mut debouncer = new_debouncer(Duration::from_secs(1), None, tx).unwrap();
+    debouncer
+      .watcher()
       .watch(&lua_file_path, notify::RecursiveMode::NonRecursive)
-      .expect("Failed to start file watcher 2");
+      .unwrap();
 
     {
       let sender = sender.clone();
@@ -120,7 +105,6 @@ impl SimpleComponent for App {
       let lua_thread_id = lua_thread_id.clone();
       let preventer_called = preventer_called.clone();
       let is_stopped = is_stopped.clone();
-      let reload_called = reload_called.clone();
       let file_last_checked_at = file_last_checked_at.clone();
       let tx_lua = tx_lua.clone();
 
@@ -128,17 +112,7 @@ impl SimpleComponent for App {
         match rx.recv() {
           Ok(event) => match event {
             Ok(e) => {
-              let mut last = last_processed.lock().unwrap();
-              let now = Instant::now();
-              // there are multiple file save events... so ignore the next few if we already started one in the last 250ms
-              if let Some(last_time) = *last {
-                if now.duration_since(last_time) < Duration::from_millis(250) {
-                  log::warn!("File update skipped: {:?}", e);
-                  continue;
-                }
-              }
               log::info!("File update: {:?}", e);
-              *last = Some(now);
 
               let (tx, rx) = channel::<()>();
               // destroy all existing parts of the relm/gtk4 app
@@ -148,34 +122,40 @@ impl SimpleComponent for App {
               log::debug!("We have cleaned up our messes, we can actually destroy the bar!");
               sender.input(hitokage_lua::AppMsg::DestroyActual);
 
-              let is_stopped_value = *is_stopped.lock().unwrap();
-              if !is_stopped_value {
+              let mut stopped_guard = is_stopped.lock().unwrap();
+              if !*stopped_guard {
                 // if we are stuck in lua execution loop we need to dispatch a response to it for it to implode itself
-                *CONFIG_UPDATE.write() = true;
+                let mut wg = CONFIG_UPDATE.write();
+                *wg = true;
+                drop(wg);
 
                 match rx_lua.recv() {
-                    Ok(true) => {
-                      log::info!("Safely reset lua coroutine")
-                    },
-                    Ok(false) => {
-                      log::info!("Coroutine deadlocked, starting new lua_handle");
-                      let _ = config::create_lua_handle(
-                        sender.clone(),
-                        lua_file_path.clone(),
-                        lua_thread_id.clone(),
-                        preventer_called.clone(),
-                        is_stopped.clone(),
-                        reload_called.clone(),
-                        file_last_checked_at.clone(),
-                        tx_lua.clone(),
-                      );
-                    }
-                    Err(_) => {
-                      // @codyduong LOL, todo
-                      log::error!("Lua channel closed before confirmation of launch")
-                    },
+                  Ok(true) => {
+                    log::info!("Lua thread reset itself within lua environment");
+
+                    *stopped_guard = false;
+                  }
+                  Ok(false) => {
+                    log::info!("Lua thread coroutine deadlocked, starting new lua thread");
+                    let _ = config::create_lua_handle(
+                      sender.clone(),
+                      lua_file_path.clone(),
+                      lua_thread_id.clone(),
+                      preventer_called.clone(),
+                      is_stopped.clone(),
+                      file_last_checked_at.clone(),
+                      tx_lua.clone(),
+                    );
+
+                    *stopped_guard = false;
+                  }
+                  Err(_) => {
+                    // @codyduong LOL, todo
+                    log::error!("Lua channel closed before receiving confirmation of launch of lua thread")
+                  }
                 }
               } else {
+                log::info!("Lua thread finished executing, starting new lua thread");
                 // otherwise we have finished execution, so dispatch a new thread
                 let _ = config::create_lua_handle(
                   sender.clone(),
@@ -183,10 +163,11 @@ impl SimpleComponent for App {
                   lua_thread_id.clone(),
                   preventer_called.clone(),
                   is_stopped.clone(),
-                  reload_called.clone(),
                   file_last_checked_at.clone(),
                   tx_lua.clone(),
                 );
+
+                *stopped_guard = false;
               }
             }
             Err(e) => {
@@ -196,21 +177,22 @@ impl SimpleComponent for App {
           Err(e) => {
             log::error!("Receive error: {:?}", e);
           }
-        }
+        };
+        thread::sleep(Duration::from_millis(100));
       });
     }
 
     // komorebi pipe
     let sender_clone = sender.clone();
-    socket::start_async_reader_new(sender_clone);
+    socket::start(sender_clone);
 
     // bar.widget().realize();
     // gtk4::prelude::WidgetExt::realize(bar.widget());
 
     let model = App {
       bars: Vec::new(),
-      _filewatcher: filewatcher,
       file_last_checked_at,
+      _debouncer: debouncer,
       _tx_lua: tx_lua,
       // bar,
     };
@@ -309,6 +291,10 @@ impl SimpleComponent for App {
         }
       }
     }
+  }
+
+  fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
+    socket::shutdown().expect("Failed to shutdown komorebi socket");
   }
 }
 
