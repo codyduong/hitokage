@@ -1,7 +1,8 @@
-use hitokage_core::lua::monitor::MonitorGeometry;
+use hitokage_core::lua::monitor::{Monitor, MonitorGeometry};
 use hitokage_core::widgets::bar::BarLuaHook::{RequestGeometry, RequestWidgets};
 use hitokage_core::widgets::bar::{Bar, BarMsg, BarProps};
 use hitokage_core::widgets::WidgetSender;
+use mlua::FromLuaMulti;
 use mlua::{
   Lua, LuaSerdeExt, UserData, UserDataMethods,
   Value::{self},
@@ -95,6 +96,46 @@ impl UserData for BarInstanceUserData {
   }
 }
 
+struct BarPropsExtended {
+  monitor: Monitor,
+  props: BarProps,
+}
+
+impl<'lua> FromLuaMulti<'lua> for BarPropsExtended {
+  fn from_lua_multi(values: mlua::MultiValue<'lua>, lua: &'lua Lua) -> mlua::Result<Self> {
+    let mut iter = values.into_iter();
+
+    let monitor: Monitor = match iter.next() {
+      Some(value) => lua.from_value(value)?,
+      None => return Err(mlua::Error::BadArgument{
+        to: Some("create".to_string()),
+        pos: 0,
+        name: Some("monitor".to_string()),
+        cause: Arc::new(mlua::Error::FromLuaConversionError {
+          from: "Value",
+          to: "Monitor",
+          message: Some("Expected a Value of type Monitor for the first argument, received Nil".to_string())
+        })
+      }),
+    };
+    let props: BarProps = match iter.next() {
+      Some(value) => lua.from_value(value)?,
+      None => return Err(mlua::Error::BadArgument{
+        to: Some("create".to_string()),
+        pos: 1,
+      name: Some("bar_props".to_string()),
+        cause: Arc::new(mlua::Error::FromLuaConversionError {
+          from: "Value",
+          to: "Monitor",
+          message: Some("Expected a Value of type BarProps for the second argument, received Nil".to_string())
+        })
+      }),
+    };
+
+    Ok(BarPropsExtended { monitor, props })
+  }
+}
+
 pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table<'lua>>
 where
   C: Component<Input = crate::AppMsg>,
@@ -108,13 +149,13 @@ where
       "create",
       lua.create_function({
         let sender = sender.clone();
-        move |lua_inner, value: Value| {
-          let props: BarProps = lua_inner.from_value(value)?;
+        move |lua_inner, props_extended: BarPropsExtended| {
+          let BarPropsExtended {monitor, props} = props_extended;
           let bar_sender: Arc<Mutex<Option<ComponentSender<Bar>>>> = Arc::new(Mutex::new(None));
 
           let mut id_l = id.lock().unwrap();
           sender.input(<C as Component>::Input::LuaHook(crate::LuaHook {
-            t: crate::LuaHookType::CreateBar(props, *id_l, {
+            t: crate::LuaHookType::CreateBar(monitor, props, *id_l, {
               let bar_sender = Arc::clone(&bar_sender);
               {
                 Box::new(move |s| {

@@ -87,7 +87,7 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
     })
     .collect();
 
-  let iter = monitors.into_iter().filter_map(move |monitor| {
+  let iter = monitors.into_iter().enumerate().filter_map(move |(index, monitor)| {
     let mut geometry: MonitorGeometry = monitor.size;
 
     let hmonitor = HMONITOR(monitor.hmonitor);
@@ -124,6 +124,7 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
         id: monitor.hmonitor,
         name: monitor.name.clone(),
         scale_factor,
+        index,
       })
     } else {
       panic!("No matching monitor found for geometry: {:?}", geometry);
@@ -144,8 +145,6 @@ impl MonitorUserData {
 impl UserData for MonitorUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_function("get_all", all);
-    methods.add_meta_function(MetaMethod::Call, all);
-
     methods.add_function("get_primary", primary);
   }
 }
@@ -195,10 +194,10 @@ mod tests {
       let value: Value = lua.globals().get("userdata")?;
 
       let userdata: AnyUserData = assert_lua_type!(value, AnyUserData);
-      let metatable = userdata.get_metatable()?;
+      // let metatable = userdata.get_metatable()?;
       assert_lua_type!(userdata.get::<&str, Value>("get_all")?, mlua::Function);
       assert_lua_type!(userdata.get::<&str, Value>("get_primary")?, mlua::Function);
-      assert_lua_type!(metatable.get("__call")?, mlua::Function);
+      // assert_lua_type!(metatable.get("__call")?, mlua::Function);
       // assert_eq!(table.len()?, 0);
       // assert_eq!(table.pairs::<String, Value>().count(), 2);
     }

@@ -1,4 +1,4 @@
-use hitokage_core::lua::event::{EVENT, NEW_EVENT};
+use hitokage_core::lua::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 
@@ -74,9 +74,22 @@ where
 
     let configuration = lua.create_table()?;
 
-    configuration.set("changed", lua.create_function(move|_lua_inner,_value: Value| {
-      Ok(Value::Boolean(true))
-    })?)?;
+    configuration.set(
+      "changed",
+      lua.create_function({
+        let sender = sender.clone();
+        move |lua_inner, _value: Value| {
+          sender.input(crate::AppMsg::LuaHook(crate::LuaHook {
+            t: crate::LuaHookType::NoAction,
+            // callback: Box::new(|_| Ok(())),
+          }));
+          let args = CONFIG_UPDATE.read();
+          let lua_args = lua_inner.to_value(std::ops::Deref::deref(&args));
+
+          Ok(lua_args)
+        }
+      })?,
+    )?;
 
     table.set("configuration", configuration)?;
   }

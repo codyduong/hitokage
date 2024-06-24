@@ -12,3 +12,5 @@ pub struct EventNotif {
 pub static STATE: SharedState<serde_json::Value> = SharedState::new(); // this only stores the newest state
 pub static EVENT: SharedState<Vec<EventNotif>> = SharedState::new();
 pub static NEW_EVENT: SharedState<bool> = SharedState::new(); // if the state has changed since we last read the state
+
+pub static CONFIG_UPDATE: SharedState<bool> = SharedState::new(); // if we updated init.lua
