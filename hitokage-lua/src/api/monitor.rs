@@ -2,7 +2,10 @@ use gdk4::{
   glib::{self, object::Cast},
   prelude::*,
 };
-use hitokage_core::{lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor}, win_utils::get_windows_version};
+use hitokage_core::{
+  lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor},
+  win_utils::get_windows_version,
+};
 use mlua::{AnyUserData, Lua, LuaSerdeExt, MetaMethod, UserData, UserDataMethods, Value};
 use windows::Win32::{
   Graphics::Gdi::HMONITOR,

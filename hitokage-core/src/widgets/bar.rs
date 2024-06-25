@@ -114,7 +114,13 @@ pub struct Bar {
 impl SimpleComponent for Bar {
   type Input = BarMsg;
   type Output = ();
-  type Init = (Monitor, BarProps, u32, Box<dyn Fn(ComponentSender<Bar>) -> () + Send>, gtk::ApplicationWindow);
+  type Init = (
+    Monitor,
+    BarProps,
+    u32,
+    Box<dyn Fn(ComponentSender<Bar>) -> () + Send>,
+    gtk::ApplicationWindow,
+  );
   type Widgets = AppWidgets;
 
   view! {

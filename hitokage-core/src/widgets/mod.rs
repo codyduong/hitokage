@@ -4,8 +4,8 @@ pub mod clock;
 pub mod workspace;
 
 use clock::{Clock, ClockMsg};
-use mlua::{LuaSerdeExt, Value};
 use mlua::{IntoLua, Lua, UserData, UserDataMethods};
+use mlua::{LuaSerdeExt, Value};
 use r#box::Box;
 use relm4::component::Connector;
 use relm4::ComponentController;

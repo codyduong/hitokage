@@ -107,29 +107,33 @@ impl<'lua> FromLuaMulti<'lua> for BarPropsExtended {
 
     let monitor: Monitor = match iter.next() {
       Some(value) => lua.from_value(value)?,
-      None => return Err(mlua::Error::BadArgument{
-        to: Some("create".to_string()),
-        pos: 0,
-        name: Some("monitor".to_string()),
-        cause: Arc::new(mlua::Error::FromLuaConversionError {
-          from: "Value",
-          to: "Monitor",
-          message: Some("Expected a Value of type Monitor for the first argument, received Nil".to_string())
+      None => {
+        return Err(mlua::Error::BadArgument {
+          to: Some("create".to_string()),
+          pos: 0,
+          name: Some("monitor".to_string()),
+          cause: Arc::new(mlua::Error::FromLuaConversionError {
+            from: "Value",
+            to: "Monitor",
+            message: Some("Expected a Value of type Monitor for the first argument, received Nil".to_string()),
+          }),
         })
-      }),
+      }
     };
     let props: BarProps = match iter.next() {
       Some(value) => lua.from_value(value)?,
-      None => return Err(mlua::Error::BadArgument{
-        to: Some("create".to_string()),
-        pos: 1,
-      name: Some("bar_props".to_string()),
-        cause: Arc::new(mlua::Error::FromLuaConversionError {
-          from: "Value",
-          to: "Monitor",
-          message: Some("Expected a Value of type BarProps for the second argument, received Nil".to_string())
+      None => {
+        return Err(mlua::Error::BadArgument {
+          to: Some("create".to_string()),
+          pos: 1,
+          name: Some("bar_props".to_string()),
+          cause: Arc::new(mlua::Error::FromLuaConversionError {
+            from: "Value",
+            to: "Monitor",
+            message: Some("Expected a Value of type BarProps for the second argument, received Nil".to_string()),
+          }),
         })
-      }),
+      }
     };
 
     Ok(BarPropsExtended { monitor, props })
@@ -150,7 +154,7 @@ where
       lua.create_function({
         let sender = sender.clone();
         move |lua_inner, props_extended: BarPropsExtended| {
-          let BarPropsExtended {monitor, props} = props_extended;
+          let BarPropsExtended { monitor, props } = props_extended;
           let bar_sender: Arc<Mutex<Option<ComponentSender<Bar>>>> = Arc::new(Mutex::new(None));
 
           let mut id_l = id.lock().unwrap();
