@@ -73,9 +73,9 @@ impl SimpleComponent for Clock {
         let tx = {
           let guard = destroyed_sender.lock().unwrap();
           if let Some(ref tx) = *guard {
-              Some(tx.clone())
+            Some(tx.clone())
           } else {
-              None
+            None
           }
         };
         if let Some(tx) = tx {
@@ -99,7 +99,7 @@ impl SimpleComponent for Clock {
         log::warn!("destroying clock");
         *self.destroyed_sender.lock().unwrap() = Some(tx);
         *self.destroyed.lock().unwrap() = true;
-      },
+      }
     }
   }
 }

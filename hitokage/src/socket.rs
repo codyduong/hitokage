@@ -46,10 +46,11 @@ pub fn start(sender: relm4::ComponentSender<crate::App>) -> std::thread::JoinHan
 
     Ok(())
   })
-  
 }
 
 pub fn shutdown() -> Result<()> {
-  send_message(&komorebi_client::SocketMessage::RemoveSubscriberSocket(NAME.to_string()))?;
+  send_message(&komorebi_client::SocketMessage::RemoveSubscriberSocket(
+    NAME.to_string(),
+  ))?;
   Ok(())
 }

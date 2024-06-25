@@ -1,7 +1,7 @@
 use relm4::prelude::*;
 use relm4::ComponentParts;
-use relm4::SimpleComponent;
 use relm4::ComponentSender;
+use relm4::SimpleComponent;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
