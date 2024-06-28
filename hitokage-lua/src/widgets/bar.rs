@@ -130,7 +130,7 @@ where
       "create",
       lua.create_function({
         let sender = sender.clone();
-        move |lua_inner, props_extended: BarPropsExtended| {
+        move |_, props_extended: BarPropsExtended| {
           let BarPropsExtended { monitor, props } = props_extended;
           let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 

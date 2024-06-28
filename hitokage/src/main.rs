@@ -31,7 +31,6 @@ enum LuaCoroutineMessage {
 }
 
 struct App {
-  root: gtk::ApplicationWindow,
   bars: Vec<Connector<widgets::bar::Bar>>,
   file_last_checked_at: Arc<Mutex<Instant>>,
   // keep alive for lifetime of app
@@ -90,8 +89,7 @@ impl Component for App {
       tx_lua.clone(),
     );
 
-    let _monitor_handle =
-      config::create_watcher_handle(lua_thread_id.clone(), preventer_called.clone(), is_stopped.clone());
+    let _monitor_handle = config::create_watcher_handle(preventer_called.clone(), is_stopped.clone());
 
     let (tx, rx) = channel();
 
@@ -192,7 +190,6 @@ impl Component for App {
     // gtk4::prelude::WidgetExt::realize(bar.widget());
 
     let model = App {
-      root: root.clone(),
       bars: Vec::new(),
       file_last_checked_at,
       _debouncer: debouncer,

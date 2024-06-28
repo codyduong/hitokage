@@ -1,14 +1,6 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::sync::Arc;
-use std::sync::Mutex;
-
-use crate::lua::event::EVENT;
 use crate::lua::event::STATE;
-use crate::RelmContainerExtManual;
 use anyhow::Context;
 use gtk4::prelude::*;
-use gtk4::EventControllerFocus;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -85,7 +77,7 @@ impl SimpleComponent for Workspace {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
     match msg {
       WorkspaceMsg::Workspaces(workspaces) => {
-        update_workspaces(self, &self.root, &workspaces);
+        update_workspaces(&self.root, &workspaces);
       }
       WorkspaceMsg::FocusWorkspace(i) => {
         let state = STATE.read();
@@ -170,7 +162,7 @@ fn get_workspaces(state: &serde_json::Value, monitor_id: u32) -> anyhow::Result<
   Ok(workspaces_vec)
 }
 
-fn update_workspaces(model: &Workspace, root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> () {
+fn update_workspaces(root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> () {
   let mut i = 0;
   loop {
     match root.child_at_index(i as i32) {
