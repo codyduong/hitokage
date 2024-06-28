@@ -252,7 +252,7 @@ local file_watcher = coroutine.create(
 
 dispatcher({
   -- hitokage.loop.coroutine(),
-  clock_swapper,
+  -- clock_swapper,
   file_watcher,
   komorebic_coroutine,
 })

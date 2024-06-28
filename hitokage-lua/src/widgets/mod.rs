@@ -2,7 +2,6 @@ use clock::ClockUserData;
 use hitokage_core::widgets::{clock::ClockMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData};
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
-use std::sync::{Arc, Mutex};
 use workspace::WorkspaceUserData;
 
 pub mod bar;

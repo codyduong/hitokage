@@ -162,7 +162,6 @@ pub fn create_lua_handle(
 }
 
 pub fn create_watcher_handle(
-  lua_thread_id: Arc<Mutex<u32>>,
   preventer_called: Arc<Mutex<bool>>,
   is_stopped: Arc<Mutex<bool>>,
 ) -> std::thread::JoinHandle<()> {
