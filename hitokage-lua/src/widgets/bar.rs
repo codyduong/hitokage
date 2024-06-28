@@ -1,7 +1,8 @@
+use super::WidgetUserDataVec;
+use crate::impl_getter_fn;
 use hitokage_core::lua::monitor::{Monitor, MonitorGeometry};
-use hitokage_core::widgets::bar::BarLuaHook::{RequestGeometry, RequestWidgets};
-use hitokage_core::widgets::bar::{Bar, BarMsg, BarProps};
-use hitokage_core::widgets::WidgetSender;
+use hitokage_core::widgets::bar::BarLuaHook::{GetGeometry, GetWidgets};
+use hitokage_core::widgets::bar::{BarMsg, BarProps};
 use mlua::FromLuaMulti;
 use mlua::{
   Lua, LuaSerdeExt, UserData, UserDataMethods,
@@ -10,36 +11,12 @@ use mlua::{
 use relm4::{Component, ComponentSender};
 use std::sync::{mpsc, Arc, Mutex};
 
-struct BarInstanceUserData {
+struct BarUserData {
   id: u32,
-  sender: Arc<Mutex<Option<ComponentSender<Bar>>>>,
-  widgets: Arc<Mutex<Vec<WidgetSender>>>,
-  geometry: Arc<Mutex<MonitorGeometry>>,
+  sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>>,
 }
 
-macro_rules! impl_getter_fn {
-  ($fn_name:ident, $field:ident, $request_enum:expr, $ret:ty) => {
-    fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
-      let sender = self.assert_ready()?;
-
-      let (tx, rx) = mpsc::channel::<()>();
-      let arc = Arc::clone(&self.$field);
-      sender.input(BarMsg::LuaHook($request_enum(arc, tx)));
-      rx.recv().unwrap();
-      let lock = self.$field.lock().unwrap();
-
-      let ret_val: $ret = if std::any::TypeId::of::<$ret>() == std::any::TypeId::of::<Vec<WidgetSender>>() {
-        lock.clone() as $ret
-      } else {
-        (*lock).clone() as $ret
-      };
-
-      Ok(ret_val)
-    }
-  };
-}
-
-impl BarInstanceUserData {
+impl BarUserData {
   fn is_ready(&self) -> bool {
     let sender = self.sender.lock().unwrap();
     if sender.is_some() {
@@ -48,22 +25,22 @@ impl BarInstanceUserData {
     return false;
   }
 
-  fn assert_ready(&self) -> Result<ComponentSender<Bar>, crate::HitokageError> {
+  fn sender(&self) -> Result<relm4::Sender<BarMsg>, crate::HitokageError> {
     let sender = self.sender.lock().unwrap();
 
     match &*sender {
       Some(sender) => Ok(sender.clone()),
       None => Err(crate::HitokageError::RustError(
-        "Bar is not ready, did we wait for BarInstance.ready or BarInstance:is_ready()".to_string(),
+        "Bar is not ready, did we wait for Bar.ready or Bar:is_ready()".to_string(),
       )),
     }
   }
 
-  impl_getter_fn!(get_widgets, widgets, RequestWidgets, Vec<WidgetSender>);
-  impl_getter_fn!(get_geometry, geometry, RequestGeometry, MonitorGeometry);
+  impl_getter_fn!(get_widgets, BarMsg::LuaHook, GetWidgets, WidgetUserDataVec);
+  impl_getter_fn!(get_geometry, BarMsg::LuaHook, GetGeometry, MonitorGeometry);
 }
 
-impl UserData for BarInstanceUserData {
+impl UserData for BarUserData {
   fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(_fields: &mut F) {}
 
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
@@ -85,7 +62,7 @@ impl UserData for BarInstanceUserData {
         match value {
           Value::String(s) => match s.to_str()? {
             "ready" => Ok(lua.to_value(&instance.is_ready())?),
-            "widgets" => Ok(lua.pack(instance.get_widgets()?)?),
+            // "widgets" => Ok(lua.pack(instance.get_widgets().into()?)?),
             "geometry" => Ok(lua.to_value(&instance.get_geometry()?)?),
             _ => Ok(Value::Nil),
           },
@@ -155,7 +132,7 @@ where
         let sender = sender.clone();
         move |lua_inner, props_extended: BarPropsExtended| {
           let BarPropsExtended { monitor, props } = props_extended;
-          let bar_sender: Arc<Mutex<Option<ComponentSender<Bar>>>> = Arc::new(Mutex::new(None));
+          let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 
           let mut id_l = id.lock().unwrap();
           sender.input(<C as Component>::Input::LuaHook(crate::LuaHook {
@@ -171,11 +148,9 @@ where
             }),
           }));
 
-          let bar_instance = BarInstanceUserData {
+          let bar_instance = BarUserData {
             id: *id_l,
             sender: bar_sender,
-            widgets: Arc::new(Mutex::new(Vec::new())),
-            geometry: Arc::new(Mutex::new(MonitorGeometry::default())),
           };
 
           *id_l += 1;
@@ -196,7 +171,7 @@ mod tests {
   use gtk4::prelude::*;
   use mlua::{Lua, Table, Value};
   use relm4::prelude::*;
-  use relm4::{ComponentParts, ComponentSender, SimpleComponent};
+  use relm4::{ComponentParts, SimpleComponent};
 
   struct DummyComponent {}
 

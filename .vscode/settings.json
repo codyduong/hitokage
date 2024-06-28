@@ -3,6 +3,6 @@
     "missing-return"
   ],
   "Lua.workspace.library": [
-    "../hitokage.lua"
+    "../hitokage-lua-lib/src/hitokage.lua"
   ],
 }
