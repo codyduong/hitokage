@@ -1,18 +1,24 @@
-use std::sync::mpsc::Sender;
-use std::sync::Arc;
-use std::sync::Mutex;
-
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use relm4::SimpleComponent;
 use serde::{Deserialize, Serialize};
+use std::sync::mpsc::Sender;
+use std::sync::Arc;
+use std::sync::Mutex;
+
+#[derive(Debug, Clone)]
+pub enum ClockMsgHook {
+  GetFormat(Sender<String>),
+  SetFormat(String),
+}
 
 #[derive(Debug, Clone)]
 pub enum ClockMsg {
   Tick,
   Destroy(Sender<()>),
+  LuaHook(ClockMsgHook),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -100,6 +106,14 @@ impl SimpleComponent for Clock {
         *self.destroyed_sender.lock().unwrap() = Some(tx);
         *self.destroyed.lock().unwrap() = true;
       }
+      ClockMsg::LuaHook(hook) => match hook {
+        ClockMsgHook::GetFormat(tx) => {
+          tx.send(self.format.clone()).unwrap();
+        }
+        ClockMsgHook::SetFormat(format) => {
+          self.format = format;
+        }
+      },
     }
   }
 }

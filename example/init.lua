@@ -7,7 +7,7 @@ local primary = hitokage.monitor.get_primary()
 
 -- hitokage.debug(monitors)
 
---- @type BarInstanceArray
+--- @type BarArray
 local bars = {}
 
 for _, monitor in ipairs(monitors) do
@@ -34,15 +34,56 @@ for _, monitor in ipairs(monitors) do
   ::continue::
 end
 
--- for i, bar in ipairs(bars) do
---   while not bar:is_ready() do
---     hitokage.debug("waiting for bar to instantiate", i)
---     coroutine.yield() -- yield ensures minimum of 100ms
+local clocks = {}
+
+for i, bar in ipairs(bars) do
+  while not bar:is_ready() do
+    hitokage.debug("waiting for bar to instantiate", i)
+    coroutine.yield() -- yield to other processes to occur
+  end
+  for _, widget in ipairs(bar:get_widgets()) do
+    hitokage.debug(widget)
+    if widget.type == "Clock" then
+      table.insert(clocks, widget)
+    end 
+  end
+end
+
+local timeout = function (timeout, action)
+  return coroutine.create(function()
+    local start_time = os.clock()
+  
+    while true do
+
+      local elapsed_time = (os.clock() - start_time) * 1000
+      local remaining_time = timeout - elapsed_time
+      if (remaining_time <= 0) then
+        start_time = os.clock()
+        action()
+      end
+
+      coroutine.yield()
+    end
+  end)
+end
+
+-- local clock_swapper = timeout(1000, function()
+--   for _, clock in ipairs(clocks) do
+--     local format = clock:get_format()
+--     local current_hour = tonumber(os.date("%H"))
+--     local sleep = false
+--     if current_hour >= 0 and current_hour < 8 then
+--       sleep = true
+--     else
+--       sleep = false
+--     end
+--     if sleep and format == "%Y-%m-%d %H:%M:%S" then
+--       clock:set_format("🛌 SLEEP TIME 🛌")
+--     else
+--       clock:set_format("%Y-%m-%d %H:%M:%S")
+--     end
 --   end
---   hitokage.debug("ready", bar.ready)
---   hitokage.debug("widgets", bar:get_widgets())
---   hitokage.debug("geometry", bar.geometry)
--- end
+-- end)
 
 -- local s = hitokage.read_state()
 -- hitokage.debug(s);
@@ -211,6 +252,7 @@ local file_watcher = coroutine.create(
 
 dispatcher({
   -- hitokage.loop.coroutine(),
+  clock_swapper,
   file_watcher,
   komorebic_coroutine,
 })

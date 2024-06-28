@@ -1,4 +1,4 @@
-use hitokage_core::lua::monitor::Monitor;
+use hitokage_core::{lua::monitor::Monitor, widgets::bar::BarMsg};
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
@@ -27,7 +27,7 @@ pub enum LuaHookType {
     Monitor,
     hitokage_core::widgets::bar::BarProps,
     u32,
-    Box<dyn Fn(ComponentSender<hitokage_core::widgets::bar::Bar>) -> () + Send>,
+    Box<dyn Fn(relm4::Sender<BarMsg>) -> () + Send>,
   ),
   CheckConfigUpdate,
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything

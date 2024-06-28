@@ -1,10 +1,10 @@
 use super::clock::ClockMsg;
-use super::WidgetSender;
+use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
 use crate::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
-use crate::win_utils::{self, get_windows_version};
+use crate::win_utils::get_windows_version;
 use gtk4::prelude::*;
 use gtk4::Window;
 use relm4::prelude::*;
@@ -15,8 +15,6 @@ use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Sender};
-use std::sync::Arc;
-use std::sync::Mutex;
 use std::thread;
 
 pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
@@ -68,18 +66,10 @@ fn setup_window_pos(window: Window, geometry: &MonitorGeometry) -> anyhow::Resul
   Ok(())
 }
 
+#[derive(Debug)]
 pub enum BarLuaHook {
-  RequestWidgets(Arc<Mutex<Vec<WidgetSender>>>, Sender<()>),
-  RequestGeometry(Arc<Mutex<MonitorGeometry>>, Sender<()>),
-}
-
-impl std::fmt::Debug for BarLuaHook {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      BarLuaHook::RequestWidgets(_, _) => write!(f, "RequestWidgets"),
-      BarLuaHook::RequestGeometry(_, _) => write!(f, "RequestGeometry"),
-    }
-  }
+  GetWidgets(Sender<Vec<WidgetUserData>>),
+  GetGeometry(Sender<MonitorGeometry>),
 }
 
 #[derive(Debug)]
@@ -118,7 +108,7 @@ impl SimpleComponent for Bar {
     Monitor,
     BarProps,
     u32,
-    Box<dyn Fn(ComponentSender<Bar>) -> () + Send>,
+    Box<dyn Fn(relm4::Sender<BarMsg>) -> () + Send>,
     gtk::ApplicationWindow,
   );
   type Widgets = AppWidgets;
@@ -166,7 +156,7 @@ impl SimpleComponent for Bar {
     //   // todo @codyduong, needed for if users change scaling on the go
     // });
 
-    callback(sender.clone());
+    callback(sender.clone().input_sender().clone());
 
     let mut model = Bar {
       position: props.position,
@@ -210,20 +200,15 @@ impl SimpleComponent for Bar {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
     match msg {
       BarMsg::LuaHook(hook) => match hook {
-        BarLuaHook::RequestWidgets(arc, tx) => {
-          let mut lock = arc.lock().unwrap();
-          *lock = self.widgets.iter().map(|i| WidgetSender::from(i)).collect();
-          drop(lock);
-          tx.send(()).unwrap();
+        BarLuaHook::GetWidgets(tx) => {
+          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
+            .unwrap();
         }
-        BarLuaHook::RequestGeometry(arc, tx) => {
-          let mut lock = arc.lock().unwrap();
-          *lock = self.geometry;
-          drop(lock);
-          tx.send(()).unwrap();
+        BarLuaHook::GetGeometry(tx) => {
+          tx.send(self.geometry).unwrap();
         }
       },
       BarMsg::Destroy(tx) => {
@@ -240,10 +225,10 @@ impl SimpleComponent for Bar {
               rxv.push(inner_rx)
             }
             // @codyduong only clock needs a dedicated cleanup, since it has a timer
-            WidgetController::Workspace(component) => {
+            WidgetController::Workspace(_component) => {
               // let _ = component.sender().send(WorkspaceMsg::Destroy);
             }
-            WidgetController::Box(component) => {
+            WidgetController::Box(_component) => {
               // let _ = component.sender().send(BoxMsg::Destroy);
             }
           }
