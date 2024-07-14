@@ -44,11 +44,18 @@ fn load_monitor_information() -> anyhow::Result<Vec<MonitorTemp>> {
 
   for display in win32_display_data::connected_displays_all().flatten() {
     let path = display.device_path.clone();
-    let mut split: Vec<_> = path.split('#').collect();
-    split.remove(0);
-    split.remove(split.len() - 1);
-    let device = split[0].to_string();
-    let device_id = split.join("-");
+
+    // https://github.com/LGUG2Z/komorebi/commit/ef9e734680acffdde69d9d0457f208a010e319db
+    let (device, device_id) = if path.is_empty() {
+      (String::from("UNKNOWN"), String::from("UNKNOWN"))
+    } else {
+      let mut split: Vec<_> = path.split('#').collect();
+      split.remove(0);
+      split.remove(split.len() - 1);
+      let device = split[0].to_string();
+      let device_id = split.join("-");
+      (device, device_id)
+    };
 
     let name = display.device_name.trim_start_matches(r"\\.\").to_string();
     let name = name.split('\\').collect::<Vec<_>>()[0].to_string();

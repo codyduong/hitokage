@@ -1177,7 +1177,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple_logger",
- "win32-display-data",
+ "win32-display-data 0.1.0 (git+https://github.com/LGUG2Z/win32-display-data?rev=32a45cebf132c3d651ee22c0c40033a6b7edc945)",
  "windows 0.56.0",
 ]
 
@@ -1198,7 +1198,7 @@ dependencies = [
  "serde",
  "simple_logger",
  "smol",
- "win32-display-data",
+ "win32-display-data 0.1.0 (git+https://github.com/LGUG2Z/win32-display-data?rev=32a45cebf132c3d651ee22c0c40033a6b7edc945)",
  "windows 0.56.0",
 ]
 
@@ -1346,7 +1346,7 @@ dependencies = [
  "uds_windows",
  "which",
  "widestring",
- "win32-display-data",
+ "win32-display-data 0.1.0 (git+https://github.com/LGUG2Z/win32-display-data?rev=2a0f7166da154880a1750b91829b1186d9c6a00c)",
  "windows 0.54.0",
  "windows-implement 0.53.0",
  "windows-interface 0.53.0",
@@ -2790,6 +2790,16 @@ checksum = "7219d36b6eac893fa81e84ebe06485e7dcbb616177469b142df14f1f4deb1311"
 name = "win32-display-data"
 version = "0.1.0"
 source = "git+https://github.com/LGUG2Z/win32-display-data?rev=2a0f7166da154880a1750b91829b1186d9c6a00c#2a0f7166da154880a1750b91829b1186d9c6a00c"
+dependencies = [
+ "itertools",
+ "thiserror",
+ "windows 0.54.0",
+]
+
+[[package]]
+name = "win32-display-data"
+version = "0.1.0"
+source = "git+https://github.com/LGUG2Z/win32-display-data?rev=32a45cebf132c3d651ee22c0c40033a6b7edc945#32a45cebf132c3d651ee22c0c40033a6b7edc945"
 dependencies = [
  "itertools",
  "thiserror",
