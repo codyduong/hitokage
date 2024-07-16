@@ -1,6 +1,4 @@
-use gtk4::{
-  prelude::*, style_context_add_provider_for_display, style_context_remove_provider_for_display, StyleContext,
-};
+use gtk4::{prelude::*, style_context_add_provider_for_display, style_context_remove_provider_for_display};
 use hitokage_core::lua::event::{EventNotif, CONFIG_UPDATE, STATE};
 use hitokage_core::lua::event::{EVENT, NEW_EVENT};
 use hitokage_core::widgets;
