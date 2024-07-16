@@ -5,8 +5,8 @@ use crate::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
-use gtk4::prelude::*;
 use gtk4::Window;
+use gtk4::{prelude::*, Constraint, ConstraintLayout, ConstraintTarget};
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::SharedState;
@@ -24,13 +24,15 @@ fn setup_window_size(
   geometry: &MonitorGeometry,
   scale_factor: &MonitorScaleFactor,
 ) -> anyhow::Result<()> {
-  let mut height = (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 * scale_factor.y) as i32;
+  let mut width = geometry.width as i32;
+  let mut height = geometry.height as i32;
 
-  if get_windows_version() < 11 {
-    height = (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 / scale_factor.y).round() as i32;
+  if get_windows_version() > 10 {
+    width *= scale_factor.x as i32;
+    height *= scale_factor.y as i32;
   }
 
-  window.set_size_request(geometry.width, height);
+  window.set_size_request(width, height);
 
   Ok(())
 }
@@ -75,7 +77,6 @@ pub enum BarLuaHook {
 #[derive(Debug)]
 pub enum BarMsg {
   Destroy(Sender<()>),
-  DestroyActual,
   LuaHook(BarLuaHook),
 }
 
@@ -86,9 +87,18 @@ pub enum BarPosition {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct BarOffset {
+  pub x: Option<i32>,
+  pub y: Option<i32>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct BarProps {
   pub position: Option<BarPosition>,
   pub widgets: Vec<WidgetProps>,
+  pub width: Option<i32>,
+  pub height: Option<i32>,
+  pub offset: Option<BarOffset>,
 }
 
 pub struct Bar {
@@ -98,6 +108,8 @@ pub struct Bar {
   id: u32,
   index: usize,
   scale_factor: MonitorScaleFactor,
+  offset_x: i32,
+  offset_y: i32,
 }
 
 #[relm4::component(pub)]
@@ -115,7 +127,7 @@ impl SimpleComponent for Bar {
 
   view! {
     Window {
-      set_default_size: (1920, crate::common::HITOKAGE_STATUSBAR_HEIGHT),
+      set_default_size: (500, crate::common::HITOKAGE_STATUSBAR_HEIGHT),
       set_resizable: false,
       set_display: &gdk4::Display::default().expect("Failed to get default display"),
       set_decorated: false,
@@ -137,7 +149,9 @@ impl SimpleComponent for Bar {
         // Surfaces aren't ready in realize, but they are ready for consumption here
         let _ = setup_window_pos(window.clone(), &model.geometry);
         // regardless of win version komorebi is consistent unlike gdk4
-        let height = (crate::common::HITOKAGE_STATUSBAR_HEIGHT as f32 * &model.scale_factor.y) as i32;
+        let height = ((model.geometry.height + &model.offset_y) as f32 * &model.scale_factor.y) as i32;
+
+        // println!("{:?} {:?}", (model.geometry.height + &model.offset_y), height);
 
         let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
           model.index,
@@ -158,14 +172,43 @@ impl SimpleComponent for Bar {
 
     callback(sender.clone().input_sender().clone());
 
+    let mut geometry = monitor.geometry;
+    let mut offset_x = 0;
+    let mut offset_y = 0;
+
+    // by default use 32
+    // TODO @codyduong, this is assuming a horizontal bar, otherwise change defaults
+    geometry.height = crate::common::HITOKAGE_STATUSBAR_HEIGHT;
+
+    if let Some(width) = props.width {
+      geometry.width = width;
+    }
+
+    if let Some(height) = props.height {
+      geometry.height = height;
+    }
+
+    if let Some(offset) = props.offset {
+      if let Some(x) = offset.x {
+        geometry.x += x;
+        offset_x = x;
+      }
+      if let Some(y) = offset.y {
+        geometry.y += y;
+        offset_y = y;
+      }
+    }
+
     let mut model = Bar {
       position: props.position,
-      geometry: monitor.geometry,
+      geometry,
       widgets: Vec::new(),
       id: id, //hitokage id
       // windows id
       index: monitor.index,
       scale_factor: monitor.scale_factor,
+      offset_x,
+      offset_y,
     };
 
     let mut sswg = BAR.write();
@@ -182,6 +225,7 @@ impl SimpleComponent for Bar {
           model.widgets.push(WidgetController::Clock(controller));
         }
         WidgetProps::Workspace(inner_props) => {
+          println!("{:?}", inner_props);
           let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
           widgets.main_box.append(controller.widget());
           model.widgets.push(WidgetController::Workspace(controller));
@@ -241,9 +285,6 @@ impl SimpleComponent for Bar {
           }
           let _ = tx.send(());
         });
-      }
-      BarMsg::DestroyActual => {
-        log::error!("deprecated @codyduong")
       }
     }
   }

@@ -26,10 +26,15 @@ for _, monitor in ipairs(monitors) do
 
   table.insert(bars, hitokage.bar.create(monitor, {
     widgets = {
-      { Workspace = {} },
-      { Clock = { format = "%Y-%m-%d %H:%M:%S" } },
+      { Workspace = { width = 32 } },
       { Box = {} },
+      { Clock = { format = "%Y-%m-%d %H:%M:%S" } },
     },
+    width = monitor.geometry.width - 16,
+    offset = {
+      x = 8,
+      y = 8,
+    }
   }))
   ::continue::
 end
