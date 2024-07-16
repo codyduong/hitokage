@@ -1,4 +1,6 @@
-use gtk4::prelude::*;
+use gtk4::{
+  prelude::*, style_context_add_provider_for_display, style_context_remove_provider_for_display, StyleContext,
+};
 use hitokage_core::lua::event::{EventNotif, CONFIG_UPDATE, STATE};
 use hitokage_core::lua::event::{EVENT, NEW_EVENT};
 use hitokage_core::widgets;
@@ -35,6 +37,8 @@ struct App {
   file_last_checked_at: Arc<Mutex<Instant>>,
   // keep alive for lifetime of app
   _debouncer: notify_debouncer_full::Debouncer<notify::ReadDirectoryChangesWatcher, notify_debouncer_full::FileIdMap>,
+  _css_debouncer:
+    notify_debouncer_full::Debouncer<notify::ReadDirectoryChangesWatcher, notify_debouncer_full::FileIdMap>,
   _tx_lua: Sender<bool>,
 }
 
@@ -52,7 +56,7 @@ impl Component for App {
       // LOL! Is there a better way to prevent this from showing?
       connect_show => move |window| {
         window.set_visible(false)
-      }
+      },
     },
   }
 
@@ -66,6 +70,16 @@ impl Component for App {
     } else {
       let mut path = dirs::home_dir().expect("Could not find home directory");
       path.push(".config/hitokage/init.lua");
+      path
+    };
+
+    let css_file_path = if cfg!(feature = "development") {
+      let mut path = Path::new(file!()).to_path_buf();
+      path.push("../../../example/styles.css");
+      fs::canonicalize(path).expect("Failed to canonicalize path")
+    } else {
+      let mut path = dirs::home_dir().expect("Could not find home directory");
+      path.push(".config/hitokage/styles.css");
       path
     };
 
@@ -182,6 +196,64 @@ impl Component for App {
       });
     }
 
+    let (tx2, rx2) = channel();
+    let (tx3, rx3) = channel();
+
+    let mut css_debouncer = new_debouncer(Duration::from_secs(1), None, tx2).unwrap();
+    css_debouncer
+      .watcher()
+      .watch(&css_file_path, notify::RecursiveMode::NonRecursive)
+      .unwrap();
+
+    let root = root.clone();
+
+    thread::spawn(move || loop {
+      match rx2.recv() {
+        Ok(event) => match event {
+          Ok(_) => {
+            tx3.send(()).expect("Failed to send message to reload css");
+          }
+          Err(e) => {
+            log::error!("Watch error: {:?}", e);
+          }
+        },
+        Err(e) => {
+          log::error!("Receive error: {:?}", e);
+        }
+      }
+    });
+
+    {
+      let root = root.clone();
+      let css_file_path = css_file_path.clone();
+      glib::source::idle_add_local(move || {
+        let mut old_providers: Vec<&gtk4::CssProvider> = vec![];
+
+        if let Ok(_) = rx3.try_recv() {
+          let provider = gtk4::CssProvider::new();
+          let css_file = gdk4::gio::File::for_path(&css_file_path);
+          provider.load_from_file(&css_file);
+
+          let display = gtk4::prelude::WidgetExt::display(&root);
+
+          for old_provider in old_providers.drain(..) {
+            style_context_remove_provider_for_display(&display, old_provider);
+          }
+
+          old_providers.push(&provider);
+          style_context_add_provider_for_display(&display, &provider, 500);
+        }
+        glib::ControlFlow::Continue
+      });
+    }
+
+    // load initial
+    let display = gtk4::prelude::WidgetExt::display(&root);
+    let provider = gtk4::CssProvider::new();
+    let css_file = gdk4::gio::File::for_path(&css_file_path);
+    provider.load_from_file(&css_file);
+    style_context_add_provider_for_display(&display, &provider, 400);
+
     // komorebi pipe
     let sender_clone = sender.clone();
     socket::start(sender_clone);
@@ -193,6 +265,7 @@ impl Component for App {
       bars: Vec::new(),
       file_last_checked_at,
       _debouncer: debouncer,
+      _css_debouncer: css_debouncer,
       _tx_lua: tx_lua,
       // bar,
     };
@@ -280,7 +353,6 @@ impl Component for App {
       AppMsg::DestroyActual => {
         // we can't prematurely drop our controllers our we panic!, so wait until we have cleaned up everything we need to
         for mut bar in self.bars.drain(..) {
-          let _ = bar.sender().send(BarMsg::DestroyActual);
           bar.widget().destroy();
           // explode!
           bar.detach_runtime();
@@ -302,7 +374,7 @@ fn main() {
     SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE).expect("Failed to set process DPI awareness");
   }
 
-  let style_file_path = "./example/styles.css";
+  // let style_file_path = "./example/styles.css";
 
   gtk::init().unwrap();
   if let Some(settings) = gtk::Settings::default() {
@@ -311,9 +383,10 @@ fn main() {
     settings.set_property("gtk-xft-hinting", &1);
     settings.set_property("gtk-xft-hintstyle", &"hintfull");
     settings.set_property("gtk-xft-rgba", &"rgb");
+    settings.set_property("gtk-xft-dpi", 300);
   }
 
   let app = RelmApp::new("com.example.hitokage");
-  let _ = app.set_global_css_from_file(style_file_path);
+  // let _ = app.set_global_css_from_file(style_file_path);
   app.run::<App>(());
 }

@@ -1,11 +1,16 @@
 use crate::lua::event::STATE;
 use anyhow::Context;
 use gtk4::prelude::*;
+use gtk4::Constraint;
+use gtk4::ConstraintLayout;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use relm4::SimpleComponent;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 type WorkspaceState = (Option<String>, bool, bool);
 
@@ -16,12 +21,19 @@ pub enum WorkspaceMsg {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct WorkspaceProps {}
+pub struct WorkspaceProps {
+  width: Option<i32>,
+  height: Option<i32>,
+}
 
 pub struct Workspace {
   root: gtk4::FlowBox,
   id: u32, // win id
-           // workspaces: Vec<WorkspaceState>,
+  // workspaces: Vec<WorkspaceState>,
+  constraint_layout: ConstraintLayout,
+  workspaces_to_check_constraints: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>, // this maps a workspace id to the constraints that should be reevaluated every workspace change
+  width: i32,
+  height: i32,
 }
 
 #[relm4::component(pub)]
@@ -31,14 +43,16 @@ impl SimpleComponent for Workspace {
   type Init = (WorkspaceProps, u32); // win id
 
   view! {
+    #[root]
     gtk::FlowBox {
       set_height_request: 16,
-
+      set_hexpand: false,
+      set_vexpand: true,
     }
   }
 
   fn init(propst: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let (_props, id) = propst;
+    let (props, id) = propst;
 
     {
       let sender = sender.clone();
@@ -59,9 +73,20 @@ impl SimpleComponent for Workspace {
       });
     }
 
-    let model = Workspace { root: root.clone(), id };
+    let constraint_layout = ConstraintLayout::new();
+
+    let model = Workspace {
+      root: root.clone(),
+      id,
+      constraint_layout: constraint_layout.clone(),
+      workspaces_to_check_constraints: Arc::new(Mutex::new(HashMap::new())),
+      width: props.width.unwrap_or(16),
+      height: props.height.unwrap_or(16),
+    };
 
     let widgets = view_output!();
+
+    root.set_layout_manager(Some(constraint_layout));
 
     // let (relm4s, relm4r) = relm4::channel::<()>();
     STATE.subscribe(sender.input_sender(), move |state| {
@@ -77,7 +102,14 @@ impl SimpleComponent for Workspace {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
     match msg {
       WorkspaceMsg::Workspaces(workspaces) => {
-        update_workspaces(&self.root, &workspaces);
+        update_workspaces(
+          &self.root,
+          &workspaces,
+          &self.constraint_layout,
+          Arc::clone(&self.workspaces_to_check_constraints),
+          self.width,
+          self.height,
+        );
       }
       WorkspaceMsg::FocusWorkspace(i) => {
         let state = STATE.read();
@@ -162,8 +194,16 @@ fn get_workspaces(state: &serde_json::Value, monitor_id: u32) -> anyhow::Result<
   Ok(workspaces_vec)
 }
 
-fn update_workspaces(root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> () {
+fn update_workspaces(
+  root: &gtk4::FlowBox,
+  workspaces: &Vec<WorkspaceState>,
+  constraints_layout: &ConstraintLayout,
+  workspaces_to_check_constraints_guard: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>,
+  width: i32,
+  height: i32,
+) -> () {
   let mut i = 0;
+  let mut workspaces_to_check_constraints = workspaces_to_check_constraints_guard.lock().unwrap();
   loop {
     match root.child_at_index(i as i32) {
       Some(child) => {
@@ -194,22 +234,115 @@ fn update_workspaces(root: &gtk4::FlowBox, workspaces: &Vec<WorkspaceState>) -> 
         };
       }
       None => match workspaces.get(i) {
-        Some((name, is_focused, is_visible)) => {
+        Some((name, is_focused, _)) => {
           let label = gtk::Label::new(Some(&name.clone().unwrap_or((i + 1).to_string())));
-          let child = gtk::FlowBoxChild::new();
-          // let box_ = gtk::Box::new(gtk4::Orientation::Horizontal, 1);
-          // box_.append(&label);
           root.append(&label);
-          child.set_visible(*is_visible);
+          let child = &root.child_at_index(i as i32).unwrap();
           if *is_focused {
-            root.select_child(&child)
+            root.select_child(child);
           }
+
+          child.set_size_request(width, height);
+
+          // constraints_layout.add_constraint(Constraint::new(
+          //   Some(child),
+          //   gtk4::ConstraintAttribute::Width,
+          //   gtk4::ConstraintRelation::Le,
+          //   None::<&gtk4::FlowBox>,
+          //   gtk4::ConstraintAttribute::None,
+          //   1.0,
+          //   width as f64,
+          //   1000000000,
+          // ));
+          // constraints_layout.add_constraint(Constraint::new(
+          //   Some(child),
+          //   gtk4::ConstraintAttribute::Height,
+          //   gtk4::ConstraintRelation::Le,
+          //   None::<&gtk4::FlowBox>,
+          //   gtk4::ConstraintAttribute::None,
+          //   1.0,
+          //   height as f64,
+          //   1000000000,
+          // ));
+          // correctly layout at start of flowbox
+          constraints_layout.add_constraint(Constraint::new(
+            Some(child),
+            gtk4::ConstraintAttribute::Start,
+            gtk4::ConstraintRelation::Ge,
+            Some(root),
+            gtk4::ConstraintAttribute::Start,
+            1.0,
+            0.0,
+            1,
+          ));
+
+          // constraints_layout.add_constraint(Constraint::new(
+          //   Some(child),
+          //   gtk4::ConstraintAttribute::End,
+          //   gtk4::ConstraintRelation::Ge,
+          //   Some(root),
+          //   gtk4::ConstraintAttribute::End,
+          //   1.0,
+          //   0.0,
+          //   1,
+          // ));
         }
         None => break,
       },
     }
+
+    if i != 0 {
+      let child = &root.child_at_index(i as i32);
+
+      if let Some(constraints) = workspaces_to_check_constraints.get_mut(&(i as i32)) {
+        for constraint in constraints.drain(..) {
+          // TODO @codyduong we remove this constraint and reconstruct it even if it is the same...
+          constraints_layout.remove_constraint(&constraint);
+          // log::debug!("[Workspace] removing constraint {:?}", constraint);
+        }
+      }
+
+      if let Some(child) = child {
+        // lead 8 pixels from previous sibling
+        if i != 0 {
+          // find first visible previous sibling
+          let prev_visible = loop {
+            let mut prev_sibling = child.prev_sibling();
+            while let Some(ref sibling) = prev_sibling {
+              if sibling.is_visible() {
+                break;
+              }
+              prev_sibling = sibling.prev_sibling();
+            }
+            break prev_sibling;
+          };
+
+          let to_check_constraints = vec![Constraint::new(
+            Some(child),
+            gtk4::ConstraintAttribute::Start,
+            gtk4::ConstraintRelation::Eq,
+            prev_visible.as_ref(),
+            gtk4::ConstraintAttribute::End,
+            1.0,
+            0.0,
+            1000,
+          )];
+
+          // if we are the center element then center everything?
+
+          for constraint in to_check_constraints.clone() {
+            constraints_layout.add_constraint(constraint.clone());
+            // log::debug!("[Workspace] adding constraint {:?}", constraint);
+          }
+
+          workspaces_to_check_constraints.insert(i as i32, to_check_constraints);
+        }
+      }
+    }
+
     i += 1;
   }
+
   root.show();
 
   ()

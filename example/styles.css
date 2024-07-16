@@ -3,15 +3,16 @@ window {
   color: #f2e5bc;
   
   font-family: 'MesloLGS NF', 'Courier New', 'Bars', 'Font Awesome 5 Free';
-  font-size: 12px;
+  font-size: 14px;
 }
 
 flowbox {
-  padding: 4px 0 0 8px;
+  padding: 0px 0 0 0px;
 }
 
 flowboxchild {
-  margin: 0 4px 0 0;
+  /* distance between workspace children */
+  margin-left: 8px;
   border: 1px solid rgba(168, 153, 132, 0.4);
 
   color: #f2e5bc;
@@ -19,6 +20,8 @@ flowboxchild {
 
   font-size: 12px;
   border-radius: 2px;
+
+  /* min-width: 64px; */
 }
 
 flowboxchild:selected {

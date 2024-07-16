@@ -41,6 +41,10 @@ function bar_instance:get_widgets() end
 --- Array of WidgetProps
 --- @alias WidgetPropsVec table<number, WidgetProps>
 
+--- @class BarOffset
+--- @field x number?
+--- @field y number?
+
 -------------------------------------------------------------------------------
 --- Represents the bar module
 --- @class barlib
@@ -48,6 +52,9 @@ local bar = {}
 
 --- @class BarProps
 --- @field widgets WidgetPropsVec
+--- @field width number?
+--- @field height number?
+--- @field offset BarOffset?
 
 --- Creates a new bar
 --- @param monitor Monitor
