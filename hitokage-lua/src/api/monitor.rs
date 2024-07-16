@@ -6,7 +6,7 @@ use hitokage_core::{
   lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor},
   win_utils::get_windows_version,
 };
-use mlua::{AnyUserData, Lua, LuaSerdeExt, MetaMethod, UserData, UserDataMethods, Value};
+use mlua::{AnyUserData, Lua, LuaSerdeExt, UserData, UserDataMethods, Value};
 use windows::Win32::{
   Graphics::Gdi::HMONITOR,
   UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI},
@@ -190,7 +190,7 @@ pub fn make<'lua>(lua: &'lua Lua) -> anyhow::Result<AnyUserData<'lua>> {
 // tests
 #[cfg(test)]
 mod tests {
-  use mlua::{AnyUserData, AnyUserDataExt, Lua, Table, UserData, Value};
+  use mlua::{AnyUserData, AnyUserDataExt, Lua, Value};
 
   use crate::assert_lua_type;
 
@@ -207,12 +207,8 @@ mod tests {
       let value: Value = lua.globals().get("userdata")?;
 
       let userdata: AnyUserData = assert_lua_type!(value, AnyUserData);
-      // let metatable = userdata.get_metatable()?;
       assert_lua_type!(userdata.get::<&str, Value>("get_all")?, mlua::Function);
       assert_lua_type!(userdata.get::<&str, Value>("get_primary")?, mlua::Function);
-      // assert_lua_type!(metatable.get("__call")?, mlua::Function);
-      // assert_eq!(table.len()?, 0);
-      // assert_eq!(table.pairs::<String, Value>().count(), 2);
     }
 
     Ok(())
