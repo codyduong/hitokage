@@ -317,16 +317,31 @@ fn update_workspaces(
             break prev_sibling;
           };
 
-          let to_check_constraints = vec![Constraint::new(
-            Some(child),
-            gtk4::ConstraintAttribute::Start,
-            gtk4::ConstraintRelation::Eq,
-            prev_visible.as_ref(),
-            gtk4::ConstraintAttribute::End,
-            1.0,
-            0.0,
-            1000,
-          )];
+          let mut to_check_constraints: Vec<Constraint> = Vec::new();
+
+          if let Some(prev) = prev_visible {
+            to_check_constraints.push(Constraint::new(
+              Some(child),
+              gtk4::ConstraintAttribute::Start,
+              gtk4::ConstraintRelation::Eq,
+              Some(&prev),
+              gtk4::ConstraintAttribute::End,
+              1.0,
+              0.0,
+              1000,
+            ))
+          } else {
+            to_check_constraints.push(Constraint::new(
+              Some(child),
+              gtk4::ConstraintAttribute::Start,
+              gtk4::ConstraintRelation::Eq,
+              Some(root),
+              gtk4::ConstraintAttribute::Start,
+              1.0,
+              0.0,
+              1000,
+            ))
+          }
 
           // if we are the center element then center everything?
 
