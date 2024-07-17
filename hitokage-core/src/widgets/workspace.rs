@@ -9,21 +9,31 @@ use relm4::ComponentSender;
 use relm4::SimpleComponent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::Mutex;
 
 type WorkspaceState = (Option<String>, bool, bool);
 
 #[derive(Debug, Clone)]
+pub enum WorkspaceMsgHook {
+  GetItemHeight(Sender<u32>),
+  SetItemHeight(u32),
+  GetItemWidth(Sender<u32>),
+  SetItemWidth(u32),
+}
+
+#[derive(Debug, Clone)]
 pub enum WorkspaceMsg {
   Workspaces(Vec<WorkspaceState>),
   FocusWorkspace(usize),
+  LuaHook(WorkspaceMsgHook),
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct WorkspaceProps {
-  width: Option<i32>,
-  height: Option<i32>,
+  item_width: Option<u32>,
+  item_height: Option<u32>,
 }
 
 pub struct Workspace {
@@ -32,8 +42,8 @@ pub struct Workspace {
   // workspaces: Vec<WorkspaceState>,
   constraint_layout: ConstraintLayout,
   workspaces_to_check_constraints: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>, // this maps a workspace id to the constraints that should be reevaluated every workspace change
-  width: i32,
-  height: i32,
+  item_width: i32,
+  item_height: i32,
 }
 
 #[relm4::component(pub)]
@@ -80,8 +90,8 @@ impl SimpleComponent for Workspace {
       id,
       constraint_layout: constraint_layout.clone(),
       workspaces_to_check_constraints: Arc::new(Mutex::new(HashMap::new())),
-      width: props.width.unwrap_or(16),
-      height: props.height.unwrap_or(16),
+      item_width: props.item_width.unwrap_or(16) as i32,
+      item_height: props.item_height.unwrap_or(16) as i32,
     };
 
     let widgets = view_output!();
@@ -107,8 +117,8 @@ impl SimpleComponent for Workspace {
           &workspaces,
           &self.constraint_layout,
           Arc::clone(&self.workspaces_to_check_constraints),
-          self.width,
-          self.height,
+          self.item_width,
+          self.item_height,
         );
       }
       WorkspaceMsg::FocusWorkspace(i) => {
@@ -127,6 +137,40 @@ impl SimpleComponent for Workspace {
           log::error!("We failed to find any focused workspace? What happened!")
         }
       }
+      WorkspaceMsg::LuaHook(hook) => match hook {
+        WorkspaceMsgHook::GetItemHeight(tx) => {
+          tx.send(self.item_width as u32).unwrap();
+        }
+        WorkspaceMsgHook::SetItemHeight(item_height) => {
+          self.item_width = item_height as i32;
+          let state = STATE.read();
+          let workspaces = get_workspaces(&state.clone(), self.id).unwrap();
+          update_workspaces(
+            &self.root,
+            &workspaces,
+            &self.constraint_layout,
+            Arc::clone(&self.workspaces_to_check_constraints),
+            self.item_width,
+            self.item_height,
+          );
+        }
+        WorkspaceMsgHook::GetItemWidth(tx) => {
+          tx.send(self.item_width as u32).unwrap();
+        }
+        WorkspaceMsgHook::SetItemWidth(item_width) => {
+          self.item_width = item_width as i32;
+          let state = STATE.read();
+          let workspaces = get_workspaces(&state.clone(), self.id).unwrap();
+          update_workspaces(
+            &self.root,
+            &workspaces,
+            &self.constraint_layout,
+            Arc::clone(&self.workspaces_to_check_constraints),
+            self.item_width,
+            self.item_height,
+          );
+        }
+      },
     }
   }
 }
