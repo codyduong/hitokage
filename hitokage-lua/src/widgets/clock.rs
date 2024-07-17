@@ -1,8 +1,7 @@
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::widgets::clock::ClockMsg;
 use hitokage_core::widgets::clock::ClockMsgHook::{GetFormat, SetFormat};
-use mlua::Lua;
-use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
+use mlua::{Lua, LuaSerdeExt, UserData, UserDataMethods, Value};
 use std::sync::mpsc;
 
 #[derive(Debug, Clone)]
@@ -25,23 +24,18 @@ impl UserData for ClockUserData {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
 
     methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
-
     methods.add_method("set_format", |lua, this, value: mlua::Value| {
       Ok(this.set_format(lua, value)?)
     });
 
-    methods.add_meta_method(
+    methods.add_meta_method::<_, mlua::String, _>(
       "__index",
-      |lua, instance, value| -> Result<mlua::Value<'lua>, mlua::Error> {
-        match value {
-          Value::String(s) => match s.to_str()? {
-            "type" => Ok(lua.to_value(&instance.r#type.clone())?),
-            "format" => Ok(lua.to_value(&instance.get_format()?)?),
-            _ => Ok(Value::Nil),
-          },
+      |lua, instance, key| -> Result<mlua::Value<'lua>, mlua::Error> {
+        match key.to_str().unwrap() {
+          "type" => Ok(lua.to_value(&instance.r#type.clone())?),
           _ => Ok(Value::Nil),
         }
       },
-    )
+    );
   }
 }
