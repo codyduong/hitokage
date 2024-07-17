@@ -330,17 +330,6 @@ fn update_workspaces(
               0.0,
               1000,
             ))
-          } else {
-            to_check_constraints.push(Constraint::new(
-              Some(child),
-              gtk4::ConstraintAttribute::Start,
-              gtk4::ConstraintRelation::Eq,
-              Some(root),
-              gtk4::ConstraintAttribute::Start,
-              1.0,
-              0.0,
-              1000,
-            ))
           }
 
           // if we are the center element then center everything?
