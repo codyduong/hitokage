@@ -19,6 +19,7 @@ use std::thread;
 use std::time::Duration;
 use std::time::Instant;
 use windows::Win32::UI::HiDpi::{SetProcessDpiAwareness, PROCESS_PER_MONITOR_DPI_AWARE};
+use windows::Win32::UI::WindowsAndMessaging::{GetWindowLongPtrW, SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_TOOLWINDOW};
 
 mod config;
 mod socket;
@@ -52,8 +53,23 @@ impl Component for App {
 
       // LOL! Is there a better way to prevent this from showing?
       connect_show => move |window| {
-        window.set_visible(false)
-      },
+        window.set_visible(false);
+
+        let native = window.native().expect("Failed to get native");
+        let surface = native.surface().expect("Failed to get surface");
+
+        let handle = surface
+          .downcast::<gdk4_win32::Win32Surface>()
+          .expect("Failed to get Win32Surface")
+          .handle();
+        let win_handle = windows::Win32::Foundation::HWND(handle.0);
+
+        unsafe {
+          let ex_style = GetWindowLongPtrW(win_handle, GWL_EXSTYLE) as u32;
+          let new_ex_style = ex_style | WS_EX_TOOLWINDOW.0;
+          SetWindowLongPtrW(win_handle, GWL_EXSTYLE, new_ex_style as _);
+        }
+      }
     },
   }
 
