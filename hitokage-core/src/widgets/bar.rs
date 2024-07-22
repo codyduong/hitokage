@@ -14,6 +14,7 @@ use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
+use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, HWND_TOP, SWP_NOSIZE};
 
 pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
 
@@ -35,7 +36,7 @@ fn setup_window_size(
   Ok(())
 }
 
-fn setup_window_pos(window: Window, geometry: &MonitorGeometry) -> anyhow::Result<()> {
+fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::Result<()> {
   // https://discourse.gnome.org/t/set-absolut-window-position-in-gtk4/8552/4
   let native = window.native().expect("Failed to get native");
   let surface = native.surface().expect("Failed to get surface");
@@ -47,18 +48,10 @@ fn setup_window_pos(window: Window, geometry: &MonitorGeometry) -> anyhow::Resul
     .handle();
   let win_handle = windows::Win32::Foundation::HWND(handle.0);
 
-  log::debug!("Attempting to move {:?}", win_handle);
-
   unsafe {
-    windows::Win32::UI::WindowsAndMessaging::SetWindowPos(
-      win_handle,
-      // TODO @codyduong, set this up for user configuration
-      windows::Win32::UI::WindowsAndMessaging::HWND_TOP,
-      geometry.x,
-      geometry.y,
-      0,
-      0,
-      windows::Win32::UI::WindowsAndMessaging::SWP_NOSIZE,
+    SetWindowPos(
+      win_handle, // TODO @codyduong, set this up for user configuration
+      HWND_TOP, geometry.x, geometry.y, 0, 0, SWP_NOSIZE,
     )
     .ok();
   }
@@ -144,7 +137,7 @@ impl SimpleComponent for Bar {
 
       connect_show => move |window| {
         // Surfaces aren't ready in realize, but they are ready for consumption here
-        let _ = setup_window_pos(window.clone(), &model.geometry);
+        let _ = setup_window_surface(window.clone(), &model.geometry);
         // regardless of win version komorebi is consistent unlike gdk4
         let height = ((model.geometry.height + &model.offset_y) as f32 * &model.scale_factor.y) as i32;
 
