@@ -15,7 +15,6 @@ pub enum AppMsg {
   Komorebi(String),
   KomorebiErr(String),
   LuaHook(LuaHook),
-  Destroy(std::sync::mpsc::Sender<()>),
   DestroyActual,
 }
 

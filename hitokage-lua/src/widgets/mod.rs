@@ -28,7 +28,7 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
       WidgetUserData::Workspace(sender) => {
         let workspace_userdata = WorkspaceUserData {
           r#type: "Workspace".to_string(),
-          sender: sender
+          sender: sender,
         };
         lua.pack(workspace_userdata)
       }
