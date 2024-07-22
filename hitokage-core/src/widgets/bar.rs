@@ -1,4 +1,3 @@
-use super::clock::ClockMsg;
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
 use crate::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
@@ -14,8 +13,7 @@ use relm4::SimpleComponent;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::mpsc::{channel, Sender};
-use std::thread;
+use std::sync::mpsc::Sender;
 
 pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
 
@@ -76,7 +74,6 @@ pub enum BarLuaHook {
 
 #[derive(Debug)]
 pub enum BarMsg {
-  Destroy(Sender<()>),
   LuaHook(BarLuaHook),
 }
 
@@ -254,37 +251,18 @@ impl SimpleComponent for Bar {
           tx.send(self.geometry).unwrap();
         }
       },
-      BarMsg::Destroy(tx) => {
-        let mut rxv: Vec<std::sync::mpsc::Receiver<()>> = vec![];
-
-        for widget in &self.widgets {
-          match widget {
-            WidgetController::Clock(component) => {
-              let sender = component.sender().clone();
-              let (inner_tx, inner_rx) = channel::<()>();
-
-              let _ = sender.send(ClockMsg::Destroy(inner_tx));
-
-              rxv.push(inner_rx)
-            }
-            // @codyduong only clock needs a dedicated cleanup, since it has a timer
-            WidgetController::Workspace(_component) => {
-              // let _ = component.sender().send(WorkspaceMsg::Destroy);
-            }
-            WidgetController::Box(_component) => {
-              // let _ = component.sender().send(BoxMsg::Destroy);
-            }
-          }
-        }
-
-        thread::spawn(move || {
-          for rx in &rxv {
-            // we can sometimes close the channel early so don't unwrap...
-            let _ = rx.recv().unwrap();
-          }
-          let _ = tx.send(());
-        });
-      }
     }
+  }
+
+  fn shutdown(&mut self, _widgets: &mut Self::Widgets, _outputt: relm4::Sender<Self::Output>) {
+    let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
+      self.index,
+      komorebi_client::Rect {
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+      },
+    ));
   }
 }

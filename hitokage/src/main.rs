@@ -3,7 +3,6 @@ use hitokage_core::lua::event::{EventNotif, CONFIG_UPDATE, STATE};
 use hitokage_core::lua::event::{EVENT, NEW_EVENT};
 use hitokage_core::widgets;
 use hitokage_core::widgets::bar;
-use hitokage_core::widgets::bar::BarMsg;
 use hitokage_lua::AppMsg;
 use hitokage_lua::LuaHookType;
 use notify::Watcher;
@@ -126,12 +125,6 @@ impl Component for App {
             Ok(e) => {
               log::info!("File update: {:?}", e);
 
-              let (tx, rx) = channel::<()>();
-              // destroy all existing parts of the relm/gtk4 app
-              sender.input(hitokage_lua::AppMsg::Destroy(tx));
-              // wait for it to complete
-              rx.recv().unwrap();
-              log::debug!("We have cleaned up our messes, we can actually destroy the bar!");
               sender.input(hitokage_lua::AppMsg::DestroyActual);
 
               let mut stopped_guard = is_stopped.lock().unwrap();
@@ -331,23 +324,6 @@ impl Component for App {
           ()
         }
       },
-      AppMsg::Destroy(tx) => {
-        // this has to be refactored because there is no way this is the right way to do it
-        let mut rxv: Vec<std::sync::mpsc::Receiver<()>> = vec![];
-
-        for bar in self.bars.iter() {
-          let (inner_tx, inner_rx) = channel::<()>();
-          let _ = bar.sender().send(BarMsg::Destroy(inner_tx));
-          rxv.push(inner_rx);
-        }
-
-        thread::spawn(move || {
-          for rx in &rxv {
-            let _ = rx.recv().unwrap();
-          }
-          let _ = tx.send(());
-        });
-      }
       AppMsg::DestroyActual => {
         // we can't prematurely drop our controllers our we panic!, so wait until we have cleaned up everything we need to
         for mut bar in self.bars.drain(..) {
