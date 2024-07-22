@@ -225,7 +225,6 @@ impl SimpleComponent for Bar {
           model.widgets.push(WidgetController::Clock(controller));
         }
         WidgetProps::Workspace(inner_props) => {
-          println!("{:?}", inner_props);
           let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
           widgets.main_box.append(controller.widget());
           model.widgets.push(WidgetController::Workspace(controller));
