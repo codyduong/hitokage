@@ -231,7 +231,7 @@ impl Component for App {
           }
         }
       });
-    
+
       let root = root.clone();
       let css_file_path = css_file_path.clone();
       glib::source::idle_add_local(move || {
