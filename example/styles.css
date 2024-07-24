@@ -7,7 +7,7 @@ window {
 }
 
 flowbox {
-  padding: 0px 0 0 0px;
+  padding: 0px 8px 0px 8px;
   border: 1px solid rgba(255, 0, 0, 0.4);
 }
 
@@ -19,14 +19,14 @@ flowboxchild {
   color: #f2e5bc;
   background-color: rgba(60, 56, 54, 0.4);
 
-  font-size: 12px;
-  border-radius: 2px;
+  font-size: 11px;
+  border-radius: 11px;
 
   /* min-width: 64px; */
 }
 
-flowboxchild:last-child {
-  margin-right: 8px;
+flowboxchild:first-child {
+  margin-left: 0px;
 }
 
 flowboxchild:selected {
