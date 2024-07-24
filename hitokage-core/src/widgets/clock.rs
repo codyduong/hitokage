@@ -52,7 +52,7 @@ impl SimpleComponent for Clock {
   view! {
     gtk::Box {
       gtk::Label {
-        set_hexpand: true,
+        set_hexpand: false,
         #[watch]
         set_label: &model.current_time,
       },

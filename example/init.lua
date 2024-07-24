@@ -26,9 +26,9 @@ for _, monitor in ipairs(monitors) do
 
   table.insert(bars, hitokage.bar.create(monitor, {
     widgets = {
-      { Workspace = { width = 32 } },
       { Box = {} },
-      { Clock = { format = "%Y-%m-%d %H:%M:%S" } },
+      { Workspace = { halign = "Start" } },
+      { Clock = { format = "%Y-%m-%d %I:%M:%S %p" } },
     },
     width = monitor.geometry.width - 16,
     offset = {
@@ -39,6 +39,13 @@ for _, monitor in ipairs(monitors) do
   ::continue::
 end
 
+
+--- @alias WorkspaceTable table<number, Workspace>
+--- @type WorkspaceTable
+local workspaces = {}
+
+--- @alias ClockTable table<number, Clock>
+--- @type ClockTable
 local clocks = {}
 
 for i, bar in ipairs(bars) do
@@ -50,6 +57,9 @@ for i, bar in ipairs(bars) do
     hitokage.debug(widget)
     if widget.type == "Clock" then
       table.insert(clocks, widget)
+    end
+    if widget.type == "Workspace" then
+      table.insert(workspaces, widget)
     end 
   end
 end
@@ -71,6 +81,18 @@ local timeout = function (timeout, action)
     end
   end)
 end
+
+-- local halign_test = timeout(1000, function()
+--   for _, workspace in ipairs(workspaces) do
+--     local halign = workspace:get_halign()
+
+--     if halign == 'Start' then
+--       workspace:set_halign('Center')
+--     else
+--       workspace:set_halign('Start')
+--     end
+--   end
+-- end)
 
 -- local clock_swapper = timeout(1000, function()
 --   for _, clock in ipairs(clocks) do
@@ -258,6 +280,7 @@ local file_watcher = coroutine.create(
 dispatcher({
   -- hitokage.loop.coroutine(),
   -- clock_swapper,
+  -- halign_test,
   file_watcher,
   komorebic_coroutine,
 })

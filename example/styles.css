@@ -8,6 +8,7 @@ window {
 
 flowbox {
   padding: 0px 0 0 0px;
+  border: 1px solid rgba(255, 0, 0, 0.4);
 }
 
 flowboxchild {
@@ -22,6 +23,10 @@ flowboxchild {
   border-radius: 2px;
 
   /* min-width: 64px; */
+}
+
+flowboxchild:last-child {
+  margin-right: 8px;
 }
 
 flowboxchild:selected {
