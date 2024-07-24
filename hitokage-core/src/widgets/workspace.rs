@@ -45,7 +45,7 @@ pub struct Workspace {
   // workspaces: Vec<WorkspaceState>,
   constraint_layout: ConstraintLayout,
   workspaces_to_check_constraints: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>, // this maps a workspace id to the constraints that should be reevaluated every workspace change
-  
+
   // lua accessible
   item_width: i32,
   item_height: i32,
@@ -103,7 +103,10 @@ impl Component for Workspace {
 
     let item_width = props.item_width.unwrap_or(16) as i32;
     let item_height = props.item_height.unwrap_or(16) as i32;
-    let halign =  props.halign.unwrap_or(Align::Start);
+
+    println!("width: {:?} {:?}", props.item_width, item_width);
+
+    let halign = props.halign.unwrap_or(Align::Start);
 
     root.set_halign(halign.clone().into());
 
@@ -157,9 +160,7 @@ impl Component for Workspace {
         }
       }
       WorkspaceMsg::LuaHook(hook) => match hook {
-        WorkspaceMsgHook::GetHalign(tx) => {
-          tx.send(self.halign).unwrap()
-        }
+        WorkspaceMsgHook::GetHalign(tx) => tx.send(self.halign).unwrap(),
         WorkspaceMsgHook::SetHalign(halign) => {
           root.set_halign(halign.clone().into());
           self.halign = halign
@@ -305,9 +306,10 @@ fn update_workspaces(
       None => match workspaces.get(i) {
         Some((name, is_focused, _)) => {
           let label = gtk::Label::new(Some(&name.clone().unwrap_or((i + 1).to_string())));
+          label.set_hexpand(true);
+          label.set_vexpand(true);
           flowbox.append(&label);
           let child = &flowbox.child_at_index(i as i32).unwrap();
-          child.set_hexpand(false);
           if *is_focused {
             flowbox.select_child(child);
           }
@@ -327,6 +329,13 @@ fn update_workspaces(
         }
       }
 
+      let flowbox_style = flowbox.style_context();
+      let flowbox_padding = flowbox_style.padding();
+      let child_style = child.style_context();
+      let child_margin = child_style.margin();
+
+      child.set_size_request(width + child_margin.left() as i32 + child_margin.right() as i32, height);
+
       let mut to_check_constraints: Vec<Constraint> = Vec::new();
 
       let first_visible_or_focused = workspaces
@@ -337,12 +346,12 @@ fn update_workspaces(
         if i == first {
           let constraint = Constraint::new(
             Some(&child),
-            gtk4::ConstraintAttribute::Start,
+            gtk4::ConstraintAttribute::Left,
             gtk4::ConstraintRelation::Eq,
             Some(flowbox),
-            gtk4::ConstraintAttribute::Start,
+            gtk4::ConstraintAttribute::Left,
             1.0,
-            0.0,
+            std::cmp::max(flowbox_padding.left(), child_margin.left()) as f64,
             1000000000,
           );
 
@@ -356,10 +365,10 @@ fn update_workspaces(
         if let Some(prev) = prev_visible {
           let constraint = Constraint::new(
             Some(&child),
-            gtk4::ConstraintAttribute::Start,
+            gtk4::ConstraintAttribute::Left,
             gtk4::ConstraintRelation::Eq,
             Some(&prev),
-            gtk4::ConstraintAttribute::End,
+            gtk4::ConstraintAttribute::Right,
             1.0,
             0.0,
             1001001000,
@@ -376,13 +385,13 @@ fn update_workspaces(
       if let Some(last) = last_visible_or_focused {
         if i == last {
           let constraint = Constraint::new(
-            Some(&child),
-            gtk4::ConstraintAttribute::End,
-            gtk4::ConstraintRelation::Eq,
             Some(flowbox),
-            gtk4::ConstraintAttribute::End,
+            gtk4::ConstraintAttribute::Right,
+            gtk4::ConstraintRelation::Eq,
+            Some(&child),
+            gtk4::ConstraintAttribute::Right,
             1.0,
-            0.0,
+            std::cmp::max(flowbox_padding.right(), child_margin.right()) as f64,
             1000000000,
           );
 
