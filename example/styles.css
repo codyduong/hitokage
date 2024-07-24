@@ -8,7 +8,7 @@ window {
 
 flowbox {
   padding: 0px 8px 0px 8px;
-  border: 1px solid rgba(255, 0, 0, 0.4);
+  /* border: 1px solid rgba(255, 0, 0, 0.4); */
 }
 
 flowboxchild {
@@ -22,7 +22,7 @@ flowboxchild {
   font-size: 11px;
   border-radius: 11px;
 
-  /* min-width: 64px; */
+  transition: min-width 250ms;
 }
 
 flowboxchild:first-child {
@@ -30,6 +30,8 @@ flowboxchild:first-child {
 }
 
 flowboxchild:selected {
+  min-width: 32px;
+  border: 1px solid #f2e5bc;
   background-color: #f2e5bc;
   color: #333333;
   font-weight: bold;

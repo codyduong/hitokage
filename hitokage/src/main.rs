@@ -214,23 +214,24 @@ impl Component for App {
 
     let root = root.clone();
 
-    thread::spawn(move || loop {
-      match rx2.recv() {
-        Ok(event) => match event {
-          Ok(_) => {
-            tx3.send(()).expect("Failed to send message to reload css");
-          }
-          Err(e) => {
-            log::error!("Watch error: {:?}", e);
-          }
-        },
-        Err(e) => {
-          log::error!("Receive error: {:?}", e);
-        }
-      }
-    });
-
     {
+      let tx3 = tx3.clone();
+      thread::spawn(move || loop {
+        match rx2.recv() {
+          Ok(event) => match event {
+            Ok(_) => {
+              tx3.send(()).expect("Failed to send message to reload css");
+            }
+            Err(e) => {
+              log::error!("Watch error: {:?}", e);
+            }
+          },
+          Err(e) => {
+            log::error!("Receive error: {:?}", e);
+          }
+        }
+      });
+    
       let root = root.clone();
       let css_file_path = css_file_path.clone();
       glib::source::idle_add_local(move || {
@@ -254,12 +255,8 @@ impl Component for App {
       });
     }
 
-    // load initial
-    let display = gtk4::prelude::WidgetExt::display(&root);
-    let provider = gtk4::CssProvider::new();
-    let css_file = gdk4::gio::File::for_path(&css_file_path);
-    provider.load_from_file(&css_file);
-    style_context_add_provider_for_display(&display, &provider, 400);
+    // load initial css
+    tx3.send(()).unwrap();
 
     // komorebi pipe
     let sender_clone = sender.clone();
