@@ -1,8 +1,8 @@
+use crate::common::Align;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
-use relm4::SimpleComponent;
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
@@ -12,6 +12,8 @@ use std::sync::Mutex;
 pub enum ClockMsgHook {
   GetFormat(Sender<String>),
   SetFormat(String),
+  GetHalign(Sender<Align>),
+  SetHalign(Align),
 }
 
 #[derive(Debug, Clone)]
@@ -23,6 +25,7 @@ pub enum ClockMsg {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ClockProps {
   format: String,
+  halign: Align,
 }
 
 impl From<ClockProps> for Clock {
@@ -31,6 +34,7 @@ impl From<ClockProps> for Clock {
       format: props.format.clone(),
       current_time: chrono::Local::now().format(&props.format).to_string(),
       destroyed: Arc::new(Mutex::new(false)),
+      halign: props.halign,
     }
   }
 }
@@ -40,14 +44,16 @@ pub struct Clock {
   format: String,
   current_time: String,
   destroyed: Arc<Mutex<bool>>,
+  halign: Align,
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for Clock {
+impl Component for Clock {
   type Input = ClockMsg;
   type Output = ();
   type Init = ClockProps;
   type Widgets = ClockWidgets;
+  type CommandOutput = ();
 
   view! {
     gtk::Box {
@@ -61,6 +67,9 @@ impl SimpleComponent for Clock {
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let model: Clock = props.into();
+
+    root.add_css_class("clock");
+    root.set_halign(model.clone().halign.into());
 
     // Timer
     let sender_clone = sender.clone();
@@ -80,7 +89,7 @@ impl SimpleComponent for Clock {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       ClockMsg::Tick => {
         self.current_time = chrono::Local::now().format(&self.format).to_string();
@@ -91,6 +100,13 @@ impl SimpleComponent for Clock {
         }
         ClockMsgHook::SetFormat(format) => {
           self.format = format;
+        }
+        ClockMsgHook::GetHalign(tx) => {
+          tx.send(self.halign.clone()).unwrap();
+        }
+        ClockMsgHook::SetHalign(halign) => {
+          root.set_halign(halign.clone().into());
+          self.halign = halign
         }
       },
     }
