@@ -36,3 +36,7 @@ flowboxchild:selected {
   color: #333333;
   font-weight: bold;
 }
+
+.clock {
+  padding-right: 16px;
+}
