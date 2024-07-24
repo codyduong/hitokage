@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
 --- Links to WorkspaceProps in 'hitokage-core\src\widgets\workspace.rs'
 --- @class WorkspaceProps
---- @field item_width number?
---- @field item_height number?
+--- @field item_width integer?
+--- @field item_height integer?
 --- @field halign Align?
 
 -------------------------------------------------------------------------------
