@@ -10,6 +10,7 @@ _G._not_deadlocked = function() end
 _G._subscribers = {}
 _G._subscriptions = {}
 
+local _common = require("widgets.common")
 local bar = require("widgets.bar")
 local _box = require("widgets.box")
 local _clock = require("widgets.clock")
