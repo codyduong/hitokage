@@ -310,10 +310,10 @@ impl Component for App {
       }
 
       AppMsg::LuaHook(info) => match info.t {
-        LuaHookType::CreateBar(monitor, props, id, callback) => {
+        LuaHookType::CreateBar(monitor, props, callback) => {
           let builder = bar::Bar::builder();
 
-          let bar = builder.launch((monitor, props, id, callback, root.clone()));
+          let bar = builder.launch((monitor, props, callback, root.clone()));
           // .forward(sender.input_sender(), std::convert::identity);
 
           self.bars.push(bar);

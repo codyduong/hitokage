@@ -23,10 +23,6 @@ function bar_instance:is_ready() end
 --- @return MonitorGeometry
 function bar_instance:get_geometry() end
 
---- Gets the bar id
---- @return number
-function bar_instance:get_id() end
-
 --- Gets the widgets on the bar
 --- @return table<number, Box | Clock | Workspace >
 function bar_instance:get_widgets() end

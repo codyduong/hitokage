@@ -16,8 +16,6 @@ use std::collections::HashMap;
 use std::sync::mpsc::Sender;
 use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, HWND_TOP, SWP_NOSIZE};
 
-pub static BAR: SharedState<HashMap<u32, ComponentSender<Bar>>> = SharedState::new();
-
 fn setup_window_size(
   window: Window,
   geometry: &MonitorGeometry,
@@ -94,8 +92,7 @@ pub struct BarProps {
 pub struct Bar {
   position: Option<BarPosition>,
   geometry: MonitorGeometry,
-  pub widgets: Vec<WidgetController>,
-  id: u32,
+  widgets: Vec<WidgetController>,
   index: usize,
   scale_factor: MonitorScaleFactor,
   offset_x: i32,
@@ -109,7 +106,6 @@ impl SimpleComponent for Bar {
   type Init = (
     Monitor,
     BarProps,
-    u32,
     Box<dyn Fn(relm4::Sender<BarMsg>) -> () + Send>,
     gtk::ApplicationWindow,
   );
@@ -152,7 +148,7 @@ impl SimpleComponent for Bar {
   }
 
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let (monitor, props, id, callback, application_root) = input;
+    let (monitor, props, callback, application_root) = input;
 
     root.set_transient_for(Some(&application_root));
 
@@ -170,13 +166,8 @@ impl SimpleComponent for Bar {
     // TODO @codyduong, this is assuming a horizontal bar, otherwise change defaults
     geometry.height = crate::common::HITOKAGE_STATUSBAR_HEIGHT;
 
-    if let Some(width) = props.width {
-      geometry.width = width;
-    }
-
-    if let Some(height) = props.height {
-      geometry.height = height;
-    }
+    geometry.width = props.width.unwrap_or(geometry.width);
+    geometry.height = props.height.unwrap_or(geometry.height);
 
     if let Some(offset) = props.offset {
       if let Some(x) = offset.x {
@@ -193,17 +184,11 @@ impl SimpleComponent for Bar {
       position: props.position,
       geometry,
       widgets: Vec::new(),
-      id: id, //hitokage id
-      // windows id
       index: monitor.index,
       scale_factor: monitor.scale_factor,
       offset_x,
       offset_y,
     };
-
-    let mut sswg = BAR.write();
-    sswg.insert(id, sender);
-    drop(sswg);
 
     let widgets = view_output!();
 
