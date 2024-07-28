@@ -1,5 +1,5 @@
 window {
-  background-color: rgba(29, 32, 33, 0.3);
+  background-color: rgba(29, 32, 33, 0.0);
   color: #f2e5bc;
   
   font-family: 'MesloLGS NF', 'Courier New', 'Bars', 'Font Awesome 5 Free';
@@ -7,7 +7,7 @@ window {
 }
 
 flowbox {
-  padding: 0px 8px 0px 8px;
+  padding: 0px 24px 0px 24px;
   /* border: 1px solid rgba(255, 0, 0, 0.4); */
 }
 
@@ -22,7 +22,8 @@ flowboxchild {
   font-size: 11px;
   border-radius: 11px;
 
-  transition: min-width 250ms;
+  transition: all 500ms;
+  transition-property: min-width, background-color;
 }
 
 flowboxchild:first-child {
@@ -38,5 +39,8 @@ flowboxchild:selected {
 }
 
 .clock {
+  background-color: rgba(60, 56, 54, 1);
+  border-radius: 0px 0px 0px 24px;
+  padding-left: 32px;
   padding-right: 16px;
 }

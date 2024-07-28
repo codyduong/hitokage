@@ -28,7 +28,7 @@ for _, monitor in ipairs(monitors) do
     widgets = {
       { Box = {} },
       { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
-      { Clock = { format = "%Y-%m-%d %I:%M:%S %p", halign = 'End' } },
+      { Clock = { format = "%a %b %u %r", halign = 'End' } },
     },
     width = monitor.geometry.width - 16,
     offset = {

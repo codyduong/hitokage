@@ -41,9 +41,10 @@ impl From<ClockProps> for Clock {
 
 #[derive(Clone)]
 pub struct Clock {
-  format: String,
   current_time: String,
   destroyed: Arc<Mutex<bool>>,
+
+  format: String,
   halign: Align,
 }
 
