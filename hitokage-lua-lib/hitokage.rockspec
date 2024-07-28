@@ -1,9 +1,9 @@
-package = "myproject"
+package = "hitokage"
 version = "0.1.0"
 source = {
    url = "https://github.com/codyduong/hitokage",
    -- tag = "v0.1.0",
-   branch = "dev1",
+   branch = "dev",
    -- commit = "",
    dir = "hitokage-lua-lib",
 }
