@@ -12,7 +12,6 @@ use relm4::{Component, ComponentSender};
 use std::sync::{mpsc, Arc, Mutex};
 
 struct BarUserData {
-  id: u32,
   sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>>,
 }
 
@@ -44,8 +43,6 @@ impl UserData for BarUserData {
   fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(_fields: &mut F) {}
 
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
-    methods.add_method("get_id", |_, instance, ()| Ok(instance.id.clone()));
-
     methods.add_method("is_ready", |_, instance, ()| Ok(instance.is_ready()));
 
     methods.add_method("get_widgets", |lua, instance, ()| {
@@ -122,7 +119,6 @@ where
   C: Component<Input = crate::AppMsg>,
   <C as Component>::Output: std::marker::Send,
 {
-  let id = Arc::new(Mutex::new(0));
   let table = lua.create_table()?;
 
   {
@@ -134,9 +130,8 @@ where
           let BarPropsExtended { monitor, props } = props_extended;
           let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 
-          let mut id_l = id.lock().unwrap();
           sender.input(<C as Component>::Input::LuaHook(crate::LuaHook {
-            t: crate::LuaHookType::CreateBar(monitor, props, *id_l, {
+            t: crate::LuaHookType::CreateBar(monitor, props, {
               let bar_sender = Arc::clone(&bar_sender);
               {
                 Box::new(move |s| {
@@ -149,12 +144,8 @@ where
           }));
 
           let bar_instance = BarUserData {
-            id: *id_l,
             sender: bar_sender,
           };
-
-          *id_l += 1;
-          drop(id_l);
 
           Ok(bar_instance)
         }

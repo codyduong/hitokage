@@ -25,7 +25,6 @@ pub enum LuaHookType {
   CreateBar(
     Monitor,
     hitokage_core::widgets::bar::BarProps,
-    u32,
     Box<dyn Fn(relm4::Sender<BarMsg>) -> () + Send>,
   ),
   CheckConfigUpdate,
@@ -38,11 +37,10 @@ impl std::fmt::Debug for LuaHookType {
       LuaHookType::SubscribeState => write!(f, "SubscribeState"),
       LuaHookType::WriteState => write!(f, "WriteState"),
       LuaHookType::ReadEvent => write!(f, "ReadEvent"),
-      LuaHookType::CreateBar(monitor, props, id, _) => f
+      LuaHookType::CreateBar(monitor, props, _) => f
         .debug_struct("CreateBar")
         .field("monitor", monitor)
         .field("props", props)
-        .field("id", id)
         .field("callback", &"<function>")
         .finish(),
       &LuaHookType::CheckConfigUpdate => write!(f, "CheckConfigUpdate"),
