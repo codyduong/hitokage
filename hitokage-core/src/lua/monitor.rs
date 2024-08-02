@@ -58,7 +58,7 @@ impl DivAssign<MonitorScaleFactor> for MonitorGeometry {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Monitor {
   pub connecter: Option<String>,
   pub description: Option<String>,

@@ -1,6 +1,7 @@
 -------------------------------------------------------------------------------
 --- Links to BoxProps in 'hitokage-core\src\widgets\box.rs'
 --- @class BoxProps
+--- @field widgets WidgetPropsVec?
 
 -------------------------------------------------------------------------------
 --- Links to BoxUserData hitokage-lua\src\widgets\box.rs
