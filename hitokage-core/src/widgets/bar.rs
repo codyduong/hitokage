@@ -193,6 +193,7 @@ impl SimpleComponent for Bar {
     let widgets = view_output!();
 
     for widget in props.widgets {
+      let monitor = monitor.clone();
       match widget {
         WidgetProps::Clock(inner_props) => {
           let controller = Clock::builder().launch(inner_props).detach();
@@ -205,7 +206,8 @@ impl SimpleComponent for Bar {
           model.widgets.push(WidgetController::Workspace(controller));
         }
         WidgetProps::Box(inner_props) => {
-          let controller = crate::widgets::r#box::Box::builder().launch(inner_props).detach();
+          println!("foo: {:?}", inner_props);
+          let controller = crate::widgets::r#box::Box::builder().launch((monitor, inner_props)).detach();
           widgets.main_box.append(controller.widget());
           model.widgets.push(WidgetController::Box(controller));
         }

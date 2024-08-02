@@ -26,7 +26,17 @@ for _, monitor in ipairs(monitors) do
 
   table.insert(bars, hitokage.bar.create(monitor, {
     widgets = {
-      { Box = {} },
+      {
+        Box = {
+          widgets = {
+            {
+              Box = {
+                widgets = {}
+              }
+            },
+          },
+        }
+      },
       { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
       { Clock = { format = "%a %b %u %r", halign = 'End' } },
     },
@@ -60,16 +70,15 @@ for i, bar in ipairs(bars) do
     end
     if widget.type == "Workspace" then
       table.insert(workspaces, widget)
-    end 
+    end
   end
 end
 
-local timeout = function (timeout, action)
+local timeout = function(timeout, action)
   return coroutine.create(function()
     local start_time = os.clock()
-  
-    while true do
 
+    while true do
       local elapsed_time = (os.clock() - start_time) * 1000
       local remaining_time = timeout - elapsed_time
       if (remaining_time <= 0) then

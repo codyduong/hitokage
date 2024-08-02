@@ -110,6 +110,8 @@ impl<'lua> FromLuaMulti<'lua> for BarPropsExtended {
       }
     };
 
+    println!("baz: {:?}", props);
+
     Ok(BarPropsExtended { monitor, props })
   }
 }
