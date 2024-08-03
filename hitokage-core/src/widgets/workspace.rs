@@ -1,9 +1,12 @@
 use crate::common::Align;
+use crate::common::CssClass;
 use crate::lua::event::STATE;
+use crate::prepend_css_class;
 use anyhow::Context;
 use gtk4::prelude::*;
 use gtk4::Constraint;
 use gtk4::ConstraintLayout;
+use indexmap::IndexSet;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -37,7 +40,7 @@ pub struct WorkspaceProps {
   item_width: Option<u32>,
   item_height: Option<u32>,
   halign: Option<Align>,
-  class: Option<String>,
+  class: Option<CssClass>,
 }
 
 pub struct Workspace {
@@ -50,7 +53,7 @@ pub struct Workspace {
   item_width: i32,
   item_height: i32,
   halign: Align,
-  class: Option<String>,
+  classes: Vec<String>,
 }
 
 #[relm4::component(pub)]
@@ -115,13 +118,11 @@ impl Component for Workspace {
       item_width,
       item_height,
       halign,
-      class: props.class
+      classes: prepend_css_class!("workspace", props.class.unwrap_or_default()),
     };
 
-    root.add_css_class("workspace");
-    if let Some(class) = &model.class {
-      root.add_css_class(&class);
-    }
+    let classes_ref: Vec<&str> = model.classes.iter().map(AsRef::as_ref).collect();
+    root.set_css_classes(&classes_ref);
     root.set_halign(halign.into());
 
     STATE.subscribe(sender.input_sender(), move |state| {

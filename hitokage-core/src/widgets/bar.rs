@@ -1,18 +1,19 @@
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
+use crate::common::CssClass;
 use crate::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
+use crate::prepend_css_class;
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
 use gtk4::prelude::*;
 use gtk4::Window;
+use indexmap::IndexSet;
 use relm4::prelude::*;
 use relm4::ComponentParts;
-use relm4::SharedState;
 use relm4::SimpleComponent;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::mpsc::Sender;
 use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, HWND_TOP, SWP_NOSIZE};
 
@@ -87,7 +88,7 @@ pub struct BarProps {
   pub width: Option<i32>,
   pub height: Option<i32>,
   pub offset: Option<BarOffset>,
-  class: Option<String>,
+  class: Option<CssClass>,
 }
 
 pub struct Bar {
@@ -98,7 +99,7 @@ pub struct Bar {
   scale_factor: MonitorScaleFactor,
   offset_x: i32,
   offset_y: i32,
-  class: Option<String>,
+  classes: Vec<String>,
 }
 
 #[relm4::component(pub)]
@@ -152,16 +153,6 @@ impl SimpleComponent for Bar {
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let (monitor, props, callback, application_root) = input;
 
-    root.add_css_class("bar");
-    if let Some(class) = &props.class {
-      root.add_css_class(class);
-    }
-    root.set_transient_for(Some(&application_root));
-
-    // root.connect_scale_factor_notify(move |win| {
-    //   // todo @codyduong, needed for if users change scaling on the go
-    // });
-
     callback(sender.clone().input_sender().clone());
 
     let mut geometry = monitor.geometry;
@@ -194,8 +185,16 @@ impl SimpleComponent for Bar {
       scale_factor: monitor.scale_factor,
       offset_x,
       offset_y,
-      class: props.class,
+      classes: prepend_css_class!("bar", props.class.unwrap_or_default()),
     };
+
+    let classes_ref: Vec<&str> = model.classes.iter().map(AsRef::as_ref).collect();
+    root.set_css_classes(&classes_ref);
+    root.set_transient_for(Some(&application_root));
+
+    // root.connect_scale_factor_notify(move |win| {
+    //   // todo @codyduong, needed for if users change scaling on the go
+    // });
 
     let widgets = view_output!();
 
@@ -213,7 +212,9 @@ impl SimpleComponent for Bar {
           model.widgets.push(WidgetController::Workspace(controller));
         }
         WidgetProps::Box(inner_props) => {
-          let controller = crate::widgets::r#box::Box::builder().launch((monitor, inner_props)).detach();
+          let controller = crate::widgets::r#box::Box::builder()
+            .launch((monitor, inner_props))
+            .detach();
           widgets.main_box.append(controller.widget());
           model.widgets.push(WidgetController::Box(controller));
         }

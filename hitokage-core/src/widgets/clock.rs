@@ -1,5 +1,8 @@
 use crate::common::Align;
+use crate::common::CssClass;
+use crate::prepend_css_class;
 use gtk4::prelude::*;
+use indexmap::IndexSet;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -26,7 +29,7 @@ pub enum ClockMsg {
 pub struct ClockProps {
   format: String,
   halign: Option<Align>,
-  class: Option<String>,
+  class: Option<CssClass>,
 }
 
 impl From<ClockProps> for Clock {
@@ -36,7 +39,7 @@ impl From<ClockProps> for Clock {
       destroyed: Arc::new(Mutex::new(false)),
       format: props.format.clone(),
       halign: props.halign.unwrap_or(Align::Start),
-      class: props.class,
+      classes: prepend_css_class!("clock", props.class.unwrap_or_default()),
     }
   }
 }
@@ -47,7 +50,7 @@ pub struct Clock {
 
   format: String,
   halign: Align,
-  class: Option<String>,
+  classes: Vec<String>,
 }
 
 #[relm4::component(pub)]
@@ -71,10 +74,8 @@ impl Component for Clock {
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let model: Clock = props.into();
 
-    root.add_css_class("clock");
-    if let Some(class) = &model.class {
-      root.add_css_class(&class);
-    }
+    let classes_ref: Vec<&str> = model.classes.iter().map(AsRef::as_ref).collect();
+    root.set_css_classes(&classes_ref);
     root.set_halign(model.halign.into());
 
     // Timer

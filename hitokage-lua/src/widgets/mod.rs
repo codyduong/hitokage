@@ -1,5 +1,7 @@
 use clock::ClockUserData;
-use hitokage_core::widgets::{clock::ClockMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData};
+use hitokage_core::widgets::{
+  clock::ClockMsg, r#box::BoxMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData,
+};
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
 use workspace::WorkspaceUserData;
@@ -12,7 +14,7 @@ pub mod workspace;
 enum WidgetUserData {
   Clock(relm4::Sender<ClockMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
-  Box(relm4::Sender<()>),
+  Box(relm4::Sender<BoxMsg>),
 }
 
 impl<'lua> IntoLua<'lua> for WidgetUserData {
@@ -32,9 +34,10 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
         };
         lua.pack(workspace_userdata)
       }
-      WidgetUserData::Box(_) => {
+      WidgetUserData::Box(sender) => {
         let box_userdata = BoxUserData {
           r#type: "Box".to_string(),
+          sender: sender,
         };
         lua.pack(box_userdata)
       }

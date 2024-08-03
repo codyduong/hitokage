@@ -53,6 +53,7 @@ local bar = {}
 --- @field width integer?
 --- @field height integer?
 --- @field offset BarOffset?
+--- @field class CssClass?
 
 --- Creates a new bar
 --- @param monitor Monitor

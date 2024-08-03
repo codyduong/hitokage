@@ -3,6 +3,7 @@
 --- @class ClockProps
 --- @field format string?
 --- @field halign Align?
+--- @field class CssClass?
 
 -------------------------------------------------------------------------------
 --- Links to ClockUserData hitokage-lua\src\widgets\clock.rs
@@ -11,7 +12,7 @@
 --- @field type 'Clock'
 ---
 --- Wrapper around bar:get_format() and set_format()
---- @field format string
+-- --- @field format string
 ---
 local clock_instance = {}
 
@@ -23,7 +24,7 @@ function clock_instance:get_type() end
 --- @return string
 function clock_instance:get_format() end
 
---- Get the format string
+--- Set the format string
 --- @param string string
 --- @return nil
 function clock_instance:set_format(string) end

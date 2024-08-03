@@ -59,7 +59,7 @@ impl UserData for BarUserData {
         match value {
           Value::String(s) => match s.to_str()? {
             "ready" => Ok(lua.to_value(&instance.is_ready())?),
-            // "widgets" => Ok(lua.pack(instance.get_widgets().into()?)?),
+            "widgets" => Ok(lua.pack(instance.get_widgets()?)?),
             "geometry" => Ok(lua.to_value(&instance.get_geometry()?)?),
             _ => Ok(Value::Nil),
           },
@@ -143,9 +143,7 @@ where
             }),
           }));
 
-          let bar_instance = BarUserData {
-            sender: bar_sender,
-          };
+          let bar_instance = BarUserData { sender: bar_sender };
 
           Ok(bar_instance)
         }

@@ -4,3 +4,5 @@
 
 --- @class UnknownAlign
 --- @field __Unknown number
+
+--- @alias CssClass string | table<number, string>

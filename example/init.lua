@@ -40,6 +40,16 @@ for _, monitor in ipairs(monitors) do
                 class = "blue"
               }
             },
+            {
+              Box = {
+                widgets = {},
+                class = {
+                  "red",
+                  "green",
+                  "blue"
+                }
+              }
+            }
           }
         }
       },
@@ -64,6 +74,10 @@ local workspaces = {}
 --- @type ClockTable
 local clocks = {}
 
+--- @alias BoxesTable table<number, Box>
+--- @type BoxesTable
+local boxes = {}
+
 for i, bar in ipairs(bars) do
   while not bar:is_ready() do
     hitokage.debug("waiting for bar to instantiate", i)
@@ -76,6 +90,9 @@ for i, bar in ipairs(bars) do
     end
     if widget.type == "Workspace" then
       table.insert(workspaces, widget)
+    end
+    if widget.type == "Box" then
+      table.insert(boxes, widget)
     end
   end
 end
@@ -126,6 +143,19 @@ end
 --     end
 --   end
 -- end)
+
+local css_boxes_test = timeout(0, function()
+  local widgets = boxes[1]:get_widgets()
+
+  local first = widgets[1]:get_class()
+  for index, bar in ipairs(widgets) do
+    if next(widgets, index) == nil then
+      bar:set_class(first)
+    else
+      bar:set_class(widgets[index+1]:get_class())
+    end
+  end
+end)
 
 -- local s = hitokage.read_state()
 -- hitokage.debug(s);
@@ -296,6 +326,7 @@ dispatcher({
   -- hitokage.loop.coroutine(),
   -- clock_swapper,
   -- halign_test,
+  css_boxes_test,
   file_watcher,
   komorebic_coroutine,
 })
