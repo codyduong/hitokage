@@ -1,11 +1,4 @@
-hitokage.debug("5");
-
--- hitokage.debug(hitokage);
-
 local monitors = hitokage.monitor.get_all()
-local primary = hitokage.monitor.get_primary()
-
--- hitokage.debug(monitors)
 
 --- @type BarArray
 local bars = {}
