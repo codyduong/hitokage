@@ -25,27 +25,29 @@ pub enum ClockMsg {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ClockProps {
   format: String,
-  halign: Align,
+  halign: Option<Align>,
+  class: Option<String>,
 }
 
 impl From<ClockProps> for Clock {
   fn from(props: ClockProps) -> Self {
     Clock {
-      format: props.format.clone(),
       current_time: chrono::Local::now().format(&props.format).to_string(),
       destroyed: Arc::new(Mutex::new(false)),
-      halign: props.halign,
+      format: props.format.clone(),
+      halign: props.halign.unwrap_or(Align::Start),
+      class: props.class,
     }
   }
 }
 
-#[derive(Clone)]
 pub struct Clock {
   current_time: String,
   destroyed: Arc<Mutex<bool>>,
 
   format: String,
   halign: Align,
+  class: Option<String>,
 }
 
 #[relm4::component(pub)]
@@ -70,7 +72,10 @@ impl Component for Clock {
     let model: Clock = props.into();
 
     root.add_css_class("clock");
-    root.set_halign(model.clone().halign.into());
+    if let Some(class) = &model.class {
+      root.add_css_class(&class);
+    }
+    root.set_halign(model.halign.into());
 
     // Timer
     let sender_clone = sender.clone();

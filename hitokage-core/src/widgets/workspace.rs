@@ -37,6 +37,7 @@ pub struct WorkspaceProps {
   item_width: Option<u32>,
   item_height: Option<u32>,
   halign: Option<Align>,
+  class: Option<String>,
 }
 
 pub struct Workspace {
@@ -46,10 +47,10 @@ pub struct Workspace {
   constraint_layout: ConstraintLayout,
   workspaces_to_check_constraints: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>, // this maps a workspace id to the constraints that should be reevaluated every workspace change
 
-  // lua accessible
   item_width: i32,
   item_height: i32,
   halign: Align,
+  class: Option<String>,
 }
 
 #[relm4::component(pub)]
@@ -104,11 +105,7 @@ impl Component for Workspace {
     let item_width = props.item_width.unwrap_or(16) as i32;
     let item_height = props.item_height.unwrap_or(16) as i32;
 
-    println!("width: {:?} {:?}", props.item_width, item_width);
-
     let halign = props.halign.unwrap_or(Align::Start);
-
-    root.set_halign(halign.clone().into());
 
     let model = Workspace {
       flowbox: flowbox.clone(),
@@ -118,9 +115,15 @@ impl Component for Workspace {
       item_width,
       item_height,
       halign,
+      class: props.class
     };
 
-    // let (relm4s, relm4r) = relm4::channel::<()>();
+    root.add_css_class("workspace");
+    if let Some(class) = &model.class {
+      root.add_css_class(&class);
+    }
+    root.set_halign(halign.into());
+
     STATE.subscribe(sender.input_sender(), move |state| {
       // we only care about the most recent state
       let workspaces = get_workspaces(&state.clone(), id);
@@ -314,6 +317,7 @@ fn update_workspaces(
             flowbox.select_child(child);
           }
           child.set_size_request(width, height);
+          child.add_css_class("workspacechild");
         }
         None => break,
       },

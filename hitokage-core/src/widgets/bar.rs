@@ -87,6 +87,7 @@ pub struct BarProps {
   pub width: Option<i32>,
   pub height: Option<i32>,
   pub offset: Option<BarOffset>,
+  class: Option<String>,
 }
 
 pub struct Bar {
@@ -97,6 +98,7 @@ pub struct Bar {
   scale_factor: MonitorScaleFactor,
   offset_x: i32,
   offset_y: i32,
+  class: Option<String>,
 }
 
 #[relm4::component(pub)]
@@ -150,6 +152,10 @@ impl SimpleComponent for Bar {
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let (monitor, props, callback, application_root) = input;
 
+    root.add_css_class("bar");
+    if let Some(class) = &props.class {
+      root.add_css_class(class);
+    }
     root.set_transient_for(Some(&application_root));
 
     // root.connect_scale_factor_notify(move |win| {
@@ -188,6 +194,7 @@ impl SimpleComponent for Bar {
       scale_factor: monitor.scale_factor,
       offset_x,
       offset_y,
+      class: props.class,
     };
 
     let widgets = view_output!();
