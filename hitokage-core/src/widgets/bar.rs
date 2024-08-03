@@ -1,17 +1,15 @@
+use super::base::{Base, BaseProps};
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
-use crate::common::CssClass;
-use crate::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
-use crate::prepend_css_class;
+use crate::structs::{CssClass, Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
+use crate::{prepend_css_class, prepend_css_class_to_model};
 use gtk4::prelude::*;
 use gtk4::Window;
-use indexmap::IndexSet;
 use relm4::prelude::*;
 use relm4::ComponentParts;
-use relm4::SimpleComponent;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
@@ -60,8 +58,10 @@ fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::R
 
 #[derive(Debug)]
 pub enum BarLuaHook {
-  GetWidgets(Sender<Vec<WidgetUserData>>),
+  GetClass(Sender<Vec<String>>),
+  SetClass(Option<CssClass>),
   GetGeometry(Sender<MonitorGeometry>),
+  GetWidgets(Sender<Vec<WidgetUserData>>),
 }
 
 #[derive(Debug)]
@@ -88,7 +88,8 @@ pub struct BarProps {
   pub width: Option<i32>,
   pub height: Option<i32>,
   pub offset: Option<BarOffset>,
-  class: Option<CssClass>,
+  #[serde(flatten)]
+  base: BaseProps,
 }
 
 pub struct Bar {
@@ -99,11 +100,11 @@ pub struct Bar {
   scale_factor: MonitorScaleFactor,
   offset_x: i32,
   offset_y: i32,
-  classes: Vec<String>,
+  base: Base,
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for Bar {
+impl Component for Bar {
   type Input = BarMsg;
   type Output = ();
   type Init = (
@@ -113,6 +114,7 @@ impl SimpleComponent for Bar {
     gtk::ApplicationWindow,
   );
   type Widgets = AppWidgets;
+  type CommandOutput = ();
 
   view! {
     Window {
@@ -185,11 +187,10 @@ impl SimpleComponent for Bar {
       scale_factor: monitor.scale_factor,
       offset_x,
       offset_y,
-      classes: prepend_css_class!("bar", props.class.unwrap_or_default()),
+      base: props.base.into(),
     };
 
-    let classes_ref: Vec<&str> = model.classes.iter().map(AsRef::as_ref).collect();
-    root.set_css_classes(&classes_ref);
+    prepend_css_class_to_model!("bar", model, root);
     root.set_transient_for(Some(&application_root));
 
     // root.connect_scale_factor_notify(move |win| {
@@ -227,15 +228,21 @@ impl SimpleComponent for Bar {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       BarMsg::LuaHook(hook) => match hook {
-        BarLuaHook::GetWidgets(tx) => {
-          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
-            .unwrap();
+        BarLuaHook::GetClass(tx) => {
+          tx.send(self.base.classes.clone()).unwrap();
+        }
+        BarLuaHook::SetClass(classes) => {
+          prepend_css_class_to_model!(self, "box", classes, root);
         }
         BarLuaHook::GetGeometry(tx) => {
           tx.send(self.geometry).unwrap();
+        }
+        BarLuaHook::GetWidgets(tx) => {
+          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
+            .unwrap();
         }
       },
     }

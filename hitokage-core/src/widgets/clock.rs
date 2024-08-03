@@ -1,8 +1,7 @@
-use crate::common::Align;
-use crate::common::CssClass;
-use crate::prepend_css_class;
+use crate::prepend_css_class_to_model;
+use crate::structs::Align;
+use crate::structs::CssClass;
 use gtk4::prelude::*;
-use indexmap::IndexSet;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -11,8 +10,12 @@ use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use super::base::{Base, BaseProps};
+
 #[derive(Debug, Clone)]
 pub enum ClockMsgHook {
+  GetClass(Sender<Vec<String>>),
+  SetClass(Option<CssClass>),
   GetFormat(Sender<String>),
   SetFormat(String),
   GetHalign(Sender<Align>),
@@ -29,7 +32,8 @@ pub enum ClockMsg {
 pub struct ClockProps {
   format: String,
   halign: Option<Align>,
-  class: Option<CssClass>,
+  #[serde(flatten)]
+  base: BaseProps,
 }
 
 impl From<ClockProps> for Clock {
@@ -39,7 +43,7 @@ impl From<ClockProps> for Clock {
       destroyed: Arc::new(Mutex::new(false)),
       format: props.format.clone(),
       halign: props.halign.unwrap_or(Align::Start),
-      classes: prepend_css_class!("clock", props.class.unwrap_or_default()),
+      base: props.base.into(),
     }
   }
 }
@@ -50,7 +54,7 @@ pub struct Clock {
 
   format: String,
   halign: Align,
-  classes: Vec<String>,
+  base: Base,
 }
 
 #[relm4::component(pub)]
@@ -72,10 +76,9 @@ impl Component for Clock {
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let model: Clock = props.into();
+    let mut model: Clock = props.into();
 
-    let classes_ref: Vec<&str> = model.classes.iter().map(AsRef::as_ref).collect();
-    root.set_css_classes(&classes_ref);
+    prepend_css_class_to_model!("clock", model, root);
     root.set_halign(model.halign.into());
 
     // Timer
@@ -102,6 +105,12 @@ impl Component for Clock {
         self.current_time = chrono::Local::now().format(&self.format).to_string();
       }
       ClockMsg::LuaHook(hook) => match hook {
+        ClockMsgHook::GetClass(tx) => {
+          tx.send(self.base.classes.clone()).unwrap();
+        }
+        ClockMsgHook::SetClass(classes) => {
+          prepend_css_class_to_model!(self, "box", classes, root);
+        }
         ClockMsgHook::GetFormat(tx) => {
           tx.send(self.format.clone()).unwrap();
         }

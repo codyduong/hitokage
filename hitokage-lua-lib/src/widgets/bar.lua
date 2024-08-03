@@ -19,11 +19,20 @@ local bar_instance = {}
 --- @return boolean
 function bar_instance:is_ready() end
 
---- Gets the geometry of the bar
+--- Get the css classes
+--- @return table<number, string>
+function bar_instance:get_class() end
+
+--- Set the css classes
+--- @param class CssClass
+--- @return nil
+function bar_instance:set_class(class) end
+
+--- Get the geometry of the bar
 --- @return MonitorGeometry
 function bar_instance:get_geometry() end
 
---- Gets the widgets on the bar
+--- Get the widgets on the bar
 --- @return table<number, Box | Clock | Workspace>
 function bar_instance:get_widgets() end
 

@@ -83,6 +83,8 @@ impl<'lua> IntoLua<'lua> for WidgetUserDataVec {
 macro_rules! impl_getter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $ret:ty) => {
     fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
+      use std::sync::mpsc;
+
       let sender = self.sender()?;
 
       let (tx, rx) = mpsc::channel::<_>();
@@ -97,7 +99,7 @@ macro_rules! impl_getter_fn {
 #[macro_export]
 macro_rules! impl_setter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $from:ty) => {
-    fn $fn_name(&self, lua: &Lua, value: mlua::Value) -> Result<(), mlua::Error> {
+    fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
       let sender = self.sender()?;
       let value: $from = lua.from_value(value)?;
 

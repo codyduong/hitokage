@@ -20,6 +20,15 @@ local clock_instance = {}
 --- @return 'Clock'
 function clock_instance:get_type() end
 
+--- Get the css classes
+--- @return table<number, string>
+function clock_instance:get_class() end
+
+--- Set the css classes
+--- @param class CssClass
+--- @return nil
+function clock_instance:set_class(class) end
+
 --- Get the format string
 --- @return string
 function clock_instance:get_format() end

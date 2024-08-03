@@ -1,12 +1,11 @@
-use crate::common::Align;
-use crate::common::CssClass;
-use crate::lua::event::STATE;
-use crate::prepend_css_class;
+use super::base::{Base, BaseProps};
+use crate::event::STATE;
+use crate::structs::{Align, CssClass};
+use crate::{prepend_css_class, prepend_css_class_to_model};
 use anyhow::Context;
 use gtk4::prelude::*;
 use gtk4::Constraint;
 use gtk4::ConstraintLayout;
-use indexmap::IndexSet;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -20,6 +19,8 @@ type WorkspaceState = (Option<String>, bool, bool);
 
 #[derive(Debug, Clone)]
 pub enum WorkspaceMsgHook {
+  GetClass(Sender<Vec<String>>),
+  SetClass(Option<CssClass>),
   GetHalign(Sender<Align>),
   SetHalign(Align),
   GetItemHeight(Sender<u32>),
@@ -40,7 +41,8 @@ pub struct WorkspaceProps {
   item_width: Option<u32>,
   item_height: Option<u32>,
   halign: Option<Align>,
-  class: Option<CssClass>,
+  #[serde(flatten)]
+  base: BaseProps,
 }
 
 pub struct Workspace {
@@ -53,7 +55,7 @@ pub struct Workspace {
   item_width: i32,
   item_height: i32,
   halign: Align,
-  classes: Vec<String>,
+  base: Base,
 }
 
 #[relm4::component(pub)]
@@ -110,7 +112,7 @@ impl Component for Workspace {
 
     let halign = props.halign.unwrap_or(Align::Start);
 
-    let model = Workspace {
+    let mut model = Workspace {
       flowbox: flowbox.clone(),
       id,
       constraint_layout: constraint_layout,
@@ -118,11 +120,10 @@ impl Component for Workspace {
       item_width,
       item_height,
       halign,
-      classes: prepend_css_class!("workspace", props.class.unwrap_or_default()),
+      base: props.base.into(),
     };
 
-    let classes_ref: Vec<&str> = model.classes.iter().map(AsRef::as_ref).collect();
-    root.set_css_classes(&classes_ref);
+    prepend_css_class_to_model!("workspace", model, root);
     root.set_halign(halign.into());
 
     STATE.subscribe(sender.input_sender(), move |state| {
@@ -164,6 +165,12 @@ impl Component for Workspace {
         }
       }
       WorkspaceMsg::LuaHook(hook) => match hook {
+        WorkspaceMsgHook::GetClass(tx) => {
+          tx.send(self.base.classes.clone()).unwrap();
+        }
+        WorkspaceMsgHook::SetClass(classes) => {
+          prepend_css_class_to_model!(self, "box", classes, root);
+        }
         WorkspaceMsgHook::GetHalign(tx) => tx.send(self.halign).unwrap(),
         WorkspaceMsgHook::SetHalign(halign) => {
           root.set_halign(halign.clone().into());

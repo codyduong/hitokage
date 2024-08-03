@@ -1,9 +1,8 @@
 use crate::{impl_getter_fn, impl_setter_fn};
-use hitokage_core::common::Align;
+use hitokage_core::structs::{Align, CssClass};
 use hitokage_core::widgets::clock::ClockMsg;
-use hitokage_core::widgets::clock::ClockMsgHook::{GetFormat, GetHalign, SetFormat, SetHalign};
-use mlua::{Lua, LuaSerdeExt, UserData, UserDataMethods, Value};
-use std::sync::mpsc;
+use hitokage_core::widgets::clock::ClockMsgHook::{GetClass, GetFormat, GetHalign, SetClass, SetFormat, SetHalign};
+use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
 #[derive(Debug, Clone)]
 pub struct ClockUserData {
@@ -16,6 +15,9 @@ impl ClockUserData {
     Ok(self.sender.clone())
   }
 
+  impl_getter_fn!(get_class, ClockMsg::LuaHook, GetClass, Vec<String>);
+  impl_setter_fn!(set_class, ClockMsg::LuaHook, SetClass, Option<CssClass>);
+
   impl_getter_fn!(get_format, ClockMsg::LuaHook, GetFormat, String);
   impl_setter_fn!(set_format, ClockMsg::LuaHook, SetFormat, String);
 
@@ -26,6 +28,11 @@ impl ClockUserData {
 impl UserData for ClockUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
+
+    methods.add_method("get_class", |lua, instance, ()| Ok(lua.pack(instance.get_class()?)?));
+    methods.add_method("set_class", |lua, this, value: mlua::Value| {
+      Ok(this.set_class(lua, value)?)
+    });
 
     methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
     methods.add_method("set_format", |lua, this, value: mlua::Value| {

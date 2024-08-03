@@ -1,4 +1,5 @@
 pub mod bar;
+pub mod base;
 pub mod r#box;
 pub mod clock;
 pub mod workspace;

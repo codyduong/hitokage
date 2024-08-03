@@ -1,12 +1,10 @@
 use crate::{impl_getter_fn, impl_setter_fn};
-use hitokage_core::common::Align;
+use hitokage_core::structs::{Align, CssClass};
 use hitokage_core::widgets::workspace::WorkspaceMsg;
 use hitokage_core::widgets::workspace::WorkspaceMsgHook::{
-  GetHalign, GetItemHeight, GetItemWidth, SetHalign, SetItemHeight, SetItemWidth,
+  GetClass, GetHalign, GetItemHeight, GetItemWidth, SetClass, SetHalign, SetItemHeight, SetItemWidth,
 };
-use mlua::Lua;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
-use std::sync::mpsc;
 
 #[derive(Debug, Clone)]
 pub struct WorkspaceUserData {
@@ -18,6 +16,9 @@ impl WorkspaceUserData {
   fn sender(&self) -> Result<relm4::Sender<WorkspaceMsg>, crate::HitokageError> {
     Ok(self.sender.clone())
   }
+
+  impl_getter_fn!(get_class, WorkspaceMsg::LuaHook, GetClass, Vec<String>);
+  impl_setter_fn!(set_class, WorkspaceMsg::LuaHook, SetClass, Option<CssClass>);
 
   impl_getter_fn!(get_halign, WorkspaceMsg::LuaHook, GetHalign, Align);
   impl_setter_fn!(set_halign, WorkspaceMsg::LuaHook, SetHalign, Align);
@@ -32,6 +33,11 @@ impl WorkspaceUserData {
 impl UserData for WorkspaceUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
+
+    methods.add_method("get_class", |lua, instance, ()| Ok(lua.pack(instance.get_class()?)?));
+    methods.add_method("set_class", |lua, this, value: mlua::Value| {
+      Ok(this.set_class(lua, value)?)
+    });
 
     methods.add_method("get_halign", |lua, this, _: ()| lua.to_value(&this.get_halign()?));
     methods.add_method("set_halign", |lua, this, value: mlua::Value| {

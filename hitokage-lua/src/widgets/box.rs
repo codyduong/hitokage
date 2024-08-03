@@ -1,11 +1,9 @@
 use super::WidgetUserDataVec;
 use crate::{impl_getter_fn, impl_setter_fn};
-use hitokage_core::common::CssClass;
+use hitokage_core::structs::CssClass;
 use hitokage_core::widgets::r#box::BoxMsg;
 use hitokage_core::widgets::r#box::BoxMsgHook::{GetClass, GetWidgets, SetClass};
-use mlua::Lua;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
-use std::sync::mpsc;
 
 #[derive(Debug, Clone)]
 pub struct BoxUserData {

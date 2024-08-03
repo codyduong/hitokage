@@ -19,16 +19,16 @@ local box_instance = {}
 --- @return 'Box'
 function box_instance:get_type() end
 
---- Gets the css class
+--- Get the css classes
 --- @return table<number, string>
 function box_instance:get_class() end
 
---- Set the format string
+--- Set the css classes
 --- @param class CssClass
 --- @return nil
 function box_instance:set_class(class) end
 
---- Gets the widgets on the box
+--- Get the widgets on the box
 --- @return table<number, Box | Clock | Workspace>
 function box_instance:get_widgets() end
 

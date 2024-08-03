@@ -1,7 +1,7 @@
 use super::WidgetUserDataVec;
-use crate::impl_getter_fn;
-use hitokage_core::lua::monitor::{Monitor, MonitorGeometry};
-use hitokage_core::widgets::bar::BarLuaHook::{GetGeometry, GetWidgets};
+use crate::{impl_getter_fn, impl_setter_fn};
+use hitokage_core::structs::{CssClass, Monitor, MonitorGeometry};
+use hitokage_core::widgets::bar::BarLuaHook::{GetClass, GetGeometry, GetWidgets, SetClass};
 use hitokage_core::widgets::bar::{BarMsg, BarProps};
 use mlua::FromLuaMulti;
 use mlua::{
@@ -9,7 +9,7 @@ use mlua::{
   Value::{self},
 };
 use relm4::{Component, ComponentSender};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 
 struct BarUserData {
   sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>>,
@@ -35,8 +35,12 @@ impl BarUserData {
     }
   }
 
-  impl_getter_fn!(get_widgets, BarMsg::LuaHook, GetWidgets, WidgetUserDataVec);
+  impl_getter_fn!(get_class, BarMsg::LuaHook, GetClass, Vec<String>);
+  impl_setter_fn!(set_class, BarMsg::LuaHook, SetClass, Option<CssClass>);
+
   impl_getter_fn!(get_geometry, BarMsg::LuaHook, GetGeometry, MonitorGeometry);
+
+  impl_getter_fn!(get_widgets, BarMsg::LuaHook, GetWidgets, WidgetUserDataVec);
 }
 
 impl UserData for BarUserData {
@@ -45,12 +49,17 @@ impl UserData for BarUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("is_ready", |_, instance, ()| Ok(instance.is_ready()));
 
-    methods.add_method("get_widgets", |lua, instance, ()| {
-      Ok(lua.pack(instance.get_widgets()?)?)
+    methods.add_method("get_class", |lua, instance, ()| Ok(lua.pack(instance.get_class()?)?));
+    methods.add_method("set_class", |lua, this, value: mlua::Value| {
+      Ok(this.set_class(lua, value)?)
     });
 
     methods.add_method("get_geometry", |lua, instance, ()| {
       Ok(lua.to_value(&instance.get_geometry()?)?)
+    });
+
+    methods.add_method("get_widgets", |lua, instance, ()| {
+      Ok(lua.pack(instance.get_widgets()?)?)
     });
 
     methods.add_meta_method(

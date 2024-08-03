@@ -1,5 +1,5 @@
 use crate::{App, LuaCoroutineMessage};
-use hitokage_core::{lua::event::CONFIG_UPDATE, win_utils};
+use hitokage_core::{event::CONFIG_UPDATE, win_utils};
 use mlua::LuaSerdeExt;
 use relm4::ComponentSender;
 use std::{

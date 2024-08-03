@@ -4,6 +4,7 @@
 --- @field item_width integer?
 --- @field item_height integer?
 --- @field halign Align?
+--- @field class CssClass?
 
 -------------------------------------------------------------------------------
 --- Links to hitokage-lua\src\widgets\workspace.rs
@@ -16,6 +17,15 @@ local workspace_instance = {}
 --- Get the type of widget
 --- @return 'Workspace'
 function workspace_instance:get_type() end
+
+--- Get the css classes
+--- @return table<number, string>
+function workspace_instance:get_class() end
+
+--- Set the css classes
+--- @param class CssClass
+--- @return nil
+function workspace_instance:set_class(class) end
 
 --- Get the halign
 --- @return Align

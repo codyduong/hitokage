@@ -1,13 +1,13 @@
+use super::base::Base;
+use super::base::BaseProps;
 use super::WidgetUserData;
-use crate::common::CssClass;
-use crate::lua::monitor::Monitor;
-use crate::prepend_css_class;
+use crate::prepend_css_class_to_model;
+use crate::structs::{CssClass, Monitor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::widgets::WidgetController;
 use crate::widgets::WidgetProps;
 use gtk4::prelude::*;
-use indexmap::IndexSet;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -29,14 +29,14 @@ pub enum BoxMsg {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BoxProps {
   widgets: Option<Vec<WidgetProps>>,
-  class: Option<CssClass>,
+  #[serde(flatten)]
+  base: BaseProps,
 }
 
 pub struct Box {
   monitor: Monitor,
-
   widgets: Vec<WidgetController>,
-  classes: Vec<String>,
+  base: Base,
 }
 
 #[relm4::component(pub)]
@@ -62,11 +62,10 @@ impl Component for Box {
     let mut model = Box {
       monitor,
       widgets: Vec::new(),
-      classes: prepend_css_class!("box", props.class.unwrap_or_default()),
+      base: props.base.into(),
     };
 
-    let classes_ref: Vec<&str> = model.classes.iter().map(AsRef::as_ref).collect();
-    root.set_css_classes(&classes_ref);
+    prepend_css_class_to_model!("box", model, root);
 
     let widgets = view_output!();
 
@@ -102,12 +101,10 @@ impl Component for Box {
     match msg {
       BoxMsg::LuaHook(hook) => match hook {
         BoxMsgHook::GetClass(tx) => {
-          tx.send(self.classes.clone()).unwrap();
+          tx.send(self.base.classes.clone()).unwrap();
         }
         BoxMsgHook::SetClass(classes) => {
-          self.classes = prepend_css_class!("box", classes.unwrap_or_default());
-          let classes_ref: Vec<&str> = self.classes.iter().map(AsRef::as_ref).collect();
-          root.set_css_classes(&classes_ref);
+          prepend_css_class_to_model!(self, "box", classes, root);
         }
         BoxMsgHook::GetWidgets(tx) => {
           tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())

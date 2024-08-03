@@ -1,4 +1,4 @@
-use hitokage_core::{lua::monitor::Monitor, widgets::bar::BarMsg};
+use hitokage_core::{structs::monitor::Monitor, widgets::bar::BarMsg};
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
