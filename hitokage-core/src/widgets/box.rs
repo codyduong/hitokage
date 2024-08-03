@@ -13,11 +13,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BoxProps {
   widgets: Option<Vec<WidgetProps>>,
+  class: Option<String>,
 }
 
 pub struct Box {
   monitor: Monitor,
+
   widgets: Vec<WidgetController>,
+  class: Option<String>,
 }
 
 #[relm4::component(pub)]
@@ -28,7 +31,6 @@ impl SimpleComponent for Box {
   type Widgets = BoxWidgets;
 
   view! {
-    #[name = "main_box"]
     gtk::Box {
       set_orientation: gtk::Orientation::Horizontal,
       set_hexpand: true,
@@ -38,14 +40,18 @@ impl SimpleComponent for Box {
   }
 
   fn init(input: Self::Init, root: Self::Root, _sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    println!("bar: {:?}", input);
-
     let (monitor, props) = input;
 
     let mut model = Box {
       monitor,
       widgets: Vec::new(),
+      class: props.class
     };
+
+    root.add_css_class("box");
+    if let Some(class) = &model.class {
+      root.add_css_class(class);
+    }
 
     let widgets = view_output!();
 
@@ -54,17 +60,17 @@ impl SimpleComponent for Box {
       match widget {
         WidgetProps::Clock(inner_props) => {
           let controller = Clock::builder().launch(inner_props).detach();
-          widgets.main_box.append(controller.widget());
+          root.append(controller.widget());
           model.widgets.push(WidgetController::Clock(controller));
         }
         WidgetProps::Workspace(inner_props) => {
           let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
-          widgets.main_box.append(controller.widget());
+          root.append(controller.widget());
           model.widgets.push(WidgetController::Workspace(controller));
         }
         WidgetProps::Box(inner_props) => {
           let controller = crate::widgets::r#box::Box::builder().launch((monitor, inner_props)).detach();
-          widgets.main_box.append(controller.widget());
+          root.append(controller.widget());
           model.widgets.push(WidgetController::Box(controller));
         }
       }

@@ -31,10 +31,23 @@ for _, monitor in ipairs(monitors) do
           widgets = {
             {
               Box = {
-                widgets = {}
+                widgets = {},
+                class = "red"
               }
             },
-          },
+            {
+              Box = {
+                widgets = {},
+                class = "green"
+              }
+            },
+            {
+              Box = {
+                widgets = {},
+                class = "blue"
+              }
+            },
+          }
         }
       },
       { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },

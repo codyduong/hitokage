@@ -1,4 +1,10 @@
 window {
+  /* Be careful about setting values here, this also modifies the debugger appearance */
+  font-family: 'MesloLGS NF', 'Courier New', 'Bars', 'Font Awesome 5 Free';
+  font-size: 14px;
+}
+
+.bar {
   background-color: rgba(29, 32, 33, 0.0);
   color: #f2e5bc;
   
@@ -6,12 +12,12 @@ window {
   font-size: 14px;
 }
 
-flowbox {
+.workspace {
   padding: 0px 24px 0px 24px;
   /* border: 1px solid rgba(255, 0, 0, 0.4); */
 }
 
-flowboxchild {
+.workspacechild {
   /* distance between workspace children */
   margin-left: 8px;
   border: 1px solid rgba(168, 153, 132, 0.4);
@@ -26,11 +32,11 @@ flowboxchild {
   transition-property: min-width, background-color;
 }
 
-flowboxchild:first-child {
+.workspacechild:first-child {
   margin-left: 0px;
 }
 
-flowboxchild:selected {
+.workspacechild:selected {
   min-width: 32px;
   border: 1px solid #f2e5bc;
   background-color: #f2e5bc;
@@ -43,4 +49,16 @@ flowboxchild:selected {
   border-radius: 0px 0px 0px 24px;
   padding-left: 32px;
   padding-right: 16px;
+}
+
+.box.red {
+  background-color: rgba(255, 0, 0, 1);
+}
+
+.box.green {
+  background-color: rgba(0, 255, 0, 1);
+}
+
+.box.blue {
+  background-color: rgba(0, 0, 255, 1);
 }
