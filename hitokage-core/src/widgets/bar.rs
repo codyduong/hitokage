@@ -213,7 +213,6 @@ impl SimpleComponent for Bar {
           model.widgets.push(WidgetController::Workspace(controller));
         }
         WidgetProps::Box(inner_props) => {
-          println!("foo: {:?}", inner_props);
           let controller = crate::widgets::r#box::Box::builder().launch((monitor, inner_props)).detach();
           widgets.main_box.append(controller.widget());
           model.widgets.push(WidgetController::Box(controller));
