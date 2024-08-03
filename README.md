@@ -13,6 +13,8 @@ Documentation and guides at: ~~https://codyduong.dev/hitokage/~~ (🚧 TODO USER
 
 ## Demo
 
+![Demonstration of default hitokage status bar](media/demo.png)
+
 ## Installation
 
 <!--
