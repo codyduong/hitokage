@@ -1,3 +1,5 @@
+--- @meta hitokage.widgets.clock
+
 -------------------------------------------------------------------------------
 --- Links to ClockProps in 'hitokage-core\src\widgets\clock.rs'
 --- @class ClockProps

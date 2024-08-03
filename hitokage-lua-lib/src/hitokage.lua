@@ -10,12 +10,12 @@ _G._not_deadlocked = function() end
 _G._subscribers = {}
 _G._subscriptions = {}
 
-local _common = require("widgets.common")
-local bar = require("widgets.bar")
-local _box = require("widgets.box")
-local _clock = require("widgets.clock")
-local monitor = require("api.monitor")
-local _workspace = require("widgets.workspace")
+local _common = require("hitokage.widgets.common")
+local bar = require("hitokage.widgets.bar")
+local _box = require("hitokage.widgets.box")
+local _clock = require("hitokage.widgets.clock")
+local monitor = require("hitokage.api.monitor")
+local _workspace = require("hitokage.widgets.workspace")
 
 -------------------------------------------------------------------------------
 --- Utility functions

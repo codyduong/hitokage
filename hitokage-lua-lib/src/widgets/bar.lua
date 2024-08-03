@@ -1,3 +1,5 @@
+--- @meta hitokage.widgets.bar
+
 -------------------------------------------------------------------------------
 --- Links to BarUserData in 'hitokage-lua\src\widgets\bar.rs'
 --- @class Bar

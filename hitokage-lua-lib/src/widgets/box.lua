@@ -1,3 +1,5 @@
+--- @meta hitokage.widgets.box
+
 -------------------------------------------------------------------------------
 --- Links to BoxProps in 'hitokage-core\src\widgets\box.rs'
 --- @class BoxProps

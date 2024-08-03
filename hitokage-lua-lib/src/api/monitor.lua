@@ -1,3 +1,5 @@
+--- @meta hitokage.api.monitor
+
 -------------------------------------------------------------------------------
 --- Represents the monitor module
 --- @class monitorlib

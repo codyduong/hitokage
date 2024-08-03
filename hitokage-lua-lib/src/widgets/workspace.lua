@@ -1,3 +1,5 @@
+--- @meta hitokage.widgets.workspace
+
 -------------------------------------------------------------------------------
 --- Links to WorkspaceProps in 'hitokage-core\src\widgets\workspace.rs'
 --- @class WorkspaceProps
