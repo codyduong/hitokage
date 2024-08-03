@@ -9,7 +9,7 @@
 --- @field geometry boolean
 ---
 --- Wrapper around bar:get_widgets()
---- @field widgets any -- @codyduong TODO fix this return type
+--- @field widgets table<number, Box | Clock | Workspace>
 ---
 local bar_instance = {}
 
@@ -24,7 +24,7 @@ function bar_instance:is_ready() end
 function bar_instance:get_geometry() end
 
 --- Gets the widgets on the bar
---- @return table<number, Box | Clock | Workspace >
+--- @return table<number, Box | Clock | Workspace>
 function bar_instance:get_widgets() end
 
 -------------------------------------------------------------------------------
