@@ -29,12 +29,12 @@ function bar_instance:get_widgets() end
 
 -------------------------------------------------------------------------------
 --- Links to WidgetProps in 'hitokage-core\src\widgets\mod.rs'
---- @class WidgetWorkspaceProps
+--- @class WidgetClockProps
 --- @field Clock ClockProps
 --- @class WidgetBoxProps
 --- @field Box BoxProps
+--- @class WidgetWorkspaceProps
 --- @field Workspace WorkspaceProps
---- @class WidgetClockProps
 
 --- Array of WidgetProps
 --- @alias WidgetPropsVec table<number, WidgetBoxProps | WidgetClockProps | WidgetWorkspaceProps>
