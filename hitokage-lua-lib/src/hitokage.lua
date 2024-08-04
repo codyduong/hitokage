@@ -1,8 +1,12 @@
 --- @meta hitokage
+--- 
+--- @module 'hitokage.common'
+--- @module 'hitokage.widgets.box'
+--- @module 'hitokage.widgets.clock'
+--- @module 'hitokage.widgets.common'
+--- @module 'hitokage.widgets.workspace'
 
 --- This is the global module for [hitokage](https://github.com/codyduong/hitokage)
----
---- [View documentation](https://codyduong.dev/hitokage/lua/hitokage)
 ---
 --- @class hitokagelib
 _G.hitokage = {}
@@ -10,12 +14,8 @@ _G._not_deadlocked = function() end
 _G._subscribers = {}
 _G._subscriptions = {}
 
-local _common = require("hitokage.widgets.common")
-local bar = require("hitokage.widgets.bar")
-local _box = require("hitokage.widgets.box")
-local _clock = require("hitokage.widgets.clock")
+local bar = require("hitokage.api.bar")
 local monitor = require("hitokage.api.monitor")
-local _workspace = require("hitokage.widgets.workspace")
 
 -------------------------------------------------------------------------------
 --- Utility functions
