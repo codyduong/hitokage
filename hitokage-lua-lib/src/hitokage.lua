@@ -1,6 +1,7 @@
 --- @meta hitokage
 --- 
 --- @module 'hitokage.common'
+--- @module 'hitokage.widgets.base'
 --- @module 'hitokage.widgets.box'
 --- @module 'hitokage.widgets.clock'
 --- @module 'hitokage.widgets.common'
