@@ -12,6 +12,12 @@ pub enum Align {
   __Unknown(i32),
 }
 
+impl Default for Align {
+  fn default() -> Self {
+    Align::Fill
+  }
+}
+
 impl From<Align> for gtk4::Align {
   fn from(item: Align) -> Self {
     match item {
@@ -21,6 +27,20 @@ impl From<Align> for gtk4::Align {
       Align::Center => gtk4::Align::Center,
       Align::Baseline => gtk4::Align::Baseline,
       Align::__Unknown(i) => gtk4::Align::__Unknown(i),
+    }
+  }
+}
+
+impl From<gtk4::Align> for Align {
+  fn from(item: gtk4::Align) -> Self {
+    match item {
+      gtk4::Align::Fill => Align::Fill,
+      gtk4::Align::Start => Align::Start,
+      gtk4::Align::End => Align::End,
+      gtk4::Align::Center => Align::Center,
+      gtk4::Align::Baseline => Align::Baseline,
+      gtk4::Align::__Unknown(i) => Align::__Unknown(i),
+      _ => Align::__Unknown(0),
     }
   }
 }

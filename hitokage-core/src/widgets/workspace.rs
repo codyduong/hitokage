@@ -1,7 +1,6 @@
-use super::base::{Base, BaseProps};
+use super::base::{Base, BaseMsgHook, BaseProps};
 use crate::event::STATE;
-use crate::structs::{Align, CssClass};
-use crate::{prepend_css_class, prepend_css_class_to_model};
+use crate::{generate_base_match_arms, prepend_css_class, prepend_css_class_to_model, set_initial_base_props};
 use anyhow::Context;
 use gtk4::prelude::*;
 use gtk4::Constraint;
@@ -19,10 +18,7 @@ type WorkspaceState = (Option<String>, bool, bool);
 
 #[derive(Debug, Clone)]
 pub enum WorkspaceMsgHook {
-  GetClass(Sender<Vec<String>>),
-  SetClass(Option<CssClass>),
-  GetHalign(Sender<Align>),
-  SetHalign(Align),
+  BaseHook(BaseMsgHook),
   GetItemHeight(Sender<u32>),
   SetItemHeight(u32),
   GetItemWidth(Sender<u32>),
@@ -40,7 +36,6 @@ pub enum WorkspaceMsg {
 pub struct WorkspaceProps {
   item_width: Option<u32>,
   item_height: Option<u32>,
-  halign: Option<Align>,
   #[serde(flatten)]
   base: BaseProps,
 }
@@ -54,7 +49,6 @@ pub struct Workspace {
 
   item_width: i32,
   item_height: i32,
-  halign: Align,
   base: Base,
 }
 
@@ -68,8 +62,6 @@ impl Component for Workspace {
   view! {
     #[root]
     gtk::Box {
-      set_hexpand: true,
-      set_halign: gtk4::Align::Start,
       #[name="flowbox"]
       gtk::FlowBox {
         set_height_request: 16,
@@ -110,8 +102,6 @@ impl Component for Workspace {
     let item_width = props.item_width.unwrap_or(16) as i32;
     let item_height = props.item_height.unwrap_or(16) as i32;
 
-    let halign = props.halign.unwrap_or(Align::Start);
-
     let mut model = Workspace {
       flowbox: flowbox.clone(),
       id,
@@ -119,12 +109,11 @@ impl Component for Workspace {
       workspaces_to_check_constraints: Arc::new(Mutex::new(HashMap::new())),
       item_width,
       item_height,
-      halign,
       base: props.base.into(),
     };
 
     prepend_css_class_to_model!("workspace", model, root);
-    root.set_halign(halign.into());
+    set_initial_base_props!(model, root);
 
     STATE.subscribe(sender.input_sender(), move |state| {
       // we only care about the most recent state
@@ -165,16 +154,8 @@ impl Component for Workspace {
         }
       }
       WorkspaceMsg::LuaHook(hook) => match hook {
-        WorkspaceMsgHook::GetClass(tx) => {
-          tx.send(self.base.classes.clone()).unwrap();
-        }
-        WorkspaceMsgHook::SetClass(classes) => {
-          prepend_css_class_to_model!(self, "box", classes, root);
-        }
-        WorkspaceMsgHook::GetHalign(tx) => tx.send(self.halign).unwrap(),
-        WorkspaceMsgHook::SetHalign(halign) => {
-          root.set_halign(halign.clone().into());
-          self.halign = halign
+        WorkspaceMsgHook::BaseHook(base) => {
+          generate_base_match_arms!(self, "workspace", root, BaseMsgHook, base)
         }
         WorkspaceMsgHook::GetItemHeight(tx) => {
           tx.send(self.item_width as u32).unwrap();
@@ -317,8 +298,8 @@ fn update_workspaces(
       None => match workspaces.get(i) {
         Some((name, is_focused, _)) => {
           let label = gtk::Label::new(Some(&name.clone().unwrap_or((i + 1).to_string())));
-          label.set_hexpand(true);
-          label.set_vexpand(true);
+          label.set_hexpand(false);
+          label.set_vexpand(false);
           flowbox.append(&label);
           let child = &flowbox.child_at_index(i as i32).unwrap();
           if *is_focused {

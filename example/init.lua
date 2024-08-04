@@ -53,18 +53,18 @@ for _, monitor in ipairs(monitors) do
           }
         }
       },
-      { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
+      -- { Box = {} },
+      { Workspace = { halign = 'Center', item_height = 22, item_width = 22 } },
       { Clock = { format = "%a %b %u %r", halign = 'End' } },
     },
     width = monitor.geometry.width - 16,
     offset = {
       x = 8,
       y = 8,
-    }
+    },
   }))
   ::continue::
 end
-
 
 --- @alias WorkspaceTable table<number, Workspace>
 --- @type WorkspaceTable

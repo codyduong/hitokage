@@ -1,8 +1,11 @@
 use super::base::Base;
 use super::base::BaseProps;
 use super::WidgetUserData;
+use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
-use crate::structs::{CssClass, Monitor};
+use crate::set_initial_base_props;
+use crate::structs::Monitor;
+use crate::widgets::base::BaseMsgHook;
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::widgets::WidgetController;
@@ -16,8 +19,7 @@ use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
 pub enum BoxMsgHook {
-  GetClass(Sender<Vec<String>>),
-  SetClass(Option<CssClass>),
+  BaseHook(BaseMsgHook),
   GetWidgets(Sender<Vec<WidgetUserData>>),
 }
 
@@ -50,9 +52,6 @@ impl Component for Box {
   view! {
     gtk::Box {
       set_orientation: gtk::Orientation::Horizontal,
-      set_hexpand: true,
-      set_vexpand: true,
-      set_homogeneous: true,
     }
   }
 
@@ -62,10 +61,18 @@ impl Component for Box {
     let mut model = Box {
       monitor,
       widgets: Vec::new(),
-      base: props.base.into(),
+      base: Base {
+        classes: props.base.class.unwrap_or_default().into(),
+        halign: props.base.halign,
+        hexpand: props.base.hexpand.or(Some(true)),
+        homogeneous: props.base.homogeneous.or(Some(true)),
+        valign: props.base.valign,
+        vexpand: props.base.vexpand.or(Some(true)),
+      },
     };
 
     prepend_css_class_to_model!("box", model, root);
+    set_initial_base_props!(model, root);
 
     let widgets = view_output!();
 
@@ -100,11 +107,8 @@ impl Component for Box {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       BoxMsg::LuaHook(hook) => match hook {
-        BoxMsgHook::GetClass(tx) => {
-          tx.send(self.base.classes.clone()).unwrap();
-        }
-        BoxMsgHook::SetClass(classes) => {
-          prepend_css_class_to_model!(self, "box", classes, root);
+        BoxMsgHook::BaseHook(base) => {
+          generate_base_match_arms!(self, "box", root, BaseMsgHook, base)
         }
         BoxMsgHook::GetWidgets(tx) => {
           tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())

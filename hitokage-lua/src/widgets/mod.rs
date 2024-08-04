@@ -94,6 +94,19 @@ macro_rules! impl_getter_fn {
       Ok(ret_val)
     }
   };
+  ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $ret:ty) => {
+    fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
+      use std::sync::mpsc;
+
+      let sender = self.sender()?;
+
+      let (tx, rx) = mpsc::channel::<_>();
+      sender.send($msg_enum1($msg_enum2($request_enum(tx)))).unwrap();
+      let ret_val: $ret = rx.recv().unwrap().into();
+
+      Ok(ret_val)
+    }
+  };
 }
 
 #[macro_export]
@@ -104,6 +117,16 @@ macro_rules! impl_setter_fn {
       let value: $from = lua.from_value(value)?;
 
       sender.send($msg_enum($request_enum(value))).unwrap();
+
+      Ok(())
+    }
+  };
+  ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $from:ty) => {
+    fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
+      let sender = self.sender()?;
+      let value: $from = lua.from_value(value)?;
+
+      sender.send($msg_enum1($msg_enum2($request_enum(value)))).unwrap();
 
       Ok(())
     }

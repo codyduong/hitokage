@@ -18,7 +18,7 @@
 --- 
 --- @field class CssClass?
 --- 
---- Sets the horizontal alignment of `widget`. Defaults to `'Start'`
+--- Sets the horizontal alignment of `widget`. Defaults to `'Fill'`
 --- 
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Widget.halign.html)
 --- 
@@ -36,7 +36,7 @@
 --- 
 --- @field homogeneous boolean?
 ---
---- Sets the vertical alignment of `widget`. Defaults to `'Start'`
+--- Sets the vertical alignment of `widget`. Defaults to `'Fill'`.
 --- 
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Widget.valign.html)
 --- 

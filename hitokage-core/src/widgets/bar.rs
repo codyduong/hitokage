@@ -1,12 +1,13 @@
-use super::base::{Base, BaseProps};
+use super::base::{Base, BaseMsgHook, BaseProps};
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
-use crate::structs::{CssClass, Monitor, MonitorGeometry, MonitorScaleFactor};
+use crate::structs::{Align, Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
-use crate::{prepend_css_class, prepend_css_class_to_model};
+use crate::{generate_base_match_arms, prepend_css_class, prepend_css_class_to_model, set_initial_base_props};
 use gtk4::prelude::*;
+use gtk4::Box as GtkBox;
 use gtk4::Window;
 use relm4::prelude::*;
 use relm4::ComponentParts;
@@ -58,8 +59,7 @@ fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::R
 
 #[derive(Debug)]
 pub enum BarLuaHook {
-  GetClass(Sender<Vec<String>>),
-  SetClass(Option<CssClass>),
+  BaseHook(BaseMsgHook),
   GetGeometry(Sender<MonitorGeometry>),
   GetWidgets(Sender<Vec<WidgetUserData>>),
 }
@@ -127,9 +127,6 @@ impl Component for Bar {
       #[name = "main_box"]
       gtk::Box {
         set_orientation: gtk::Orientation::Horizontal,
-        set_hexpand: true,
-        set_vexpand: true,
-        set_homogeneous: true,
       },
 
       connect_realize => move |window| {
@@ -187,8 +184,16 @@ impl Component for Bar {
       scale_factor: monitor.scale_factor,
       offset_x,
       offset_y,
-      base: props.base.into(),
+      base: Base {
+        classes: props.base.class.unwrap_or_default().into(),
+        halign: props.base.halign,
+        hexpand: props.base.hexpand,
+        homogeneous: props.base.homogeneous.or(Some(true)),
+        valign: props.base.valign,
+        vexpand: props.base.vexpand,
+      },
     };
+
 
     prepend_css_class_to_model!("bar", model, root);
     root.set_transient_for(Some(&application_root));
@@ -198,6 +203,7 @@ impl Component for Bar {
     // });
 
     let widgets = view_output!();
+    set_initial_base_props!(model, widgets.main_box);
 
     for widget in props.widgets {
       let monitor = monitor.clone();
@@ -231,11 +237,9 @@ impl Component for Bar {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       BarMsg::LuaHook(hook) => match hook {
-        BarLuaHook::GetClass(tx) => {
-          tx.send(self.base.classes.clone()).unwrap();
-        }
-        BarLuaHook::SetClass(classes) => {
-          prepend_css_class_to_model!(self, "box", classes, root);
+        BarLuaHook::BaseHook(base) => {
+          // TODO @codyduong... this sucks... LOL! the `view_output!();` macro modifies whats available
+          generate_base_match_arms!(self, "bar", root.child().unwrap().downcast::<GtkBox>().unwrap(), BaseMsgHook, base)
         }
         BarLuaHook::GetGeometry(tx) => {
           tx.send(self.geometry).unwrap();
