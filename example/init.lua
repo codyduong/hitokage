@@ -4,7 +4,7 @@ local monitors = hitokage.monitor.get_all()
 local bars = {}
 
 for _, monitor in ipairs(monitors) do
-  if (monitor.model == "LG SDQHD") then
+  if monitor.model == "LG SDQHD" then
     goto continue
   end
 
@@ -17,52 +17,55 @@ for _, monitor in ipairs(monitors) do
   --   }
   -- })
 
-  table.insert(bars, hitokage.bar.create(monitor, {
-    widgets = {
-      {
-        Box = {
-          widgets = {
-            {
-              Box = {
-                widgets = {},
-                class = "red"
-              }
+  table.insert(
+    bars,
+    hitokage.bar.create(monitor, {
+      widgets = {
+        {
+          Box = {
+            widgets = {
+              {
+                Box = {
+                  widgets = {},
+                  class = "red",
+                },
+              },
+              {
+                Box = {
+                  widgets = {},
+                  class = "green",
+                },
+              },
+              {
+                Box = {
+                  widgets = {},
+                  class = "blue",
+                },
+              },
+              {
+                Box = {
+                  widgets = {},
+                  class = {
+                    "red",
+                    "green",
+                    "blue",
+                  },
+                },
+              },
             },
-            {
-              Box = {
-                widgets = {},
-                class = "green"
-              }
-            },
-            {
-              Box = {
-                widgets = {},
-                class = "blue"
-              }
-            },
-            {
-              Box = {
-                widgets = {},
-                class = {
-                  "red",
-                  "green",
-                  "blue"
-                }
-              }
-            }
-          }
-        }
+          },
+        },
+        -- { Box = {} },
+        { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
+        { Clock = { format = "%a %b %u %r", halign = "End" } },
       },
-      -- { Box = {} },
-      { Workspace = { halign = 'Center', item_height = 22, item_width = 22 } },
-      { Clock = { format = "%a %b %u %r", halign = 'End' } },
-    },
-    width = monitor.geometry.width - 16,
-    offset = {
-      x = 8,
-      y = 8,
-    },
-  }))
+      width = monitor.geometry.width - 16,
+      offset = {
+        x = 8,
+        y = 8,
+      },
+    })
+  )
   ::continue::
 end
 
@@ -104,7 +107,7 @@ local timeout = function(timeout, action)
     while true do
       local elapsed_time = (os.clock() - start_time) * 1000
       local remaining_time = timeout - elapsed_time
-      if (remaining_time <= 0) then
+      if remaining_time <= 0 then
         start_time = os.clock()
         action()
       end
@@ -152,7 +155,7 @@ local css_boxes_test = timeout(0, function()
     if next(widgets, index) == nil then
       bar:set_class(first)
     else
-      bar:set_class(widgets[index+1]:get_class())
+      bar:set_class(widgets[index + 1]:get_class())
     end
   end
 end)
@@ -181,7 +184,7 @@ end)
 
 _subscribers = { "komorebi" }
 _subscriptions = {
-  komorebi = {}
+  komorebi = {},
 }
 
 local subscribe = function(name, callback)
@@ -195,7 +198,7 @@ local subscribe = function(name, callback)
 
   -- Panic if the name is not approved
   if not is_subscriber then
-    error("Name not approved")
+    error "Name not approved"
   end
 
   local subscriptions = rawget(_G, "_subscriptions") or {}
@@ -246,8 +249,8 @@ local dispatcher = function(threads)
 
       if status and res_array then
         -- immediately sending any message means we reset the cooldown timer
-        _not_deadlocked();
-        coroutine.yield(res_array);
+        _not_deadlocked()
+        coroutine.yield(res_array)
       elseif not status then
         if res_array then
           hitokage.debug("Thread " .. i .. " exited:", res_array)
@@ -264,8 +267,8 @@ local dispatcher = function(threads)
     end
 
     -- ensure a minimum wait time of 100ms
-    _not_deadlocked();
-    coroutine.yield();
+    _not_deadlocked()
+    coroutine.yield()
 
     -- local elapsed_time = (os.clock() - start_time) * 1000
     -- local remaining_time = min_time_ms - elapsed_time
@@ -280,53 +283,49 @@ local dispatcher = function(threads)
   end
 end
 
-local komorebic_coroutine = coroutine.create(
-  function()
-    local subscriptions = rawget(rawget(_G, "_subscriptions"), "komorebi")
-    if #subscriptions == 0 then
-      return
-    end
+local komorebic_coroutine = coroutine.create(function()
+  local subscriptions = rawget(rawget(_G, "_subscriptions"), "komorebi")
+  if #subscriptions == 0 then
+    return
+  end
 
-    while true do
-      local new = hitokage.event.has_unread();
-      if new then
-        local unread_states = hitokage.event.get_unread();
-        -- for _, state in pairs(unread_states) do
-        --   hitokage.debug("checking " .. state.event.type);
-        --   if state.event.type == "FocusWorkspaceNumber" then
-        --     hitokage.debug("we changed workspaces to " .. state.event.content);
-        --   end
-        -- end
-        for id, callback in pairs(subscriptions) do
-          local status, res = pcall(callback, unread_states)
-          if status == false then
-            hitokage.error("Error running subscription callback {" .. id .. "}:", res)
-          end
+  while true do
+    local new = hitokage.event.has_unread()
+    if new then
+      local unread_states = hitokage.event.get_unread()
+      -- for _, state in pairs(unread_states) do
+      --   hitokage.debug("checking " .. state.event.type);
+      --   if state.event.type == "FocusWorkspaceNumber" then
+      --     hitokage.debug("we changed workspaces to " .. state.event.content);
+      --   end
+      -- end
+      for id, callback in pairs(subscriptions) do
+        local status, res = pcall(callback, unread_states)
+        if status == false then
+          hitokage.error("Error running subscription callback {" .. id .. "}:", res)
         end
       end
-      coroutine.yield()
     end
+    coroutine.yield()
   end
-)
+end)
 
-local file_watcher = coroutine.create(
-  function()
-    while true do
-      local new = hitokage.event.configuration.changed()
-      if new then
-        coroutine.yield("Reload")
-        -- stop running lua, then it will be passed to rust to reload this lua
-      end
-      coroutine.yield()
+local file_watcher = coroutine.create(function()
+  while true do
+    local new = hitokage.event.configuration.changed()
+    if new then
+      coroutine.yield "Reload"
+      -- stop running lua, then it will be passed to rust to reload this lua
     end
+    coroutine.yield()
   end
-)
+end)
 
-dispatcher({
+dispatcher {
   -- hitokage.loop.coroutine(),
   -- clock_swapper,
   -- halign_test,
-  css_boxes_test,
+  -- css_boxes_test,
   file_watcher,
   komorebic_coroutine,
-})
+}
