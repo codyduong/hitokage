@@ -71,10 +71,11 @@ pub fn create_lua_handle(
           Ok(func) => func,
           Err(err) => {
             log::error!("There was an error loading your user script: {:?}", err);
+            log::info!("Falling back to an empty script. Waiting for user script fixes");
             lua
               .load(load_content(None))
               .into_function()
-              .expect("Internal script error when fallbacking to empty user script")
+              .expect("Internal script error when falling back to empty user script")
           }
         }
       })
@@ -149,18 +150,18 @@ pub fn create_lua_handle(
                   *sswg = false;
                   let user_script = load_content(Some(file_path.clone()));
                   let result = lua.load(user_script).into_function();
+                  drop(sswg);
                   match result {
                     Ok(func) => {
                       let _ = coroutine.reset(func);
-                      drop(sswg);
                       tx.send(true).unwrap(); // safe reload success
                       ()
                     }
-                    Err(err) => {
-                      log::error!("There was an error loading your user script: {:?}", err);
-                      let mut is_stopped = is_stopped.lock().unwrap();
-                      *is_stopped = true;
-                      break Err(err);
+                    Err(_) => {
+                      // no need to handle the error since we will attempt to start again
+                      // which will indicate the error
+                      tx.send(false).unwrap();
+                      ()
                     }
                   }
                 }
