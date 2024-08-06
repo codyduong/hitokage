@@ -14,10 +14,16 @@ use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::Foundation::HANDLE;
 use windows::Win32::System::Threading::{OpenThread, TerminateThread, THREAD_TERMINATE};
 
-pub fn load_content(path: PathBuf) -> String {
-  let mut file = File::open(path.clone()).unwrap();
+pub fn load_content(path: Option<PathBuf>) -> String {
   let mut contents = String::new();
-  file.read_to_string(&mut contents).unwrap();
+
+  match path {
+    Some(path) => {
+      let mut file = File::open(path.clone()).unwrap();
+      file.read_to_string(&mut contents).unwrap();
+    }
+    None => (),
+  }
 
   let prepend = include_str!("./lua/prepend.lua");
   let append = include_str!("./lua/append.lua");
@@ -35,8 +41,6 @@ pub fn create_lua_handle(
   tx: Sender<bool>,
 ) -> std::thread::JoinHandle<Result<(), mlua::Error>> {
   return thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
-    let user_script = load_content(file_path.clone());
-
     let lua = hitokage_lua::make(sender).unwrap();
 
     {
@@ -58,9 +62,23 @@ pub fn create_lua_handle(
       Ok::<(), mlua::Error>(())
     }?;
 
+    let func_or_err = lua.load(load_content(Some(file_path.clone()))).into_function();
+
+    // if we failed to create a coroutine default to an empty script
     let coroutine = lua
-      .create_thread(lua.load(user_script).into_function().unwrap())
-      .unwrap();
+      .create_thread({
+        match func_or_err {
+          Ok(func) => func,
+          Err(err) => {
+            log::error!("There was an error loading your user script: {:?}", err);
+            lua
+              .load(load_content(None))
+              .into_function()
+              .expect("Internal script error when fallbacking to empty user script")
+          }
+        }
+      })
+      .expect("Failed to create a lua thread");
 
     let tx_clone = tx.clone();
 
@@ -129,11 +147,22 @@ pub fn create_lua_handle(
                   log::info!("Received reload from lua coroutine");
                   let mut sswg = CONFIG_UPDATE.write();
                   *sswg = false;
-                  let user_script = load_content(file_path.clone());
-                  let _ = coroutine.reset(lua.load(user_script).into_function().unwrap());
-                  drop(sswg);
-                  tx.send(true).unwrap(); // safe reload success
-                  ()
+                  let user_script = load_content(Some(file_path.clone()));
+                  let result = lua.load(user_script).into_function();
+                  match result {
+                    Ok(func) => {
+                      let _ = coroutine.reset(func);
+                      drop(sswg);
+                      tx.send(true).unwrap(); // safe reload success
+                      ()
+                    }
+                    Err(err) => {
+                      log::error!("There was an error loading your user script: {:?}", err);
+                      let mut is_stopped = is_stopped.lock().unwrap();
+                      *is_stopped = true;
+                      break Err(err);
+                    }
+                  }
                 }
               },
               Err(err) => {
