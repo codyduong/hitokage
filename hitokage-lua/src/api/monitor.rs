@@ -3,7 +3,7 @@ use gdk4::{
   prelude::*,
 };
 use hitokage_core::{
-  lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor},
+  structs::{Monitor, MonitorGeometry, MonitorScaleFactor},
   win_utils::get_windows_version,
 };
 use mlua::{AnyUserData, Lua, LuaSerdeExt, UserData, UserDataMethods, Value};

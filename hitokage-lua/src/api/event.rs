@@ -1,4 +1,4 @@
-use hitokage_core::lua::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
+use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 

@@ -1,4 +1,6 @@
-use crate::common::Align;
+use crate::generate_base_match_arms;
+use crate::prepend_css_class_to_model;
+use crate::set_initial_base_props;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
@@ -8,12 +10,14 @@ use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use super::base::BaseMsgHook;
+use super::base::{Base, BaseProps};
+
 #[derive(Debug, Clone)]
 pub enum ClockMsgHook {
+  BaseHook(BaseMsgHook),
   GetFormat(Sender<String>),
   SetFormat(String),
-  GetHalign(Sender<Align>),
-  SetHalign(Align),
 }
 
 #[derive(Debug, Clone)]
@@ -25,8 +29,8 @@ pub enum ClockMsg {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ClockProps {
   format: String,
-  halign: Option<Align>,
-  class: Option<String>,
+  #[serde(flatten)]
+  base: BaseProps,
 }
 
 impl From<ClockProps> for Clock {
@@ -35,8 +39,7 @@ impl From<ClockProps> for Clock {
       current_time: chrono::Local::now().format(&props.format).to_string(),
       destroyed: Arc::new(Mutex::new(false)),
       format: props.format.clone(),
-      halign: props.halign.unwrap_or(Align::Start),
-      class: props.class,
+      base: props.base.into(),
     }
   }
 }
@@ -46,8 +49,7 @@ pub struct Clock {
   destroyed: Arc<Mutex<bool>>,
 
   format: String,
-  halign: Align,
-  class: Option<String>,
+  base: Base,
 }
 
 #[relm4::component(pub)]
@@ -69,13 +71,10 @@ impl Component for Clock {
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let model: Clock = props.into();
+    let mut model: Clock = props.into();
 
-    root.add_css_class("clock");
-    if let Some(class) = &model.class {
-      root.add_css_class(&class);
-    }
-    root.set_halign(model.halign.into());
+    prepend_css_class_to_model!("clock", model, root);
+    set_initial_base_props!(model, root);
 
     // Timer
     let sender_clone = sender.clone();
@@ -101,18 +100,14 @@ impl Component for Clock {
         self.current_time = chrono::Local::now().format(&self.format).to_string();
       }
       ClockMsg::LuaHook(hook) => match hook {
+        ClockMsgHook::BaseHook(base) => {
+          generate_base_match_arms!(self, "clock", root, BaseMsgHook, base)
+        }
         ClockMsgHook::GetFormat(tx) => {
           tx.send(self.format.clone()).unwrap();
         }
         ClockMsgHook::SetFormat(format) => {
           self.format = format;
-        }
-        ClockMsgHook::GetHalign(tx) => {
-          tx.send(self.halign.clone()).unwrap();
-        }
-        ClockMsgHook::SetHalign(halign) => {
-          root.set_halign(halign.clone().into());
-          self.halign = halign
         }
       },
     }

@@ -1,5 +1,5 @@
 use crate::{App, LuaCoroutineMessage};
-use hitokage_core::{lua::event::CONFIG_UPDATE, win_utils};
+use hitokage_core::{event::CONFIG_UPDATE, win_utils};
 use mlua::LuaSerdeExt;
 use relm4::ComponentSender;
 use std::{
@@ -14,12 +14,21 @@ use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::Foundation::HANDLE;
 use windows::Win32::System::Threading::{OpenThread, TerminateThread, THREAD_TERMINATE};
 
-pub fn load_content(path: PathBuf) -> String {
-  let mut file = File::open(path.clone()).unwrap();
+pub fn load_content(path: Option<PathBuf>) -> String {
   let mut contents = String::new();
-  file.read_to_string(&mut contents).unwrap();
 
-  contents
+  match path {
+    Some(path) => {
+      let mut file = File::open(path.clone()).unwrap();
+      file.read_to_string(&mut contents).unwrap();
+    }
+    None => (),
+  }
+
+  let prepend = include_str!("./lua/prepend.lua");
+  let append = include_str!("./lua/append.lua");
+
+  prepend.to_owned() + "\n" + &contents + "\n" + append
 }
 
 pub fn create_lua_handle(
@@ -32,8 +41,6 @@ pub fn create_lua_handle(
   tx: Sender<bool>,
 ) -> std::thread::JoinHandle<Result<(), mlua::Error>> {
   return thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
-    let user_script = load_content(file_path.clone());
-
     let lua = hitokage_lua::make(sender).unwrap();
 
     {
@@ -55,9 +62,24 @@ pub fn create_lua_handle(
       Ok::<(), mlua::Error>(())
     }?;
 
+    let func_or_err = lua.load(load_content(Some(file_path.clone()))).into_function();
+
+    // if we failed to create a coroutine default to an empty script
     let coroutine = lua
-      .create_thread(lua.load(user_script).into_function().unwrap())
-      .unwrap();
+      .create_thread({
+        match func_or_err {
+          Ok(func) => func,
+          Err(err) => {
+            log::error!("There was an error loading your user script: {:?}", err);
+            log::info!("Falling back to an empty script. Waiting for user script fixes");
+            lua
+              .load(load_content(None))
+              .into_function()
+              .expect("Internal script error when falling back to empty user script")
+          }
+        }
+      })
+      .expect("Failed to create a lua thread");
 
     let tx_clone = tx.clone();
 
@@ -126,11 +148,22 @@ pub fn create_lua_handle(
                   log::info!("Received reload from lua coroutine");
                   let mut sswg = CONFIG_UPDATE.write();
                   *sswg = false;
-                  let user_script = load_content(file_path.clone());
-                  let _ = coroutine.reset(lua.load(user_script).into_function().unwrap());
+                  let user_script = load_content(Some(file_path.clone()));
+                  let result = lua.load(user_script).into_function();
                   drop(sswg);
-                  tx.send(true).unwrap(); // safe reload success
-                  ()
+                  match result {
+                    Ok(func) => {
+                      let _ = coroutine.reset(func);
+                      tx.send(true).unwrap(); // safe reload success
+                      ()
+                    }
+                    Err(_) => {
+                      // no need to handle the error since we will attempt to start again
+                      // which will indicate the error
+                      tx.send(false).unwrap();
+                      ()
+                    }
+                  }
                 }
               },
               Err(err) => {
@@ -182,7 +215,7 @@ pub fn create_watcher_handle(
 
       if overrun {
         log::error!(
-          "There was a possible infinite loop or deadlock detected in your hitokage.lua! Did you mean to use hitokage.loop(): "
+          "There was a possible infinite loop or deadlock detected in your hitokage.lua! Did you mean to use hitokage.dispatch()? "
         ); //@codyduong add a link to user-end docs
         start_time = Instant::now();
       }

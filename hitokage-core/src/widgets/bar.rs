@@ -1,18 +1,18 @@
+use super::base::{Base, BaseMsgHook, BaseProps};
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
-use crate::lua::monitor::{Monitor, MonitorGeometry, MonitorScaleFactor};
+use crate::structs::{Align, Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
+use crate::{generate_base_match_arms, prepend_css_class, prepend_css_class_to_model, set_initial_base_props};
 use gtk4::prelude::*;
+use gtk4::Box as GtkBox;
 use gtk4::Window;
 use relm4::prelude::*;
 use relm4::ComponentParts;
-use relm4::SharedState;
-use relm4::SimpleComponent;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::mpsc::Sender;
 use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, HWND_TOP, SWP_NOSIZE};
 
@@ -59,8 +59,9 @@ fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::R
 
 #[derive(Debug)]
 pub enum BarLuaHook {
-  GetWidgets(Sender<Vec<WidgetUserData>>),
+  BaseHook(BaseMsgHook),
   GetGeometry(Sender<MonitorGeometry>),
+  GetWidgets(Sender<Vec<WidgetUserData>>),
 }
 
 #[derive(Debug)]
@@ -87,7 +88,8 @@ pub struct BarProps {
   pub width: Option<i32>,
   pub height: Option<i32>,
   pub offset: Option<BarOffset>,
-  class: Option<String>,
+  #[serde(flatten)]
+  base: BaseProps,
 }
 
 pub struct Bar {
@@ -98,11 +100,11 @@ pub struct Bar {
   scale_factor: MonitorScaleFactor,
   offset_x: i32,
   offset_y: i32,
-  class: Option<String>,
+  base: Base,
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for Bar {
+impl Component for Bar {
   type Input = BarMsg;
   type Output = ();
   type Init = (
@@ -112,6 +114,7 @@ impl SimpleComponent for Bar {
     gtk::ApplicationWindow,
   );
   type Widgets = AppWidgets;
+  type CommandOutput = ();
 
   view! {
     Window {
@@ -124,9 +127,6 @@ impl SimpleComponent for Bar {
       #[name = "main_box"]
       gtk::Box {
         set_orientation: gtk::Orientation::Horizontal,
-        set_hexpand: true,
-        set_vexpand: true,
-        set_homogeneous: true,
       },
 
       connect_realize => move |window| {
@@ -151,16 +151,6 @@ impl SimpleComponent for Bar {
 
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let (monitor, props, callback, application_root) = input;
-
-    root.add_css_class("bar");
-    if let Some(class) = &props.class {
-      root.add_css_class(class);
-    }
-    root.set_transient_for(Some(&application_root));
-
-    // root.connect_scale_factor_notify(move |win| {
-    //   // todo @codyduong, needed for if users change scaling on the go
-    // });
 
     callback(sender.clone().input_sender().clone());
 
@@ -194,10 +184,26 @@ impl SimpleComponent for Bar {
       scale_factor: monitor.scale_factor,
       offset_x,
       offset_y,
-      class: props.class,
+      base: Base {
+        classes: props.base.class.unwrap_or_default().into(),
+        halign: props.base.halign,
+        hexpand: props.base.hexpand,
+        homogeneous: props.base.homogeneous.or(Some(true)),
+        valign: props.base.valign,
+        vexpand: props.base.vexpand,
+      },
     };
 
+
+    prepend_css_class_to_model!("bar", model, root);
+    root.set_transient_for(Some(&application_root));
+
+    // root.connect_scale_factor_notify(move |win| {
+    //   // todo @codyduong, needed for if users change scaling on the go
+    // });
+
     let widgets = view_output!();
+    set_initial_base_props!(model, widgets.main_box);
 
     for widget in props.widgets {
       let monitor = monitor.clone();
@@ -213,7 +219,9 @@ impl SimpleComponent for Bar {
           model.widgets.push(WidgetController::Workspace(controller));
         }
         WidgetProps::Box(inner_props) => {
-          let controller = crate::widgets::r#box::Box::builder().launch((monitor, inner_props)).detach();
+          let controller = crate::widgets::r#box::Box::builder()
+            .launch((monitor, inner_props))
+            .detach();
           widgets.main_box.append(controller.widget());
           model.widgets.push(WidgetController::Box(controller));
         }
@@ -226,15 +234,19 @@ impl SimpleComponent for Bar {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       BarMsg::LuaHook(hook) => match hook {
-        BarLuaHook::GetWidgets(tx) => {
-          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
-            .unwrap();
+        BarLuaHook::BaseHook(base) => {
+          // TODO @codyduong... this sucks... LOL! the `view_output!();` macro modifies whats available
+          generate_base_match_arms!(self, "bar", root.child().unwrap().downcast::<GtkBox>().unwrap(), BaseMsgHook, base)
         }
         BarLuaHook::GetGeometry(tx) => {
           tx.send(self.geometry).unwrap();
+        }
+        BarLuaHook::GetWidgets(tx) => {
+          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
+            .unwrap();
         }
       },
     }

@@ -1,5 +1,7 @@
 use clock::ClockUserData;
-use hitokage_core::widgets::{clock::ClockMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData};
+use hitokage_core::widgets::{
+  clock::ClockMsg, r#box::BoxMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData,
+};
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
 use workspace::WorkspaceUserData;
@@ -12,7 +14,7 @@ pub mod workspace;
 enum WidgetUserData {
   Clock(relm4::Sender<ClockMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
-  Box(relm4::Sender<()>),
+  Box(relm4::Sender<BoxMsg>),
 }
 
 impl<'lua> IntoLua<'lua> for WidgetUserData {
@@ -32,9 +34,10 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
         };
         lua.pack(workspace_userdata)
       }
-      WidgetUserData::Box(_) => {
+      WidgetUserData::Box(sender) => {
         let box_userdata = BoxUserData {
           r#type: "Box".to_string(),
+          sender: sender,
         };
         lua.pack(box_userdata)
       }
@@ -80,10 +83,25 @@ impl<'lua> IntoLua<'lua> for WidgetUserDataVec {
 macro_rules! impl_getter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $ret:ty) => {
     fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
+      use std::sync::mpsc;
+
       let sender = self.sender()?;
 
       let (tx, rx) = mpsc::channel::<_>();
       sender.send($msg_enum($request_enum(tx))).unwrap();
+      let ret_val: $ret = rx.recv().unwrap().into();
+
+      Ok(ret_val)
+    }
+  };
+  ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $ret:ty) => {
+    fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
+      use std::sync::mpsc;
+
+      let sender = self.sender()?;
+
+      let (tx, rx) = mpsc::channel::<_>();
+      sender.send($msg_enum1($msg_enum2($request_enum(tx)))).unwrap();
       let ret_val: $ret = rx.recv().unwrap().into();
 
       Ok(ret_val)
@@ -94,11 +112,21 @@ macro_rules! impl_getter_fn {
 #[macro_export]
 macro_rules! impl_setter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $from:ty) => {
-    fn $fn_name(&self, lua: &Lua, value: mlua::Value) -> Result<(), mlua::Error> {
+    fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
       let sender = self.sender()?;
       let value: $from = lua.from_value(value)?;
 
       sender.send($msg_enum($request_enum(value))).unwrap();
+
+      Ok(())
+    }
+  };
+  ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $from:ty) => {
+    fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
+      let sender = self.sender()?;
+      let value: $from = lua.from_value(value)?;
+
+      sender.send($msg_enum1($msg_enum2($request_enum(value)))).unwrap();
 
       Ok(())
     }

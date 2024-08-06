@@ -1,6 +1,6 @@
 use gtk4::{prelude::*, style_context_add_provider_for_display, style_context_remove_provider_for_display};
-use hitokage_core::lua::event::{EventNotif, CONFIG_UPDATE, STATE};
-use hitokage_core::lua::event::{EVENT, NEW_EVENT};
+use hitokage_core::event::{EventNotif, CONFIG_UPDATE, STATE};
+use hitokage_core::event::{EVENT, NEW_EVENT};
 use hitokage_core::widgets;
 use hitokage_core::widgets::bar;
 use hitokage_lua::AppMsg;
@@ -283,13 +283,6 @@ impl Component for App {
     match msg {
       // Komorebi States
       AppMsg::Komorebi(notif) => {
-        // println!("{:?}", &notif);
-        let notif: Option<EventNotif> = serde_json::from_str(&notif).unwrap_or_else(|err| {
-          log::warn!("Failed to read notification from komorebic: {:?}", err);
-
-          None
-        });
-
         // Breaks on version mismatch between built and available version...
         // let notif: Option<komorebi_client::Notification> = serde_json::from_str(&notif).unwrap_or_else(|err| {
         //   log::warn!("Failed to read notifcations from komorebic: {:?}", err);
@@ -297,13 +290,11 @@ impl Component for App {
         //   None
         // });
 
-        if let Some(notif_value) = notif {
-          let mut sswg = EVENT.write();
-          sswg.push(notif_value.clone());
-          drop(sswg);
-          *STATE.write() = notif_value.state;
-          *NEW_EVENT.write() = true;
-        }
+        // let mut sswg = EVENT.write();
+        // sswg.push(notif.clone());
+        // drop(sswg);
+        *STATE.write() = notif.state;
+        *NEW_EVENT.write() = true;
       }
       AppMsg::KomorebiErr(line) => {
         println!("{:?}", &line);

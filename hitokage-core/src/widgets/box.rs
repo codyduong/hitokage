@@ -1,4 +1,11 @@
-use crate::lua::monitor::Monitor;
+use super::base::Base;
+use super::base::BaseProps;
+use super::WidgetUserData;
+use crate::generate_base_match_arms;
+use crate::prepend_css_class_to_model;
+use crate::set_initial_base_props;
+use crate::structs::Monitor;
+use crate::widgets::base::BaseMsgHook;
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::widgets::WidgetController;
@@ -7,35 +14,44 @@ use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
-use relm4::SimpleComponent;
 use serde::{Deserialize, Serialize};
+use std::sync::mpsc::Sender;
+
+#[derive(Debug, Clone)]
+pub enum BoxMsgHook {
+  BaseHook(BaseMsgHook),
+  GetWidgets(Sender<Vec<WidgetUserData>>),
+}
+
+#[derive(Debug, Clone)]
+pub enum BoxMsg {
+  LuaHook(BoxMsgHook),
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BoxProps {
   widgets: Option<Vec<WidgetProps>>,
-  class: Option<String>,
+  #[serde(flatten)]
+  base: BaseProps,
 }
 
 pub struct Box {
   monitor: Monitor,
-
   widgets: Vec<WidgetController>,
-  class: Option<String>,
+  base: Base,
 }
 
 #[relm4::component(pub)]
-impl SimpleComponent for Box {
-  type Input = ();
+impl Component for Box {
+  type Input = BoxMsg;
   type Output = ();
   type Init = (Monitor, BoxProps);
   type Widgets = BoxWidgets;
+  type CommandOutput = ();
 
   view! {
     gtk::Box {
       set_orientation: gtk::Orientation::Horizontal,
-      set_hexpand: true,
-      set_vexpand: true,
-      set_homogeneous: true,
     }
   }
 
@@ -45,13 +61,18 @@ impl SimpleComponent for Box {
     let mut model = Box {
       monitor,
       widgets: Vec::new(),
-      class: props.class
+      base: Base {
+        classes: props.base.class.unwrap_or_default().into(),
+        halign: props.base.halign,
+        hexpand: props.base.hexpand.or(Some(true)),
+        homogeneous: props.base.homogeneous.or(Some(true)),
+        valign: props.base.valign,
+        vexpand: props.base.vexpand.or(Some(true)),
+      },
     };
 
-    root.add_css_class("box");
-    if let Some(class) = &model.class {
-      root.add_css_class(class);
-    }
+    prepend_css_class_to_model!("box", model, root);
+    set_initial_base_props!(model, root);
 
     let widgets = view_output!();
 
@@ -69,7 +90,9 @@ impl SimpleComponent for Box {
           model.widgets.push(WidgetController::Workspace(controller));
         }
         WidgetProps::Box(inner_props) => {
-          let controller = crate::widgets::r#box::Box::builder().launch((monitor, inner_props)).detach();
+          let controller = crate::widgets::r#box::Box::builder()
+            .launch((monitor, inner_props))
+            .detach();
           root.append(controller.widget());
           model.widgets.push(WidgetController::Box(controller));
         }
@@ -81,9 +104,17 @@ impl SimpleComponent for Box {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>) {
+  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
-      _ => {}
+      BoxMsg::LuaHook(hook) => match hook {
+        BoxMsgHook::BaseHook(base) => {
+          generate_base_match_arms!(self, "box", root, BaseMsgHook, base)
+        }
+        BoxMsgHook::GetWidgets(tx) => {
+          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
+            .unwrap();
+        }
+      },
     }
   }
 }
