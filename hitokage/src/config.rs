@@ -19,7 +19,10 @@ pub fn load_content(path: PathBuf) -> String {
   let mut contents = String::new();
   file.read_to_string(&mut contents).unwrap();
 
-  contents
+  let prepend = include_str!("./lua/prepend.lua");
+  let append = include_str!("./lua/append.lua");
+
+  prepend.to_owned() + "\n" + &contents + "\n" + append
 }
 
 pub fn create_lua_handle(

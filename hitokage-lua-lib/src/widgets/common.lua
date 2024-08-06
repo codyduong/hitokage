@@ -2,9 +2,9 @@
 
 -------------------------------------------------------------------------------
 --- Links to WidgetProps in 'hitokage-core\src\widgets\mod.rs'
---- 
+---
 --- @source hitokage-core\src\widgets\mod.rs
---- 
+---
 --- @class WidgetClockProps
 --- @field Clock ClockProps
 --- @class WidgetBoxProps
@@ -14,9 +14,9 @@
 
 -------------------------------------------------------------------------------
 --- @class HasChildrenProps
---- 
+---
 --- An array of widgets.
---- 
+---
 --- **Example**
 --- ```lua
 --- widgets = {
@@ -25,14 +25,14 @@
 ---   { Clock = { format = "%a %b %u %r", halign = 'End' } },
 --- },
 --- ```
---- 
+---
 --- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetWorkspaceProps>
 
 -------------------------------------------------------------------------------
 --- Links to BoxUserData hitokage-lua\src\widgets\box.rs
 --- @class HasChildren
---- 
---- Gets the attached widgets. 
+---
+--- Gets the attached widgets.
 --- @field widgets table<number, Box | Clock | Workspace>
 local has_children_instance = {}
 

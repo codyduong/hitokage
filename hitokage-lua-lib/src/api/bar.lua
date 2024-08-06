@@ -6,11 +6,11 @@
 local bar = {}
 
 --- Creates a new bar on a specified monitor.
---- 
+---
 --- **Example**
 --- ```lua
 --- local monitors = hitokage.monitor.get_all()
---- 
+---
 --- for _, monitor in ipairs(monitors) do
 ---   hitokage.bar.create(monitor, {
 ---     widgets = {
@@ -21,7 +21,7 @@ local bar = {}
 ---   })
 --- end
 --- ```
---- 
+---
 --- @param monitor Monitor
 --- @param bar_props BarProps
 --- @return Bar

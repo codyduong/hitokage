@@ -9,7 +9,7 @@
 -------------------------------------------------------------------------------
 --- Links to ClockUserData hitokage-lua\src\widgets\clock.rs
 --- @class Clock : Base
---- 
+---
 --- @field type 'Clock'
 local clock_instance = {}
 

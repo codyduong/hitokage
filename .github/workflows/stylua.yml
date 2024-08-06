@@ -1,0 +1,45 @@
+name: Check Lua styling with StyLua
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  stylua:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Cache StyLua
+        uses: actions/cache@v3
+        with:
+          path: |
+            stylua
+          key: ${{ runner.os }}-stylua-${{ hashFiles('**/stylua-linux.zip') }}
+          restore-keys: |
+            ${{ runner.os }}-stylua-
+
+      - name: Set up StyLua
+        run: |
+          if [ ! -f "stylua" ]; then
+            curl -L https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux.zip -o stylua.zip
+            unzip stylua.zip
+            chmod +x stylua
+          fi
+
+      - name: Check Lua files formatting
+        run: |
+          ./stylua --check .
+        continue-on-error: false
+
+      - name: Report formatting errors (optional)
+        if: failure()
+        run: |
+          echo "StyLua found formatting issues."

@@ -9,7 +9,7 @@
 -------------------------------------------------------------------------------
 --- Links to hitokage-lua\src\widgets\workspace.rs
 --- @class Workspace
---- 
+---
 --- @field type 'Workspace'
 local workspace_instance = {}
 

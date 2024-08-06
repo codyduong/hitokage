@@ -1,7 +1,4 @@
 {
-  "Lua.diagnostics.disable": [
-    "missing-return"
-  ],
   "Lua.workspace.library": [
     "../hitokage-lua-lib/src/hitokage.lua"
   ],
