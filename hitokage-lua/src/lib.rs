@@ -1,4 +1,4 @@
-use hitokage_core::{structs::monitor::Monitor, widgets::bar::BarMsg};
+use hitokage_core::{event::EventNotif, structs::monitor::Monitor, widgets::bar::BarMsg};
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
@@ -12,7 +12,7 @@ use widgets::bar;
 
 #[derive(Debug)]
 pub enum AppMsg {
-  Komorebi(String),
+  Komorebi(EventNotif),
   KomorebiErr(String),
   LuaHook(LuaHook),
   DestroyActual,

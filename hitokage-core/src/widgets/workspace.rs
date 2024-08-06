@@ -117,6 +117,9 @@ impl Component for Workspace {
 
     STATE.subscribe(sender.input_sender(), move |state| {
       // we only care about the most recent state
+
+      // TODO @codyduong change this to only care about change_workspace events.
+
       let workspaces = get_workspaces(&state.clone(), id);
 
       WorkspaceMsg::Workspaces(workspaces.unwrap())

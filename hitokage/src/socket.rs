@@ -1,4 +1,5 @@
 use anyhow::Result;
+use hitokage_core::event::EventNotif;
 use hitokage_lua::AppMsg;
 use komorebi_client::send_message;
 use std::io::BufRead;
@@ -20,21 +21,20 @@ pub fn start(sender: relm4::ComponentSender<crate::App>) -> std::thread::JoinHan
 
           for line in reader.lines().flatten() {
             // let notification: komorebi_client::Notification = match serde_json::from_str(&line) {
-            let notification: serde_json::Value = match serde_json::from_str(&line) {
+            let notification: Option<EventNotif> = match serde_json::from_str(&line) {
               Ok(notification) => notification,
               Err(error) => {
-                log::debug!("discarding malformed komorebi notification: {error}");
-                continue;
+                log::warn!("Failed to read notification from komorebic: {:?}", error);
+                None
               }
             };
 
             // match and filter on desired notifications
             match notification {
-              _ => {
-                // TODO @codyduong LOL why did we convert to json just to convert to string then back to json in main.rs LOL!!
-                let line = notification.to_string();
-                sender.input(AppMsg::Komorebi(line));
-              }
+              Some(notif) => {
+                sender.input(AppMsg::Komorebi(notif));
+              },
+              _ => ()
             }
           }
         }
