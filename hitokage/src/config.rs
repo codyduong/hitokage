@@ -214,7 +214,7 @@ pub fn create_watcher_handle(
 
       if overrun {
         log::error!(
-          "There was a possible infinite loop or deadlock detected in your hitokage.lua! Did you mean to use hitokage.loop(): "
+          "There was a possible infinite loop or deadlock detected in your hitokage.lua! Did you mean to use hitokage.dispatch()? "
         ); //@codyduong add a link to user-end docs
         start_time = Instant::now();
       }
