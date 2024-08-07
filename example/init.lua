@@ -143,4 +143,4 @@ local css_boxes_test = hitokage.timeout(0, function()
 	end
 end)
 
-hitokage.dispatch(css_boxes_test)
+-- hitokage.dispatch(css_boxes_test)
