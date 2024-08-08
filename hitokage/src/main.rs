@@ -1,5 +1,5 @@
 use gtk4::{prelude::*, style_context_add_provider_for_display, style_context_remove_provider_for_display};
-use hitokage_core::event::{EventNotif, CONFIG_UPDATE, STATE};
+use hitokage_core::event::{CONFIG_UPDATE, STATE};
 use hitokage_core::event::{EVENT, NEW_EVENT};
 use hitokage_core::widgets;
 use hitokage_core::widgets::bar;
@@ -237,7 +237,7 @@ impl Component for App {
       glib::source::idle_add_local(move || {
         let mut old_providers: Vec<&gtk4::CssProvider> = vec![];
 
-        if let Ok(_) = rx3.try_recv() {
+        if rx3.try_recv().is_ok() {
           let provider = gtk4::CssProvider::new();
           let css_file = gdk4::gio::File::for_path(&css_file_path);
           provider.load_from_file(&css_file);
@@ -304,18 +304,14 @@ impl Component for App {
         LuaHookType::CreateBar(monitor, props, callback) => {
           let builder = bar::Bar::builder();
 
-          let bar = builder.launch((monitor, props, callback, root.clone()));
+          let bar = builder.launch((*monitor, props, callback, root.clone()));
           // .forward(sender.input_sender(), std::convert::identity);
 
           self.bars.push(bar);
-
-          ()
         }
         LuaHookType::ReadEvent => {
           *EVENT.write() = Vec::new();
           *NEW_EVENT.write() = false;
-
-          ()
         }
         LuaHookType::CheckConfigUpdate => {
           *self.file_last_checked_at.lock().unwrap() = Instant::now();
@@ -324,8 +320,6 @@ impl Component for App {
         _ => {
           // @codyduong TODO
           log::warn!("todo");
-
-          ()
         }
       },
       AppMsg::DestroyActual => {
@@ -357,10 +351,10 @@ fn main() {
   gtk::init().unwrap();
   if let Some(settings) = gtk::Settings::default() {
     // TODO @codyduong we need a primer/FAQ on blurry text
-    settings.set_property("gtk-xft-antialias", &0);
-    settings.set_property("gtk-xft-hinting", &1);
-    settings.set_property("gtk-xft-hintstyle", &"hintfull");
-    settings.set_property("gtk-xft-rgba", &"rgb");
+    settings.set_property("gtk-xft-antialias", 0);
+    settings.set_property("gtk-xft-hinting", 1);
+    settings.set_property("gtk-xft-hintstyle", "hintfull");
+    settings.set_property("gtk-xft-rgba", "rgb");
     settings.set_property("gtk-xft-dpi", 300);
   }
 

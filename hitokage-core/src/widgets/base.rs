@@ -64,7 +64,7 @@ macro_rules! generate_base_match_arms {
         if let Some(halign) = $self.base.halign {
           tx.send(halign).unwrap();
         } else {
-          let halign: crate::structs::Align = $root.halign().into();
+          let halign: $crate::structs::Align = $root.halign().into();
           tx.send(halign).unwrap();
         }
       }
@@ -105,7 +105,7 @@ macro_rules! generate_base_match_arms {
         if let Some(valign) = $self.base.valign {
           tx.send(valign).unwrap();
         } else {
-          let valign: crate::structs::Align = $root.valign().into();
+          let valign: $crate::structs::Align = $root.valign().into();
           tx.send(valign).unwrap();
         }
       }

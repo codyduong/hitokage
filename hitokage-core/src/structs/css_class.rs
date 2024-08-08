@@ -52,15 +52,15 @@ macro_rules! prepend_css_class {
 #[macro_export]
 macro_rules! prepend_css_class_to_model {
   ($prepend:expr, $model:expr, $root:expr) => {{
-    use crate::prepend_css_class;
     use indexmap::IndexSet;
+    use $crate::prepend_css_class;
     $model.base.classes = prepend_css_class!($prepend, $model.base.classes);
     let classes_ref: Vec<&str> = $model.base.classes.iter().map(AsRef::as_ref).collect();
     $root.set_css_classes(&classes_ref);
   }};
   ($self:ident, $prepend:expr, $classes:expr, $root:expr) => {
-    use crate::prepend_css_class;
     use indexmap::IndexSet;
+    use $crate::prepend_css_class;
     $self.base.classes = prepend_css_class!($prepend, $classes.unwrap_or_default());
     let classes_ref: Vec<&str> = $self.base.classes.iter().map(AsRef::as_ref).collect();
     $root.set_css_classes(&classes_ref);

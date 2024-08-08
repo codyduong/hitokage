@@ -19,7 +19,7 @@ pub fn start(sender: relm4::ComponentSender<crate::App>) -> std::thread::JoinHan
         Ok(data) => {
           let reader = std::io::BufReader::new(data.try_clone().expect(""));
 
-          for line in reader.lines().flatten() {
+          for line in reader.lines().map_while(Result::ok) {
             // let notification: komorebi_client::Notification = match serde_json::from_str(&line) {
             let notification: Option<EventNotif> = match serde_json::from_str(&line) {
               Ok(notification) => notification,
@@ -30,11 +30,8 @@ pub fn start(sender: relm4::ComponentSender<crate::App>) -> std::thread::JoinHan
             };
 
             // match and filter on desired notifications
-            match notification {
-              Some(notif) => {
-                sender.input(AppMsg::Komorebi(notif));
-              },
-              _ => ()
+            if let Some(notif) = notification {
+              sender.input(AppMsg::Komorebi(notif));
             }
           }
         }

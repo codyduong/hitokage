@@ -91,8 +91,6 @@ impl Component for Workspace {
 
           sender.input(WorkspaceMsg::FocusWorkspace(workspace_index as usize))
         }
-
-        ()
       });
     }
 
@@ -105,7 +103,7 @@ impl Component for Workspace {
     let mut model = Workspace {
       flowbox: flowbox.clone(),
       id,
-      constraint_layout: constraint_layout,
+      constraint_layout,
       workspaces_to_check_constraints: Arc::new(Mutex::new(HashMap::new())),
       item_width,
       item_height,
@@ -146,7 +144,7 @@ impl Component for Workspace {
           .unwrap()
           .iter()
           .enumerate()
-          .find(|(_, workspace)| workspace.1 == true)
+          .find(|(_, workspace)| workspace.1)
         {
           if workspace_index != i {
             log::info!("hitokage is focusing workspace {}", i);
@@ -262,12 +260,12 @@ fn get_workspaces(state: &serde_json::Value, monitor_id: u32) -> anyhow::Result<
 
 fn update_workspaces(
   flowbox: &gtk4::FlowBox,
-  workspaces: &Vec<WorkspaceState>,
+  workspaces: &[WorkspaceState],
   constraints_layout: &ConstraintLayout,
   workspaces_to_check_constraints_guard: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>,
   width: i32,
   height: i32,
-) -> () {
+) {
   let mut i = 0;
   loop {
     match flowbox.child_at_index(i as i32) {
@@ -336,7 +334,7 @@ fn update_workspaces(
 
       let first_visible_or_focused = workspaces
         .iter()
-        .position(|(_, is_focused, is_visible)| *is_visible || (!*is_visible && *is_focused));
+        .position(|(_, is_focused, is_visible)| *is_visible || *is_focused);
 
       if let Some(first) = first_visible_or_focused {
         if i == first {
@@ -376,7 +374,7 @@ fn update_workspaces(
 
       let last_visible_or_focused = workspaces
         .iter()
-        .rposition(|(_, is_focused, is_visible)| *is_visible || (!*is_visible && *is_focused));
+        .rposition(|(_, is_focused, is_visible)| *is_visible || *is_focused);
 
       if let Some(last) = last_visible_or_focused {
         if i == last {
@@ -407,8 +405,6 @@ fn update_workspaces(
   }
 
   flowbox.show();
-
-  ()
 }
 
 fn find_first_visible_previous_sibling(child: &gtk4::Widget) -> Option<gtk4::Widget> {
