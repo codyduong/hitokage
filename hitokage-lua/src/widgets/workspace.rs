@@ -52,55 +52,49 @@ impl UserData for WorkspaceUserData {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
 
     // BASE PROPERTIES START
-    methods.add_method("get_class", |lua, instance, ()| Ok(lua.pack(instance.get_class()?)?));
-    methods.add_method("set_class", |lua, this, value: mlua::Value| {
-      Ok(this.set_class(lua, value)?)
-    });
+    methods.add_method("get_class", |lua, instance, ()| lua.pack(instance.get_class()?));
+    methods.add_method("set_class", |lua, this, value: mlua::Value| this.set_class(lua, value));
 
-    methods.add_method("get_halign", |lua, instance, ()| {
-      Ok(lua.to_value(&instance.get_halign()?)?)
-    });
+    methods.add_method("get_halign", |lua, instance, ()| lua.to_value(&instance.get_halign()?));
     methods.add_method("set_halign", |lua, this, value: mlua::Value| {
-      Ok(this.set_halign(lua, value)?)
+      this.set_halign(lua, value)
     });
 
     methods.add_method("get_hexpand", |lua, instance, ()| {
-      Ok(lua.to_value(&instance.get_hexpand()?)?)
+      lua.to_value(&instance.get_hexpand()?)
     });
     methods.add_method("set_hexpand", |lua, this, value: mlua::Value| {
-      Ok(this.set_hexpand(lua, value)?)
+      this.set_hexpand(lua, value)
     });
 
     methods.add_method("get_homogeneous", |lua, instance, ()| {
-      Ok(lua.to_value(&instance.get_homogeneous()?)?)
+      lua.to_value(&instance.get_homogeneous()?)
     });
     methods.add_method("set_homogeneous", |lua, this, value: mlua::Value| {
-      Ok(this.set_homogeneous(lua, value)?)
+      this.set_homogeneous(lua, value)
     });
 
-    methods.add_method("get_valign", |lua, instance, ()| {
-      Ok(lua.to_value(&instance.get_valign()?)?)
-    });
+    methods.add_method("get_valign", |lua, instance, ()| lua.to_value(&instance.get_valign()?));
     methods.add_method("set_valign", |lua, this, value: mlua::Value| {
-      Ok(this.set_valign(lua, value)?)
+      this.set_valign(lua, value)
     });
 
     methods.add_method("get_vexpand", |lua, instance, ()| {
-      Ok(lua.to_value(&instance.get_vexpand()?)?)
+      lua.to_value(&instance.get_vexpand()?)
     });
     methods.add_method("set_vexpand", |lua, this, value: mlua::Value| {
-      Ok(this.set_vexpand(lua, value)?)
+      this.set_vexpand(lua, value)
     });
     // BASE PROPERTIES END
 
     methods.add_method("get_item_height", |_, this, _: ()| Ok(this.get_item_height()?));
     methods.add_method("set_item_height", |lua, this, value: mlua::Value| {
-      Ok(this.set_item_height(lua, value)?)
+      this.set_item_height(lua, value)
     });
 
     methods.add_method("get_item_width", |_, this, _: ()| Ok(this.get_item_width()?));
     methods.add_method("set_item_width", |lua, this, value: mlua::Value| {
-      Ok(this.set_item_width(lua, value)?)
+      this.set_item_width(lua, value)
     });
 
     methods.add_meta_method::<_, mlua::String, _>(

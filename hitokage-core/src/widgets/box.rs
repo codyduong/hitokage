@@ -111,7 +111,7 @@ impl Component for Box {
           generate_base_match_arms!(self, "box", root, BaseMsgHook, base)
         }
         BoxMsgHook::GetWidgets(tx) => {
-          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
+          tx.send(self.widgets.iter().map(WidgetUserData::from).collect())
             .unwrap();
         }
       },

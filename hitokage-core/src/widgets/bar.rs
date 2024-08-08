@@ -1,7 +1,7 @@
 use super::base::{Base, BaseMsgHook, BaseProps};
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
-use crate::structs::{Align, Monitor, MonitorGeometry, MonitorScaleFactor};
+use crate::structs::{Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
@@ -21,8 +21,8 @@ fn setup_window_size(
   geometry: &MonitorGeometry,
   scale_factor: &MonitorScaleFactor,
 ) -> anyhow::Result<()> {
-  let mut width = geometry.width as i32;
-  let mut height = geometry.height as i32;
+  let mut width = geometry.width;
+  let mut height = geometry.height;
 
   if get_windows_version() > 10 {
     width *= scale_factor.x as i32;
@@ -110,7 +110,7 @@ impl Component for Bar {
   type Init = (
     Monitor,
     BarProps,
-    Box<dyn Fn(relm4::Sender<BarMsg>) -> () + Send>,
+    Box<dyn Fn(relm4::Sender<BarMsg>) + Send>,
     gtk::ApplicationWindow,
   );
   type Widgets = AppWidgets;
@@ -137,7 +137,7 @@ impl Component for Bar {
         // Surfaces aren't ready in realize, but they are ready for consumption here
         let _ = setup_window_surface(window.clone(), &model.geometry);
         // regardless of win version komorebi is consistent unlike gdk4
-        let height = ((model.geometry.height + &model.offset_y) as f32 * &model.scale_factor.y) as i32;
+        let height = ((model.geometry.height + model.offset_y) as f32 * model.scale_factor.y) as i32;
 
         // println!("{:?} {:?}", (model.geometry.height + &model.offset_y), height);
 
@@ -194,7 +194,6 @@ impl Component for Bar {
       },
     };
 
-
     prepend_css_class_to_model!("bar", model, root);
     root.set_transient_for(Some(&application_root));
 
@@ -239,13 +238,19 @@ impl Component for Bar {
       BarMsg::LuaHook(hook) => match hook {
         BarLuaHook::BaseHook(base) => {
           // TODO @codyduong... this sucks... LOL! the `view_output!();` macro modifies whats available
-          generate_base_match_arms!(self, "bar", root.child().unwrap().downcast::<GtkBox>().unwrap(), BaseMsgHook, base)
+          generate_base_match_arms!(
+            self,
+            "bar",
+            root.child().unwrap().downcast::<GtkBox>().unwrap(),
+            BaseMsgHook,
+            base
+          )
         }
         BarLuaHook::GetGeometry(tx) => {
           tx.send(self.geometry).unwrap();
         }
         BarLuaHook::GetWidgets(tx) => {
-          tx.send(self.widgets.iter().map(|i| WidgetUserData::from(i)).collect())
+          tx.send(self.widgets.iter().map(WidgetUserData::from).collect())
             .unwrap();
         }
       },

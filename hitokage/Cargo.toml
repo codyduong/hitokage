@@ -1,7 +1,10 @@
 [package]
 name = "hitokage"
+description = "A configurable status bar"
 version = "0.1.0"
 edition = "2021"
+authors = ["Cody Duong <cody.qd@gmail.com>"]
+license = "MIT"
 
 [dependencies]
 notify = "6.1.1"

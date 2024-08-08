@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, Default)]
 pub enum Align {
+  #[default]
   Fill,
   Start,
   End,
@@ -10,12 +11,6 @@ pub enum Align {
   // BaselineFill,
   // BaselineCenter,
   __Unknown(i32),
-}
-
-impl Default for Align {
-  fn default() -> Self {
-    Align::Fill
-  }
 }
 
 impl From<Align> for gtk4::Align {

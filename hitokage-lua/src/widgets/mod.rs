@@ -23,21 +23,21 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
       WidgetUserData::Clock(sender) => {
         let clock_userdata = ClockUserData {
           r#type: "Clock".to_string(),
-          sender: sender,
+          sender,
         };
         lua.pack(clock_userdata)
       }
       WidgetUserData::Workspace(sender) => {
         let workspace_userdata = WorkspaceUserData {
           r#type: "Workspace".to_string(),
-          sender: sender,
+          sender,
         };
         lua.pack(workspace_userdata)
       }
       WidgetUserData::Box(sender) => {
         let box_userdata = BoxUserData {
           r#type: "Box".to_string(),
-          sender: sender,
+          sender,
         };
         lua.pack(box_userdata)
       }
@@ -82,7 +82,7 @@ impl<'lua> IntoLua<'lua> for WidgetUserDataVec {
 #[macro_export]
 macro_rules! impl_getter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $ret:ty) => {
-    fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
+    fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
       use std::sync::mpsc;
 
       let sender = self.sender()?;
@@ -95,7 +95,7 @@ macro_rules! impl_getter_fn {
     }
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $ret:ty) => {
-    fn $fn_name(&self) -> Result<$ret, crate::HitokageError> {
+    fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
       use std::sync::mpsc;
 
       let sender = self.sender()?;

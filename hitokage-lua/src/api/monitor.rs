@@ -181,7 +181,7 @@ fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
   Ok(res)
 }
 
-pub fn make<'lua>(lua: &'lua Lua) -> anyhow::Result<AnyUserData<'lua>> {
+pub fn make(lua: &Lua) -> anyhow::Result<AnyUserData<'_>> {
   let userdata = lua.create_userdata(MonitorUserData::new()).unwrap();
 
   Ok(userdata)

@@ -17,12 +17,9 @@ use windows::Win32::System::Threading::{OpenThread, TerminateThread, THREAD_TERM
 pub fn load_content(path: Option<PathBuf>) -> String {
   let mut contents = String::new();
 
-  match path {
-    Some(path) => {
-      let mut file = File::open(path.clone()).unwrap();
-      file.read_to_string(&mut contents).unwrap();
-    }
-    None => (),
+  if let Some(path) = path {
+    let mut file = File::open(path.clone()).unwrap();
+    file.read_to_string(&mut contents).unwrap();
   }
 
   let prepend = include_str!("./lua/prepend.lua");
@@ -155,13 +152,11 @@ pub fn create_lua_handle(
                     Ok(func) => {
                       let _ = coroutine.reset(func);
                       tx.send(true).unwrap(); // safe reload success
-                      ()
                     }
                     Err(_) => {
                       // no need to handle the error since we will attempt to start again
                       // which will indicate the error
                       tx.send(false).unwrap();
-                      ()
                     }
                   }
                 }

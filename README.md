@@ -9,7 +9,7 @@
 >
 > hitokage does not have any readily available releases for download, you must build it yourself.
 
-*__hitokage__ is a configurable status bar for Windows implemented in Rust using the [relm4](https://github.com/Relm4/Relm4) framework.*
+*__hitokage__ is a configurable status bar for Windows implemented in Rust using the [relm4](https://github.com/Relm4/Relm4) GUI library.*
 
 It is primarily built for usage with [ `komorebi` ](https://github.com/LGUG2Z/komorebi), but is also usable as a 
 standalone drop-in replacement for the default Windows Taskbar.

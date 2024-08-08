@@ -23,9 +23,9 @@ pub enum LuaHookType {
   WriteState,     //
   ReadEvent,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
   CreateBar(
-    Monitor,
+    Box<Monitor>,
     hitokage_core::widgets::bar::BarProps,
-    Box<dyn Fn(relm4::Sender<BarMsg>) -> () + Send>,
+    Box<dyn Fn(relm4::Sender<BarMsg>) + Send>,
   ),
   CheckConfigUpdate,
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
@@ -126,7 +126,7 @@ fn print_helper(args: Variadic<Value>) -> String {
           output.push_str(&item);
         }
       },
-      item @ _ => {
+      item => {
         let item = format!("{:#?}", ValuePrinter(item));
         output.push_str(&item);
       }
@@ -293,7 +293,7 @@ impl<'lua> FromLuaValue<'lua> for AnyUserData<'lua> {
 #[macro_export]
 macro_rules! assert_lua_type {
   ($value:expr, $type:ty) => {
-    <$type as crate::FromLuaValue>::from_lua_value($value)
+    <$type as $crate::FromLuaValue>::from_lua_value($value)
       .expect(&format!("Expected Lua value to be of type {}", stringify!($type)))
   };
 }
