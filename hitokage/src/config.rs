@@ -1,12 +1,17 @@
 use crate::{App, LuaCoroutineMessage};
+use gtk4::{style_context_add_provider_for_display, style_context_remove_provider_for_display, ApplicationWindow};
 use hitokage_core::{event::CONFIG_UPDATE, win_utils};
 use mlua::LuaSerdeExt;
+use notify_debouncer_full::DebouncedEvent;
 use relm4::ComponentSender;
 use std::{
   fs::File,
   io::Read,
   path::PathBuf,
-  sync::{mpsc::Sender, Arc, Mutex},
+  sync::{
+    mpsc::{Receiver, Sender},
+    Arc, Mutex,
+  },
   thread::{self},
   time::{Duration, Instant},
 };
@@ -255,3 +260,47 @@ pub fn terminate_thread(id_arc: Arc<Mutex<u32>>) {
   }
   *id_guard = 0;
 }
+
+pub fn reload_css_provider(
+  root: &ApplicationWindow,
+  css_file_path: &PathBuf,
+  old_provider: &gtk4::CssProvider,
+) -> gtk4::CssProvider {
+  let provider = gtk4::CssProvider::new();
+  let css_file = gdk4::gio::File::for_path(&css_file_path);
+  provider.load_from_file(&css_file);
+
+  let display = gtk4::prelude::WidgetExt::display(root);
+
+  style_context_remove_provider_for_display(&display, old_provider);
+
+  style_context_add_provider_for_display(&display, &provider, 500);
+  provider
+}
+
+// pub fn reload_css(
+//   root: &ApplicationWindow,
+//   css_file_path: &PathBuf,
+//   rx: Receiver<Result<Vec<DebouncedEvent>, Vec<notify::Error>>>,
+// ) -> Result<Vec<DebouncedEvent>, std::sync::mpsc::TryRecvError> {
+//   let mut old_providers: Vec<&gtk4::CssProvider> = vec![];
+
+//   match rx.try_recv() {
+//     Ok(result) => {
+//       match result {
+//         Ok(result) => {
+          
+//           result
+//         },
+//         Err(error) => {
+
+//         }
+//       }
+//     }
+//     Err(error) => {
+//       log::error!("There was an error reloading css: {:?}", error);
+//       Err(error)
+//     }
+//   }
+//   // glib::source::idle_add_local(move ||);
+// }
