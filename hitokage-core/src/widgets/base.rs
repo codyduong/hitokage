@@ -10,8 +10,6 @@ pub enum BaseMsgHook {
   SetHalign(Align),
   GetHexpand(Sender<bool>),
   SetHexpand(Option<bool>),
-  GetHomogeneous(Sender<bool>),
-  SetHomogeneous(bool),
   GetValign(Sender<Align>),
   SetValign(Align),
   GetVexpand(Sender<bool>),
@@ -23,7 +21,6 @@ pub struct BaseProps {
   pub class: Option<CssClass>,
   pub halign: Option<Align>,
   pub hexpand: Option<bool>,
-  pub homogeneous: Option<bool>,
   pub valign: Option<Align>,
   pub vexpand: Option<bool>,
 }
@@ -34,7 +31,6 @@ impl From<BaseProps> for Base {
       classes: props.class.unwrap_or_default().into(),
       halign: props.halign,
       hexpand: props.hexpand,
-      homogeneous: props.homogeneous,
       valign: props.valign,
       vexpand: props.vexpand,
     }
@@ -45,22 +41,21 @@ pub struct Base {
   pub classes: Vec<String>,
   pub halign: Option<Align>,
   pub hexpand: Option<bool>,
-  pub homogeneous: Option<bool>,
   pub valign: Option<Align>,
   pub vexpand: Option<bool>,
 }
 
 #[macro_export]
 macro_rules! generate_base_match_arms {
-  ($self:ident, $box_str:expr, $root:expr, $msg_type:ident, $hook:expr) => {
+  ($self:expr, $box_str:expr, $root:expr, $hook:expr) => {
     match $hook {
-      $msg_type::GetClass(tx) => {
+      BaseMsgHook::GetClass(tx) => {
         tx.send($self.base.classes.clone()).unwrap();
       }
-      $msg_type::SetClass(classes) => {
+      BaseMsgHook::SetClass(classes) => {
         prepend_css_class_to_model!($self, $box_str, classes, $root);
       }
-      $msg_type::GetHalign(tx) => {
+      BaseMsgHook::GetHalign(tx) => {
         if let Some(halign) = $self.base.halign {
           tx.send(halign).unwrap();
         } else {
@@ -68,11 +63,11 @@ macro_rules! generate_base_match_arms {
           tx.send(halign).unwrap();
         }
       }
-      $msg_type::SetHalign(halign) => {
+      BaseMsgHook::SetHalign(halign) => {
         $self.base.halign = Some(halign);
         $root.set_halign(halign.into());
       }
-      $msg_type::GetHexpand(tx) => {
+      BaseMsgHook::GetHexpand(tx) => {
         if let Some(hexpand) = $self.base.hexpand {
           tx.send(hexpand).unwrap();
         } else {
@@ -80,7 +75,7 @@ macro_rules! generate_base_match_arms {
           tx.send(hexpand).unwrap();
         }
       }
-      $msg_type::SetHexpand(hexpand) => {
+      BaseMsgHook::SetHexpand(hexpand) => {
         $self.base.hexpand = hexpand;
         if let Some(hexpand) = $self.base.hexpand {
           $root.set_hexpand_set(true);
@@ -89,19 +84,7 @@ macro_rules! generate_base_match_arms {
           $root.set_hexpand_set(false);
         }
       }
-      $msg_type::GetHomogeneous(tx) => {
-        if let Some(homogeneous) = $self.base.homogeneous {
-          tx.send(homogeneous).unwrap();
-        } else {
-          let homogeneous: bool = $root.is_homogeneous();
-          tx.send(homogeneous).unwrap();
-        }
-      }
-      $msg_type::SetHomogeneous(homogeneous) => {
-        $self.base.homogeneous = Some(homogeneous);
-        $root.set_homogeneous(homogeneous);
-      }
-      $msg_type::GetValign(tx) => {
+      BaseMsgHook::GetValign(tx) => {
         if let Some(valign) = $self.base.valign {
           tx.send(valign).unwrap();
         } else {
@@ -109,11 +92,11 @@ macro_rules! generate_base_match_arms {
           tx.send(valign).unwrap();
         }
       }
-      $msg_type::SetValign(valign) => {
+      BaseMsgHook::SetValign(valign) => {
         $self.base.valign = Some(valign);
         $root.set_valign(valign.into());
       }
-      $msg_type::GetVexpand(tx) => {
+      BaseMsgHook::GetVexpand(tx) => {
         if let Some(vexpand) = $self.base.vexpand {
           tx.send(vexpand).unwrap();
         } else {
@@ -121,7 +104,7 @@ macro_rules! generate_base_match_arms {
           tx.send(vexpand).unwrap();
         }
       }
-      $msg_type::SetVexpand(vexpand) => {
+      BaseMsgHook::SetVexpand(vexpand) => {
         $self.base.vexpand = vexpand;
         if let Some(vexpand) = $self.base.vexpand {
           $root.set_vexpand_set(true);
@@ -136,7 +119,7 @@ macro_rules! generate_base_match_arms {
 
 #[macro_export]
 macro_rules! set_initial_base_props {
-  ($self: ident,$root:expr) => {
+  ($self: expr,$root:expr) => {
     if let Some(halign) = $self.base.halign {
       $root.set_halign(halign.into());
     }
@@ -145,9 +128,6 @@ macro_rules! set_initial_base_props {
       $root.set_hexpand(hexpand);
     } else {
       $root.set_hexpand_set(false);
-    }
-    if let Some(homogeneous) = $self.base.homogeneous {
-      $root.set_homogeneous(homogeneous);
     }
     if let Some(valign) = $self.base.valign {
       $root.set_valign(valign.into());

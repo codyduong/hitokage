@@ -2,12 +2,11 @@ use super::WidgetUserDataVec;
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::structs::{Align, CssClass};
 use hitokage_core::widgets::base::BaseMsgHook::{
-  GetClass, GetHalign, GetHexpand, GetHomogeneous, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand,
-  SetHomogeneous, SetValign, SetVexpand,
+  GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
 };
 use hitokage_core::widgets::r#box::BoxMsg;
 use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
-use hitokage_core::widgets::r#box::BoxMsgHook::GetWidgets;
+use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
 #[derive(Debug, Clone)]
@@ -31,9 +30,6 @@ impl BoxUserData {
   impl_getter_fn!(get_hexpand, BoxMsg::LuaHook, BaseHook, GetHexpand, Option<bool>);
   impl_setter_fn!(set_hexpand, BoxMsg::LuaHook, BaseHook, SetHexpand, Option<bool>);
 
-  impl_getter_fn!(get_homogeneous, BoxMsg::LuaHook, BaseHook, GetHomogeneous, bool);
-  impl_setter_fn!(set_homogeneous, BoxMsg::LuaHook, BaseHook, SetHomogeneous, bool);
-
   impl_getter_fn!(get_valign, BoxMsg::LuaHook, BaseHook, GetValign, Align);
   impl_setter_fn!(set_valign, BoxMsg::LuaHook, BaseHook, SetValign, Align);
 
@@ -41,7 +37,12 @@ impl BoxUserData {
   impl_setter_fn!(set_vexpand, BoxMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
   // BASE PROPERTIES END
 
+  // BOX PROPERTIES START
+  impl_getter_fn!(get_homogeneous, BoxMsg::LuaHook, GetHomogeneous, bool);
+  impl_setter_fn!(set_homogeneous, BoxMsg::LuaHook, SetHomogeneous, bool);
+
   impl_getter_fn!(get_widgets, BoxMsg::LuaHook, GetWidgets, WidgetUserDataVec);
+  // BOX PROPERTIES END
 }
 
 impl UserData for BoxUserData {
@@ -64,13 +65,6 @@ impl UserData for BoxUserData {
       this.set_hexpand(lua, value)
     });
 
-    methods.add_method("get_homogeneous", |lua, instance, ()| {
-      lua.to_value(&instance.get_homogeneous()?)
-    });
-    methods.add_method("set_homogeneous", |lua, this, value: mlua::Value| {
-      this.set_homogeneous(lua, value)
-    });
-
     methods.add_method("get_valign", |lua, instance, ()| lua.to_value(&instance.get_valign()?));
     methods.add_method("set_valign", |lua, this, value: mlua::Value| {
       this.set_valign(lua, value)
@@ -84,7 +78,16 @@ impl UserData for BoxUserData {
     });
     // BASE PROPERTIES END
 
+    // BOX PROPERTIES START
+    methods.add_method("get_homogeneous", |lua, instance, ()| {
+      lua.to_value(&instance.get_homogeneous()?)
+    });
+    methods.add_method("set_homogeneous", |lua, this, value: mlua::Value| {
+      this.set_homogeneous(lua, value)
+    });
+
     methods.add_method("get_widgets", |lua, instance, ()| lua.pack(instance.get_widgets()?));
+    // BOX PROPERTIES END
 
     methods.add_meta_method(
       "__index",

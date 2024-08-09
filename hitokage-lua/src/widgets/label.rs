@@ -3,44 +3,44 @@ use hitokage_core::structs::{Align, CssClass};
 use hitokage_core::widgets::base::BaseMsgHook::{
   GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
 };
-use hitokage_core::widgets::clock::ClockMsg;
-use hitokage_core::widgets::clock::ClockMsgHook::BaseHook;
-use hitokage_core::widgets::clock::ClockMsgHook::{GetFormat, SetFormat};
+use hitokage_core::widgets::label::LabelMsg;
+use hitokage_core::widgets::label::LabelMsgHook::BaseHook;
+use hitokage_core::widgets::label::LabelMsgHook::{GetLabel, SetLabel};
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
 #[derive(Debug, Clone)]
-pub struct ClockUserData {
+pub struct LabelUserData {
   pub r#type: String,
-  pub sender: relm4::Sender<ClockMsg>,
+  pub sender: relm4::Sender<LabelMsg>,
 }
 
-impl ClockUserData {
-  fn sender(&self) -> Result<relm4::Sender<ClockMsg>, crate::HitokageError> {
+impl LabelUserData {
+  fn sender(&self) -> Result<relm4::Sender<LabelMsg>, crate::HitokageError> {
     Ok(self.sender.clone())
   }
 
   // BASE PROPERTIES START
-  impl_getter_fn!(get_class, ClockMsg::LuaHook, BaseHook, GetClass, Vec<String>);
-  impl_setter_fn!(set_class, ClockMsg::LuaHook, BaseHook, SetClass, Option<CssClass>);
+  impl_getter_fn!(get_class, LabelMsg::LuaHook, BaseHook, GetClass, Vec<String>);
+  impl_setter_fn!(set_class, LabelMsg::LuaHook, BaseHook, SetClass, Option<CssClass>);
 
-  impl_getter_fn!(get_halign, ClockMsg::LuaHook, BaseHook, GetHalign, Align);
-  impl_setter_fn!(set_halign, ClockMsg::LuaHook, BaseHook, SetHalign, Align);
+  impl_getter_fn!(get_halign, LabelMsg::LuaHook, BaseHook, GetHalign, Align);
+  impl_setter_fn!(set_halign, LabelMsg::LuaHook, BaseHook, SetHalign, Align);
 
-  impl_getter_fn!(get_hexpand, ClockMsg::LuaHook, BaseHook, GetHexpand, Option<bool>);
-  impl_setter_fn!(set_hexpand, ClockMsg::LuaHook, BaseHook, SetHexpand, Option<bool>);
+  impl_getter_fn!(get_hexpand, LabelMsg::LuaHook, BaseHook, GetHexpand, Option<bool>);
+  impl_setter_fn!(set_hexpand, LabelMsg::LuaHook, BaseHook, SetHexpand, Option<bool>);
 
-  impl_getter_fn!(get_valign, ClockMsg::LuaHook, BaseHook, GetValign, Align);
-  impl_setter_fn!(set_valign, ClockMsg::LuaHook, BaseHook, SetValign, Align);
+  impl_getter_fn!(get_valign, LabelMsg::LuaHook, BaseHook, GetValign, Align);
+  impl_setter_fn!(set_valign, LabelMsg::LuaHook, BaseHook, SetValign, Align);
 
-  impl_getter_fn!(get_vexpand, ClockMsg::LuaHook, BaseHook, GetVexpand, Option<bool>);
-  impl_setter_fn!(set_vexpand, ClockMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
+  impl_getter_fn!(get_vexpand, LabelMsg::LuaHook, BaseHook, GetVexpand, Option<bool>);
+  impl_setter_fn!(set_vexpand, LabelMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
   // BASE PROPERTIES END
 
-  impl_getter_fn!(get_format, ClockMsg::LuaHook, GetFormat, String);
-  impl_setter_fn!(set_format, ClockMsg::LuaHook, SetFormat, String);
+  impl_getter_fn!(get_label, LabelMsg::LuaHook, GetLabel, String);
+  impl_setter_fn!(set_label, LabelMsg::LuaHook, SetLabel, String);
 }
 
-impl UserData for ClockUserData {
+impl UserData for LabelUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
 
@@ -73,19 +73,20 @@ impl UserData for ClockUserData {
     });
     // BASE PROPERTIES END
 
-    methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
-    methods.add_method("set_format", |lua, this, value: mlua::Value| {
-      this.set_format(lua, value)
-    });
+    methods.add_method("get_label", |_, this, _: ()| Ok(this.get_label()?));
+    methods.add_method("set_label", |lua, this, value: mlua::Value| this.set_label(lua, value));
 
-    methods.add_meta_method::<_, mlua::String, _>(
+    methods.add_meta_method(
       "__index",
-      |lua, instance, key| -> Result<mlua::Value<'lua>, mlua::Error> {
-        match key.to_str().unwrap() {
-          "type" => Ok(lua.to_value(&instance.r#type.clone())?),
+      |lua, instance, value| -> Result<mlua::Value<'lua>, mlua::Error> {
+        match value {
+          Value::String(s) => match s.to_str()? {
+            "type" => Ok(lua.to_value(&instance.r#type.clone())?),
+            _ => Ok(Value::Nil),
+          },
           _ => Ok(Value::Nil),
         }
       },
-    );
+    )
   }
 }
