@@ -221,21 +221,27 @@ impl Component for App {
       let css_file_path = css_file_path.clone();
       let old_provider = Rc::clone(&old_provider);
 
-      glib::source::idle_add_local(move || match css_watcher_rx.try_recv() {
-        Ok(result) => match result {
-          Ok(_) => {
-            let mut old_provider = old_provider.borrow_mut();
-            *old_provider = reload_css_provider(&root, &css_file_path, &old_provider);
-            glib::ControlFlow::Continue
-          }
-          Err(error) => {
-            log::error!("Failed to reload css provider, errors: {:?}", error);
-            glib::ControlFlow::Break
-          }
-        },
-        Err(error) => {
-          log::error!("Failed to reload css provider, TryRecvError: {:?}", error);
-          glib::ControlFlow::Break
+      glib::source::timeout_add_local_full(Duration::from_millis(50), glib::Priority::DEFAULT_IDLE, move || {
+        match css_watcher_rx.try_recv() {
+          Ok(result) => match result {
+            Ok(_) => {
+              let mut old_provider = old_provider.borrow_mut();
+              log::info!("Reloading styles.css");
+              *old_provider = reload_css_provider(&root, &css_file_path, &old_provider);
+              glib::ControlFlow::Continue
+            }
+            Err(error) => {
+              log::error!("Failed to reload css provider, errors: {:?}", error);
+              glib::ControlFlow::Break
+            }
+          },
+          Err(error) => match error {
+            std::sync::mpsc::TryRecvError::Empty => glib::ControlFlow::Continue,
+            std::sync::mpsc::TryRecvError::Disconnected => {
+              log::error!("Css watcher dropped");
+              glib::ControlFlow::Break
+            }
+          },
         }
       });
     }
@@ -243,6 +249,7 @@ impl Component for App {
     // load initial css
     {
       let mut old_provider = old_provider.borrow_mut();
+      log::info!("Loading styles.css");
       *old_provider = reload_css_provider(&root, &css_file_path, &old_provider);
     }
 
