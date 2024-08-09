@@ -1,13 +1,14 @@
 use super::WidgetUserDataVec;
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::structs::{Align, CssClass, Monitor, MonitorGeometry};
-use hitokage_core::widgets::bar::BarLuaHook::BaseHook;
-use hitokage_core::widgets::bar::BarLuaHook::{GetGeometry, GetWidgets};
+use hitokage_core::widgets::bar::BarLuaHook::BoxHook;
+use hitokage_core::widgets::bar::BarLuaHook::GetGeometry;
 use hitokage_core::widgets::bar::{BarMsg, BarProps};
 use hitokage_core::widgets::base::BaseMsgHook::{
-  GetClass, GetHalign, GetHexpand, GetHomogeneous, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand,
-  SetHomogeneous, SetValign, SetVexpand,
+  GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
 };
+use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
+use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
 use mlua::FromLuaMulti;
 use mlua::{
   Lua, LuaSerdeExt, UserData, UserDataMethods,
@@ -41,28 +42,65 @@ impl BarUserData {
   }
 
   // BASE PROPERTIES START
-  impl_getter_fn!(get_class, BarMsg::LuaHook, BaseHook, GetClass, Vec<String>);
-  impl_setter_fn!(set_class, BarMsg::LuaHook, BaseHook, SetClass, Option<CssClass>);
+  impl_getter_fn!(get_class, BarMsg::LuaHook, BoxHook, BaseHook, GetClass, Vec<String>);
+  impl_setter_fn!(
+    set_class,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    SetClass,
+    Option<CssClass>
+  );
 
-  impl_getter_fn!(get_halign, BarMsg::LuaHook, BaseHook, GetHalign, Align);
-  impl_setter_fn!(set_halign, BarMsg::LuaHook, BaseHook, SetHalign, Align);
+  impl_getter_fn!(get_halign, BarMsg::LuaHook, BoxHook, BaseHook, GetHalign, Align);
+  impl_setter_fn!(set_halign, BarMsg::LuaHook, BoxHook, BaseHook, SetHalign, Align);
 
-  impl_getter_fn!(get_hexpand, BarMsg::LuaHook, BaseHook, GetHexpand, Option<bool>);
-  impl_setter_fn!(set_hexpand, BarMsg::LuaHook, BaseHook, SetHexpand, Option<bool>);
+  impl_getter_fn!(
+    get_hexpand,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    GetHexpand,
+    Option<bool>
+  );
+  impl_setter_fn!(
+    set_hexpand,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    SetHexpand,
+    Option<bool>
+  );
 
-  impl_getter_fn!(get_homogeneous, BarMsg::LuaHook, BaseHook, GetHomogeneous, bool);
-  impl_setter_fn!(set_homogeneous, BarMsg::LuaHook, BaseHook, SetHomogeneous, bool);
+  impl_getter_fn!(get_valign, BarMsg::LuaHook, BoxHook, BaseHook, GetValign, Align);
+  impl_setter_fn!(set_valign, BarMsg::LuaHook, BoxHook, BaseHook, SetValign, Align);
 
-  impl_getter_fn!(get_valign, BarMsg::LuaHook, BaseHook, GetValign, Align);
-  impl_setter_fn!(set_valign, BarMsg::LuaHook, BaseHook, SetValign, Align);
-
-  impl_getter_fn!(get_vexpand, BarMsg::LuaHook, BaseHook, GetVexpand, Option<bool>);
-  impl_setter_fn!(set_vexpand, BarMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
+  impl_getter_fn!(
+    get_vexpand,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    GetVexpand,
+    Option<bool>
+  );
+  impl_setter_fn!(
+    set_vexpand,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    SetVexpand,
+    Option<bool>
+  );
   // BASE PROPERTIES END
 
-  impl_getter_fn!(get_geometry, BarMsg::LuaHook, GetGeometry, MonitorGeometry);
+  // BOX PROPERTIES START
+  impl_getter_fn!(get_homogeneous, BarMsg::LuaHook, BoxHook, GetHomogeneous, bool);
+  impl_setter_fn!(set_homogeneous, BarMsg::LuaHook, BoxHook, SetHomogeneous, bool);
 
-  impl_getter_fn!(get_widgets, BarMsg::LuaHook, GetWidgets, WidgetUserDataVec);
+  impl_getter_fn!(get_widgets, BarMsg::LuaHook, BoxHook, GetWidgets, WidgetUserDataVec);
+  // BOX PROPERTIES END
+
+  impl_getter_fn!(get_geometry, BarMsg::LuaHook, GetGeometry, MonitorGeometry);
 }
 
 impl UserData for BarUserData {
@@ -107,11 +145,20 @@ impl UserData for BarUserData {
     });
     // BASE PROPERTIES END
 
-    methods.add_method("get_geometry", |lua, instance, ()| {
-      lua.to_value(&instance.get_geometry()?)
+    // BOX PROPERTIES START
+    methods.add_method("get_homogeneous", |lua, instance, ()| {
+      lua.to_value(&instance.get_homogeneous()?)
+    });
+    methods.add_method("set_homogeneous", |lua, this, value: mlua::Value| {
+      this.set_homogeneous(lua, value)
     });
 
     methods.add_method("get_widgets", |lua, instance, ()| lua.pack(instance.get_widgets()?));
+    // BOX PROPERTIES END
+
+    methods.add_method("get_geometry", |lua, instance, ()| {
+      lua.to_value(&instance.get_geometry()?)
+    });
 
     methods.add_meta_method(
       "__index",

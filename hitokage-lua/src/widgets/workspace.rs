@@ -1,8 +1,7 @@
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::structs::{Align, CssClass};
 use hitokage_core::widgets::base::BaseMsgHook::{
-  GetClass, GetHalign, GetHexpand, GetHomogeneous, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand,
-  SetHomogeneous, SetValign, SetVexpand,
+  GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
 };
 use hitokage_core::widgets::workspace::WorkspaceMsg;
 use hitokage_core::widgets::workspace::WorkspaceMsgHook::BaseHook;
@@ -29,9 +28,6 @@ impl WorkspaceUserData {
 
   impl_getter_fn!(get_hexpand, WorkspaceMsg::LuaHook, BaseHook, GetHexpand, Option<bool>);
   impl_setter_fn!(set_hexpand, WorkspaceMsg::LuaHook, BaseHook, SetHexpand, Option<bool>);
-
-  impl_getter_fn!(get_homogeneous, WorkspaceMsg::LuaHook, BaseHook, GetHomogeneous, bool);
-  impl_setter_fn!(set_homogeneous, WorkspaceMsg::LuaHook, BaseHook, SetHomogeneous, bool);
 
   impl_getter_fn!(get_valign, WorkspaceMsg::LuaHook, BaseHook, GetValign, Align);
   impl_setter_fn!(set_valign, WorkspaceMsg::LuaHook, BaseHook, SetValign, Align);
@@ -65,13 +61,6 @@ impl UserData for WorkspaceUserData {
     });
     methods.add_method("set_hexpand", |lua, this, value: mlua::Value| {
       this.set_hexpand(lua, value)
-    });
-
-    methods.add_method("get_homogeneous", |lua, instance, ()| {
-      lua.to_value(&instance.get_homogeneous()?)
-    });
-    methods.add_method("set_homogeneous", |lua, this, value: mlua::Value| {
-      this.set_homogeneous(lua, value)
     });
 
     methods.add_method("get_valign", |lua, instance, ()| lua.to_value(&instance.get_valign()?));

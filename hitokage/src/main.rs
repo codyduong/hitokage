@@ -1,4 +1,5 @@
-use gtk4::{prelude::*, style_context_add_provider_for_display, style_context_remove_provider_for_display};
+use config::reload_css_provider;
+use gtk4::prelude::*;
 use hitokage_core::event::{CONFIG_UPDATE, STATE};
 use hitokage_core::event::{EVENT, NEW_EVENT};
 use hitokage_core::widgets;
@@ -10,8 +11,10 @@ use notify_debouncer_full::new_debouncer;
 use relm4::component::Connector;
 use relm4::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
 use std::fs::{self};
 use std::path::Path;
+use std::rc::Rc;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -203,60 +206,45 @@ impl Component for App {
       });
     }
 
-    let (tx2, rx2) = channel();
-    let (tx3, rx3) = channel();
+    let (css_watcher_tx, css_watcher_rx) = channel();
 
-    let mut css_debouncer = new_debouncer(Duration::from_secs(1), None, tx2).unwrap();
+    let mut css_debouncer = new_debouncer(Duration::from_secs(1), None, css_watcher_tx).unwrap();
     css_debouncer
       .watcher()
       .watch(&css_file_path, notify::RecursiveMode::NonRecursive)
       .unwrap();
 
-    let root = root.clone();
+    let old_provider = Rc::new(RefCell::new(gtk4::CssProvider::new()));
 
     {
-      let tx3 = tx3.clone();
-      thread::spawn(move || loop {
-        match rx2.recv() {
-          Ok(event) => match event {
-            Ok(_) => {
-              tx3.send(()).expect("Failed to send message to reload css");
-            }
-            Err(e) => {
-              log::error!("Watch error: {:?}", e);
-            }
-          },
-          Err(e) => {
-            log::error!("Receive error: {:?}", e);
-          }
-        }
-      });
-
       let root = root.clone();
       let css_file_path = css_file_path.clone();
-      glib::source::idle_add_local(move || {
-        let mut old_providers: Vec<&gtk4::CssProvider> = vec![];
+      let old_provider = Rc::clone(&old_provider);
 
-        if rx3.try_recv().is_ok() {
-          let provider = gtk4::CssProvider::new();
-          let css_file = gdk4::gio::File::for_path(&css_file_path);
-          provider.load_from_file(&css_file);
-
-          let display = gtk4::prelude::WidgetExt::display(&root);
-
-          for old_provider in old_providers.drain(..) {
-            style_context_remove_provider_for_display(&display, old_provider);
+      glib::source::idle_add_local(move || match css_watcher_rx.try_recv() {
+        Ok(result) => match result {
+          Ok(_) => {
+            let mut old_provider = old_provider.borrow_mut();
+            *old_provider = reload_css_provider(&root, &css_file_path, &old_provider);
+            glib::ControlFlow::Continue
           }
-
-          old_providers.push(&provider);
-          style_context_add_provider_for_display(&display, &provider, 500);
+          Err(error) => {
+            log::error!("Failed to reload css provider, errors: {:?}", error);
+            glib::ControlFlow::Break
+          }
+        },
+        Err(error) => {
+          log::error!("Failed to reload css provider, TryRecvError: {:?}", error);
+          glib::ControlFlow::Break
         }
-        glib::ControlFlow::Continue
       });
     }
 
     // load initial css
-    tx3.send(()).unwrap();
+    {
+      let mut old_provider = old_provider.borrow_mut();
+      *old_provider = reload_css_provider(&root, &css_file_path, &old_provider);
+    }
 
     // komorebi pipe
     let sender_clone = sender.clone();

@@ -156,7 +156,7 @@ impl Component for Workspace {
       }
       WorkspaceMsg::LuaHook(hook) => match hook {
         WorkspaceMsgHook::BaseHook(base) => {
-          generate_base_match_arms!(self, "workspace", root, BaseMsgHook, base)
+          generate_base_match_arms!(self, "workspace", root, base)
         }
         WorkspaceMsgHook::GetItemHeight(tx) => {
           tx.send(self.item_width as u32).unwrap();

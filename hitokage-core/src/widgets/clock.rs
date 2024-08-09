@@ -10,8 +10,9 @@ use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use super::base::Base;
 use super::base::BaseMsgHook;
-use super::base::{Base, BaseProps};
+use super::base::BaseProps;
 
 #[derive(Debug, Clone)]
 pub enum ClockMsgHook {
@@ -101,7 +102,7 @@ impl Component for Clock {
       }
       ClockMsg::LuaHook(hook) => match hook {
         ClockMsgHook::BaseHook(base) => {
-          generate_base_match_arms!(self, "clock", root, BaseMsgHook, base)
+          generate_base_match_arms!(self, "clock", root, base)
         }
         ClockMsgHook::GetFormat(tx) => {
           tx.send(self.format.clone()).unwrap();
