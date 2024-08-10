@@ -24,14 +24,14 @@ function label_instance:get_type() end
 --- Fetches the text from a label.
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Label.get_label.html)
---- 
+---
 --- @return string
 function label_instance:set_label() end
 
 --- Sets the text of the label.
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Label.set_label.html)
---- 
+---
 --- @param string string
 --- @return nil
 function label_instance:get_label(string) end

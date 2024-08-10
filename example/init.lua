@@ -5,7 +5,7 @@ local bars = {}
 
 local format = hitokage.reactive.create("%a %b %u %r")
 
-hitokage.debug(format);
+hitokage.debug(format)
 
 for _, monitor in ipairs(monitors) do
 	if monitor.model == "LG SDQHD" then
@@ -31,33 +31,33 @@ for _, monitor in ipairs(monitors) do
 							{
 								Box = {
 									class = "red",
-								}
+								},
 							},
 							{
 								Box = {
 									class = "green",
-								}
+								},
 							},
 							{
 								Box = {
 									widgets = {},
 									class = "blue",
-								}
+								},
 							},
 							{
 								Box = {
-									class = {"red", "green blue"},
+									class = { "red", "green blue" },
 									widgets = {
 										{
 											Label = {
-												label = "foo"
-											}
-										}
-									}
-								}
+												label = "foo",
+											},
+										},
+									},
+								},
 							},
-						}
-					}
+						},
+					},
 				},
 				-- { Box = {} },
 				{ Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
