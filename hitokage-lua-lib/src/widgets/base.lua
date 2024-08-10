@@ -53,7 +53,7 @@ local base_instance = {}
 function base_instance:get_class() end
 
 --- Set the css classes either as a space delimited string or array of strings.
---- 
+---
 --- @param ... string
 --- @return nil
 --- @overload fun(class: table<number, string>): nil

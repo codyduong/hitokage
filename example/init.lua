@@ -20,7 +20,7 @@ for _, monitor in ipairs(monitors) do
 	-- })
 
 	local reactive_format = hitokage.unsafe.reactive.create("%a %b %u %r")
-	table.insert(reactives, reactive_format);
+	table.insert(reactives, reactive_format)
 
 	table.insert(
 		bars,
