@@ -197,6 +197,7 @@ impl Component for Bar {
       },
     };
 
+    root.set_transient_for(Some(&application_root));
     prepend_css_class_to_model!("bar", model.r#box, root);
     let widgets = view_output!();
     set_initial_box_props!(model, widgets.main_box);
