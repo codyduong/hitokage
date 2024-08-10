@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use clock::ClockUserData;
 use hitokage_core::widgets::{
   clock::ClockMsg, label::LabelMsg, r#box::BoxMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData,
@@ -5,6 +7,7 @@ use hitokage_core::widgets::{
 use label::LabelUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
+use serde::Deserialize;
 use workspace::WorkspaceUserData;
 
 pub mod bar;
@@ -135,8 +138,81 @@ macro_rules! impl_getter_fn {
   };
 }
 
+// use mlua::LuaSerdeExt;
+
+pub fn convert_variadic_to_vec<'lua, T>(
+  lua: &'lua mlua::Lua,
+  args: mlua::Variadic<mlua::Value<'lua>>,
+  name: &str,
+  t: &str,
+) -> mlua::Result<Vec<T>>
+where
+  T: mlua::FromLua<'lua>,
+{
+  let mut vec = Vec::with_capacity(args.len());
+
+  if let Some(first_arg) = args.get(0) {
+    if let mlua::Value::Table(table) = first_arg.clone() {
+      if table.raw_len() > 0 {
+        if args.len() > 1 {
+          return Err(mlua::Error::RuntimeError(
+            "Extra arguments are not allowed when the first argument is a sequence".into(),
+          ));
+        }
+
+        for pair in table.sequence_values::<T>() {
+          vec.push(pair?);
+        }
+
+        return Ok(vec);
+      } else {
+        return Err(mlua::Error::BadArgument {
+          to: Some(name.to_owned()),
+          pos: 0,
+          name: None,
+          cause: Arc::new(mlua::Error::FromLuaConversionError {
+            from: first_arg.type_name(),
+            to: "Array or Element",
+            message: Some(format!(
+              "Expected an Array or {:}, not {:}",
+              t,
+              first_arg.type_name()
+            )),
+          }),
+        });
+      }
+    }
+  }
+
+  for arg in args {
+    let item: T = match T::from_lua(arg, lua) {
+      Ok(value) => value,
+      Err(_) => {
+        return Err(mlua::Error::RuntimeError(
+          "Failed to convert argument to the expected type".into(),
+        ))
+      }
+    };
+    vec.push(item);
+  }
+
+  Ok(vec)
+}
+
 #[macro_export]
 macro_rules! impl_setter_fn {
+  ($fn_name:ident, $msg_enum:path, $request_enum:path, Vec<$from:ty>) => {
+    fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
+      use crate::widgets::convert_variadic_to_vec;
+
+      let sender = self.sender()?;
+      let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;
+
+      sender.send($msg_enum($request_enum(value))).unwrap();
+
+      Ok(())
+    }
+  };
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $from:ty) => {
     fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
       let sender = self.sender()?;
@@ -147,12 +223,38 @@ macro_rules! impl_setter_fn {
       Ok(())
     }
   };
+  ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, Vec<$from:ty>) => {
+    fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
+      use crate::widgets::convert_variadic_to_vec;
+
+      let sender = self.sender()?;
+      let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;
+
+      sender.send($msg_enum1($msg_enum2($request_enum(value)))).unwrap();
+
+      Ok(())
+    }
+  };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $from:ty) => {
     fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
       let sender = self.sender()?;
       let value: $from = lua.from_value(value)?;
 
       sender.send($msg_enum1($msg_enum2($request_enum(value)))).unwrap();
+
+      Ok(())
+    }
+  };
+  ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $msg_enum3:path, $request_enum:path, Vec<$from:ty>) => {
+    fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
+      use crate::widgets::convert_variadic_to_vec;
+
+      let sender = self.sender()?;
+      let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;
+
+      sender
+        .send($msg_enum1($msg_enum2($msg_enum3($request_enum(value)))))
+        .unwrap();
 
       Ok(())
     }

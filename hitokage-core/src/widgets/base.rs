@@ -5,7 +5,7 @@ use std::sync::mpsc::Sender;
 #[derive(Debug, Clone)]
 pub enum BaseMsgHook {
   GetClass(Sender<Vec<String>>),
-  SetClass(Option<CssClass>),
+  SetClass(Vec<String>),
   GetHalign(Sender<Align>),
   SetHalign(Align),
   GetHexpand(Sender<bool>),
@@ -53,7 +53,8 @@ macro_rules! generate_base_match_arms {
         tx.send($self.base.classes.clone()).unwrap();
       }
       BaseMsgHook::SetClass(classes) => {
-        prepend_css_class_to_model!($self, $box_str, classes, $root);
+        use crate::structs::CssClass;
+        prepend_css_class_to_model!($self, $box_str, CssClass::Vec(classes), $root);
       }
       BaseMsgHook::GetHalign(tx) => {
         if let Some(halign) = $self.base.halign {

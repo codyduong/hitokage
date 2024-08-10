@@ -61,7 +61,7 @@ macro_rules! prepend_css_class_to_model {
   ($self:expr, $prepend:expr, $classes:expr, $root:expr) => {
     use indexmap::IndexSet;
     use $crate::prepend_css_class;
-    $self.base.classes = prepend_css_class!($prepend, $classes.unwrap_or_default());
+    $self.base.classes = prepend_css_class!($prepend, $classes);
     let classes_ref: Vec<&str> = $self.base.classes.iter().map(AsRef::as_ref).collect();
     $root.set_css_classes(&classes_ref);
   };

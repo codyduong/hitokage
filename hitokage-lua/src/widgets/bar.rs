@@ -1,7 +1,7 @@
 use super::WidgetUserDataVec;
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::deserializer::LuaDeserializer;
-use hitokage_core::structs::{Align, CssClass, Monitor, MonitorGeometry};
+use hitokage_core::structs::{Align, Monitor, MonitorGeometry};
 use hitokage_core::widgets::bar::BarLuaHook::BoxHook;
 use hitokage_core::widgets::bar::BarLuaHook::GetGeometry;
 use hitokage_core::widgets::bar::{BarMsg, BarProps};
@@ -51,7 +51,7 @@ impl BarUserData {
     BoxHook,
     BaseHook,
     SetClass,
-    Option<CssClass>
+    Vec<String>
   );
 
   impl_getter_fn!(get_halign, BarMsg::LuaHook, BoxHook, BaseHook, GetHalign, Align);
@@ -113,7 +113,9 @@ impl UserData for BarUserData {
 
     // BASE PROPERTIES START
     methods.add_method("get_class", |lua, instance, ()| lua.pack(instance.get_class()?));
-    methods.add_method("set_class", |lua, this, value: mlua::Value| this.set_class(lua, value));
+    methods.add_method("set_class", |lua, this, args: mlua::Variadic<Value>| {
+      this.set_class(lua, args)
+    });
 
     methods.add_method("get_halign", |lua, instance, ()| lua.to_value(&instance.get_halign()?));
     methods.add_method("set_halign", |lua, this, value: mlua::Value| {

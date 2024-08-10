@@ -1,5 +1,5 @@
 use crate::{impl_getter_fn, impl_setter_fn};
-use hitokage_core::structs::{Align, CssClass};
+use hitokage_core::structs::Align;
 use hitokage_core::widgets::base::BaseMsgHook::{
   GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
 };
@@ -21,7 +21,7 @@ impl ClockUserData {
 
   // BASE PROPERTIES START
   impl_getter_fn!(get_class, ClockMsg::LuaHook, BaseHook, GetClass, Vec<String>);
-  impl_setter_fn!(set_class, ClockMsg::LuaHook, BaseHook, SetClass, Option<CssClass>);
+  impl_setter_fn!(set_class, ClockMsg::LuaHook, BaseHook, SetClass, Vec<String>);
 
   impl_getter_fn!(get_halign, ClockMsg::LuaHook, BaseHook, GetHalign, Align);
   impl_setter_fn!(set_halign, ClockMsg::LuaHook, BaseHook, SetHalign, Align);
@@ -46,7 +46,9 @@ impl UserData for ClockUserData {
 
     // BASE PROPERTIES START
     methods.add_method("get_class", |lua, instance, ()| lua.pack(instance.get_class()?));
-    methods.add_method("set_class", |lua, this, value: mlua::Value| this.set_class(lua, value));
+    methods.add_method("set_class", |lua, this, args: mlua::Variadic<Value>| {
+      this.set_class(lua, args)
+    });
 
     methods.add_method("get_halign", |lua, instance, ()| lua.to_value(&instance.get_halign()?));
     methods.add_method("set_halign", |lua, this, value: mlua::Value| {
