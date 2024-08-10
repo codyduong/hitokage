@@ -6,6 +6,3 @@
 
 --- @class UnknownAlign
 --- @field __Unknown number
-
---- A whitespace delimited string of classnames, or array of strings.
---- @alias CssClass string | table<number, string>

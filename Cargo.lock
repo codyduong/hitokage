@@ -1175,7 +1175,9 @@ dependencies = [
  "mlua",
  "relm4",
  "relm4-macros",
+ "rustc-hash",
  "serde",
+ "serde-value",
  "serde_json",
  "simple_logger",
  "win32-display-data 0.1.0 (git+https://github.com/LGUG2Z/win32-display-data?rev=32a45cebf132c3d651ee22c0c40033a6b7edc945)",
@@ -1542,6 +1544,7 @@ dependencies = [
  "erased-serde",
  "futures-util",
  "mlua-sys",
+ "mlua_derive",
  "num-traits",
  "once_cell",
  "rustc-hash",
@@ -1560,6 +1563,21 @@ dependencies = [
  "lua-src",
  "luajit-src",
  "pkg-config",
+]
+
+[[package]]
+name = "mlua_derive"
+version = "0.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09697a6cec88e7f58a02c7ab5c18c611c6907c8654613df9cc0192658a4fb859"
+dependencies = [
+ "itertools",
+ "once_cell",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "syn 2.0.66",
 ]
 
 [[package]]

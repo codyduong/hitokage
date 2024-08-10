@@ -39,6 +39,7 @@ features = [
   "async",
   "unstable",
   "send",
+  "macros"
 ]
 
 [workspace.dependencies.lua-src]

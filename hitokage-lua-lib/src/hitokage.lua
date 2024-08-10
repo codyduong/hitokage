@@ -18,6 +18,7 @@ _G._subscriptions = {}
 
 local bar = require("hitokage.api.bar")
 local monitor = require("hitokage.api.monitor")
+local reactive = require("hitokage.api.reactive")
 
 -------------------------------------------------------------------------------
 --- Utility functions
@@ -61,5 +62,23 @@ function hitokage.timeout(timeout, action) end
 
 -------------------------------------------------------------------------------
 --- Compose hitokage
+
+--- Represents the experimental module. Code that lives here is subject to
+--- breaking API changes, typically for allowing users to access latest
+--- features that may still be undergoing design.
+---
+--- @class Experimental
+local experimental = {}
+
+--- Represents the unsafe module. Code that bypasses rust safety, and therefore
+--- with improper usage is possible to encounter a variety of errors.
+---
+--- @class Unsafe
+local unsafe = {
+	reactive = reactive,
+}
+
 hitokage.bar = bar
+hitokage.experimental = experimental
 hitokage.monitor = monitor
+hitokage.unsafe = unsafe

@@ -3,6 +3,8 @@ local monitors = hitokage.monitor.get_all()
 --- @type BarArray
 local bars = {}
 
+local reactives = {}
+
 for _, monitor in ipairs(monitors) do
 	if monitor.model == "LG SDQHD" then
 		goto continue
@@ -17,6 +19,9 @@ for _, monitor in ipairs(monitors) do
 	--   }
 	-- })
 
+	local reactive_format = hitokage.unsafe.reactive.create("%a %b %u %r")
+	table.insert(reactives, reactive_format)
+
 	table.insert(
 		bars,
 		hitokage.bar.create(monitor, {
@@ -26,13 +31,11 @@ for _, monitor in ipairs(monitors) do
 						widgets = {
 							{
 								Box = {
-									widgets = {},
 									class = "red",
 								},
 							},
 							{
 								Box = {
-									widgets = {},
 									class = "green",
 								},
 							},
@@ -44,11 +47,13 @@ for _, monitor in ipairs(monitors) do
 							},
 							{
 								Box = {
-									widgets = {},
-									class = {
-										"red",
-										"green",
-										"blue",
+									class = { "red", "green blue" },
+									widgets = {
+										{
+											Label = {
+												label = "foo",
+											},
+										},
 									},
 								},
 							},
@@ -57,7 +62,7 @@ for _, monitor in ipairs(monitors) do
 				},
 				-- { Box = {} },
 				{ Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
-				{ Clock = { format = "%a %b %u %r", halign = "End" } },
+				{ Clock = { format = reactive_format, halign = "End" } },
 			},
 			width = monitor.geometry.width - 16,
 			offset = {
@@ -140,6 +145,15 @@ local css_boxes_test = hitokage.timeout(0, function()
 		else
 			bar:set_class(widgets[index + 1]:get_class())
 		end
+	end
+end)
+
+local clockers = hitokage.timeout(500, function()
+	local current_format = reactives[1]:get()
+	if current_format == "%a %b %u %r" then
+		reactives[1]:set("reactive demo")
+	else
+		reactives[1]:set("%a %b %u %r")
 	end
 end)
 

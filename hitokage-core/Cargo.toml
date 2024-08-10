@@ -21,6 +21,8 @@ komorebi-client = {workspace = true}
 win32-display-data = { workspace = true }
 chrono = "0.4.38"
 indexmap = { version = "2.3.0", features = ["serde"] }
+rustc-hash = "2.0.0"
+serde-value = "0.7.0"
 
 [dependencies.windows]
 workspace = true

@@ -5,7 +5,7 @@
 --- @field y integer?
 
 -------------------------------------------------------------------------------
---- @class BarProps : BaseProps, HasChildrenProps
+--- @class BarProps : BoxProps
 --- @field width integer?
 --- @field height integer?
 --- @field offset BarOffset?
@@ -18,7 +18,7 @@
 
 -------------------------------------------------------------------------------
 --- Links to BarUserData in 'hitokage-lua\src\widgets\bar.rs'
---- @class Bar : Base, HasChildren
+--- @class Bar : Base, Box
 ---
 --- Wrapper around bar:is_ready()
 --- @field ready boolean

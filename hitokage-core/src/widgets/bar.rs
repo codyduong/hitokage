@@ -1,11 +1,15 @@
-use super::base::{Base, BaseMsgHook, BaseProps};
+use super::base::{Base, BaseMsgHook};
+use super::r#box::{BoxInner, BoxMsgHook, BoxProps};
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
 use crate::structs::{Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
-use crate::{generate_base_match_arms, prepend_css_class, prepend_css_class_to_model, set_initial_base_props};
+use crate::{
+  generate_base_match_arms, generate_box_match_arms, generate_box_widgets, prepend_css_class,
+  prepend_css_class_to_model, set_initial_base_props, set_initial_box_props,
+};
 use gtk4::prelude::*;
 use gtk4::Box as GtkBox;
 use gtk4::Window;
@@ -59,9 +63,8 @@ fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::R
 
 #[derive(Debug)]
 pub enum BarLuaHook {
-  BaseHook(BaseMsgHook),
+  BoxHook(BoxMsgHook),
   GetGeometry(Sender<MonitorGeometry>),
-  GetWidgets(Sender<Vec<WidgetUserData>>),
 }
 
 #[derive(Debug)]
@@ -84,23 +87,21 @@ pub struct BarOffset {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BarProps {
   pub position: Option<BarPosition>,
-  pub widgets: Vec<WidgetProps>,
   pub width: Option<i32>,
   pub height: Option<i32>,
   pub offset: Option<BarOffset>,
   #[serde(flatten)]
-  base: BaseProps,
+  pub r#box: BoxProps,
 }
 
 pub struct Bar {
   position: Option<BarPosition>,
   geometry: MonitorGeometry,
-  widgets: Vec<WidgetController>,
   index: usize,
   scale_factor: MonitorScaleFactor,
   offset_x: i32,
   offset_y: i32,
-  base: Base,
+  r#box: BoxInner,
 }
 
 #[relm4::component(pub)]
@@ -179,53 +180,28 @@ impl Component for Bar {
     let mut model = Bar {
       position: props.position,
       geometry,
-      widgets: Vec::new(),
       index: monitor.index,
       scale_factor: monitor.scale_factor,
       offset_x,
       offset_y,
-      base: Base {
-        classes: props.base.class.unwrap_or_default().into(),
-        halign: props.base.halign,
-        hexpand: props.base.hexpand,
-        homogeneous: props.base.homogeneous.or(Some(true)),
-        valign: props.base.valign,
-        vexpand: props.base.vexpand,
+      r#box: BoxInner {
+        homogeneous: props.r#box.homogeneous.or(Some(true)),
+        widgets: Vec::new(),
+        base: Base {
+          classes: props.r#box.base.class.unwrap_or_default().into(),
+          halign: props.r#box.base.halign,
+          hexpand: props.r#box.base.hexpand,
+          valign: props.r#box.base.valign,
+          vexpand: props.r#box.base.vexpand,
+        },
       },
     };
 
-    prepend_css_class_to_model!("bar", model, root);
     root.set_transient_for(Some(&application_root));
-
-    // root.connect_scale_factor_notify(move |win| {
-    //   // todo @codyduong, needed for if users change scaling on the go
-    // });
-
+    prepend_css_class_to_model!("bar", model.r#box, root);
     let widgets = view_output!();
-    set_initial_base_props!(model, widgets.main_box);
-
-    for widget in props.widgets {
-      let monitor = monitor.clone();
-      match widget {
-        WidgetProps::Clock(inner_props) => {
-          let controller = Clock::builder().launch(inner_props).detach();
-          widgets.main_box.append(controller.widget());
-          model.widgets.push(WidgetController::Clock(controller));
-        }
-        WidgetProps::Workspace(inner_props) => {
-          let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
-          widgets.main_box.append(controller.widget());
-          model.widgets.push(WidgetController::Workspace(controller));
-        }
-        WidgetProps::Box(inner_props) => {
-          let controller = crate::widgets::r#box::Box::builder()
-            .launch((monitor, inner_props))
-            .detach();
-          widgets.main_box.append(controller.widget());
-          model.widgets.push(WidgetController::Box(controller));
-        }
-      }
-    }
+    set_initial_box_props!(model, widgets.main_box);
+    generate_box_widgets!(props.r#box.widgets, model.r#box, monitor, widgets.main_box);
 
     // manually realize/show
     root.show();
@@ -236,22 +212,22 @@ impl Component for Bar {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       BarMsg::LuaHook(hook) => match hook {
-        BarLuaHook::BaseHook(base) => {
-          // TODO @codyduong... this sucks... LOL! the `view_output!();` macro modifies whats available
-          generate_base_match_arms!(
-            self,
-            "bar",
-            root.child().unwrap().downcast::<GtkBox>().unwrap(),
-            BaseMsgHook,
-            base
-          )
+        // BarLuaHook::BaseHook(base) => {
+        //   // TODO @codyduong... this sucks... LOL! the `view_output!();` macro modifies whats available
+        //   generate_base_match_arms!(
+        //     self,
+        //     "bar",
+        //     root.child().unwrap().downcast::<GtkBox>().unwrap(),
+        //     BaseMsgHook,
+        //     base
+        //   )
+        // }
+        BarLuaHook::BoxHook(hook) => {
+          let r2 = root.child().unwrap().downcast::<GtkBox>().unwrap();
+          generate_box_match_arms!(self, "bar", r2, BoxMsgHook, hook)
         }
         BarLuaHook::GetGeometry(tx) => {
           tx.send(self.geometry).unwrap();
-        }
-        BarLuaHook::GetWidgets(tx) => {
-          tx.send(self.widgets.iter().map(WidgetUserData::from).collect())
-            .unwrap();
         }
       },
     }
