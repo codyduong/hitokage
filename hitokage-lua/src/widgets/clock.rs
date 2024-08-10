@@ -1,4 +1,5 @@
 use crate::{impl_getter_fn, impl_setter_fn};
+use hitokage_core::structs::reactive::{Reactive, ReactiveString};
 use hitokage_core::structs::Align;
 use hitokage_core::widgets::base::BaseMsgHook::{
   GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
@@ -36,8 +37,8 @@ impl ClockUserData {
   impl_setter_fn!(set_vexpand, ClockMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
   // BASE PROPERTIES END
 
-  impl_getter_fn!(get_format, ClockMsg::LuaHook, GetFormat, String);
-  impl_setter_fn!(set_format, ClockMsg::LuaHook, SetFormat, String);
+  impl_getter_fn!(get_format, ClockMsg::LuaHook, GetFormat, Reactive<String>);
+  impl_setter_fn!(set_format, ClockMsg::LuaHook, SetFormat, ReactiveString);
 }
 
 impl UserData for ClockUserData {
