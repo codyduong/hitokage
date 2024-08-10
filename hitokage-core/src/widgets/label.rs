@@ -1,15 +1,9 @@
 use super::base::Base;
 use super::base::BaseProps;
-use super::WidgetUserData;
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
-use crate::structs::Monitor;
 use crate::widgets::base::BaseMsgHook;
-use crate::widgets::clock::Clock;
-use crate::widgets::workspace::Workspace;
-use crate::widgets::WidgetController;
-use crate::widgets::WidgetProps;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
