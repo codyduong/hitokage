@@ -5,8 +5,6 @@ local bars = {}
 
 local reactives = {}
 
-hitokage.debug(format)
-
 for _, monitor in ipairs(monitors) do
 	if monitor.model == "LG SDQHD" then
 		goto continue
