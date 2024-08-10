@@ -16,7 +16,7 @@
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/css-properties.html)
 ---
---- @field class CssClass?
+--- @field class string | table<number, string>?
 ---
 --- Sets the horizontal alignment of `widget`. Defaults to `'Fill'`
 ---
@@ -53,10 +53,11 @@ local base_instance = {}
 function base_instance:get_class() end
 
 --- Set the css classes either as a space delimited string or array of strings.
----
---- @param class CssClass
+--- 
+--- @param ... string
 --- @return nil
-function base_instance:set_class(class) end
+--- @overload fun(class: table<number, string>): nil
+function base_instance:set_class(...) end
 
 --- Gets the horizontal alignment of `widget`.
 ---
