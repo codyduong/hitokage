@@ -1,18 +1,14 @@
 // we need a custom deserializer for mlua UserData
 
 use crate::structs::reactive::Reactive;
-use mlua::{
-  serde::Deserializer, AnyUserData, DeserializeOptions, Error as LuaError, Lua, Table, TablePairs, TableSequence,
-  UserData, Value,
-};
+use mlua::{AnyUserData, Error as LuaError, Table, TablePairs, TableSequence, Value};
 use rustc_hash::FxHashSet;
 use serde::{
-  de::{self, DeserializeSeed, Visitor},
+  de::{self, Visitor},
   forward_to_deserialize_any,
 };
-use std::{cell::RefCell, fmt, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 use std::{
-  ops::Deref,
   os::raw::c_void,
   sync::{Arc, Mutex},
 };
@@ -104,7 +100,7 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
 
           let ptr_value = ptr as usize;
           let bytes = ptr_value.to_ne_bytes();
-          
+
           return visitor.visit_byte_buf(bytes.to_vec());
         }
 

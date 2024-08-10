@@ -171,6 +171,7 @@ fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
 }
 
 // @todo @codyduong
+#[allow(dead_code)]
 fn current() {}
 
 fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {

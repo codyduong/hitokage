@@ -2,16 +2,12 @@ use crate::{App, LuaCoroutineMessage};
 use gtk4::{style_context_add_provider_for_display, style_context_remove_provider_for_display, ApplicationWindow};
 use hitokage_core::{event::CONFIG_UPDATE, win_utils};
 use mlua::LuaSerdeExt;
-use notify_debouncer_full::DebouncedEvent;
 use relm4::ComponentSender;
 use std::{
   fs::File,
   io::Read,
   path::PathBuf,
-  sync::{
-    mpsc::{Receiver, Sender},
-    Arc, Mutex,
-  },
+  sync::{mpsc::Sender, Arc, Mutex},
   thread::{self},
   time::{Duration, Instant},
 };

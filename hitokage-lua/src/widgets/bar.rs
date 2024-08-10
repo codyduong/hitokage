@@ -45,14 +45,7 @@ impl BarUserData {
 
   // BASE PROPERTIES START
   impl_getter_fn!(get_class, BarMsg::LuaHook, BoxHook, BaseHook, GetClass, Vec<String>);
-  impl_setter_fn!(
-    set_class,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    SetClass,
-    Vec<String>
-  );
+  impl_setter_fn!(set_class, BarMsg::LuaHook, BoxHook, BaseHook, SetClass, Vec<String>);
 
   impl_getter_fn!(get_halign, BarMsg::LuaHook, BoxHook, BaseHook, GetHalign, Align);
   impl_setter_fn!(set_halign, BarMsg::LuaHook, BoxHook, BaseHook, SetHalign, Align);

@@ -7,7 +7,6 @@ use hitokage_core::widgets::{
 use label::LabelUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
-use serde::Deserialize;
 use workspace::WorkspaceUserData;
 
 pub mod bar;
@@ -173,11 +172,7 @@ where
           cause: Arc::new(mlua::Error::FromLuaConversionError {
             from: first_arg.type_name(),
             to: "Array or Element",
-            message: Some(format!(
-              "Expected an Array or {:}, not {:}",
-              t,
-              first_arg.type_name()
-            )),
+            message: Some(format!("Expected an Array or {:}, not {:}", t, first_arg.type_name())),
           }),
         });
       }

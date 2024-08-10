@@ -1,5 +1,5 @@
 use hitokage_core::structs::reactive::Reactive;
-use mlua::{Lua, LuaSerdeExt, Value};
+use mlua::{Lua, Value};
 
 pub fn make(lua: &Lua) -> anyhow::Result<mlua::Table> {
   let table = lua.create_table()?;
