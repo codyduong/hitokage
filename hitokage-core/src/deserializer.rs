@@ -1,6 +1,6 @@
 // we need a custom deserializer for mlua UserData
 
-use crate::structs::reactive::{Reactive};
+use crate::structs::reactive::Reactive;
 use mlua::{
   serde::Deserializer, AnyUserData, DeserializeOptions, Error as LuaError, Lua, Table, TablePairs, TableSequence,
   UserData, Value,
@@ -10,8 +10,12 @@ use serde::{
   de::{self, DeserializeSeed, Visitor},
   forward_to_deserialize_any,
 };
-use std::{ops::Deref, os::raw::c_void, sync::{Arc, Mutex}};
 use std::{cell::RefCell, fmt, rc::Rc};
+use std::{
+  ops::Deref,
+  os::raw::c_void,
+  sync::{Arc, Mutex},
+};
 
 /* ************************************************************* */
 /* https://docs.rs/mlua/latest/src/mlua/serde/de.rs.html#663-682 */

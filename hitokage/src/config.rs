@@ -289,7 +289,7 @@ pub fn reload_css_provider(
 //     Ok(result) => {
 //       match result {
 //         Ok(result) => {
-          
+
 //           result
 //         },
 //         Err(error) => {

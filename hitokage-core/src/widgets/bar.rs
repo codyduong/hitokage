@@ -7,7 +7,8 @@ use crate::widgets::clock::Clock;
 use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
 use crate::{
-  generate_base_match_arms, generate_box_match_arms, generate_box_widgets, prepend_css_class, prepend_css_class_to_model, set_initial_base_props, set_initial_box_props
+  generate_base_match_arms, generate_box_match_arms, generate_box_widgets, prepend_css_class,
+  prepend_css_class_to_model, set_initial_base_props, set_initial_box_props,
 };
 use gtk4::prelude::*;
 use gtk4::Box as GtkBox;
@@ -220,16 +221,9 @@ impl Component for Bar {
         //     base
         //   )
         // }
-        
         BarLuaHook::BoxHook(hook) => {
           let r2 = root.child().unwrap().downcast::<GtkBox>().unwrap();
-          generate_box_match_arms!(
-            self,
-            "bar",
-            r2,
-            BoxMsgHook,
-            hook
-          )
+          generate_box_match_arms!(self, "bar", r2, BoxMsgHook, hook)
         }
         BarLuaHook::GetGeometry(tx) => {
           tx.send(self.geometry).unwrap();
