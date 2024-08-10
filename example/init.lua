@@ -3,7 +3,7 @@ local monitors = hitokage.monitor.get_all()
 --- @type BarArray
 local bars = {}
 
-local format = hitokage.reactive.create("%a %b %u %r")
+local reactives = {}
 
 hitokage.debug(format)
 
@@ -20,6 +20,9 @@ for _, monitor in ipairs(monitors) do
 	--     {Box = {}},
 	--   }
 	-- })
+
+	local reactive_format = hitokage.unsafe.reactive.create("%a %b %u %r")
+	table.insert(reactives, reactive_format);
 
 	table.insert(
 		bars,
@@ -61,7 +64,7 @@ for _, monitor in ipairs(monitors) do
 				},
 				-- { Box = {} },
 				{ Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
-				{ Clock = { format = format, halign = "End" } },
+				{ Clock = { format = reactive_format, halign = "End" } },
 			},
 			width = monitor.geometry.width - 16,
 			offset = {
@@ -147,16 +150,13 @@ local css_boxes_test = hitokage.timeout(0, function()
 	end
 end)
 
-local foo = 0
-
 local clockers = hitokage.timeout(500, function()
-	local current_format = format:get()
+	local current_format = reactives[1]:get()
 	if current_format == "%a %b %u %r" then
-		format:set("reactive demo")
+		reactives[1]:set("reactive demo")
 	else
-		format:set("%a %b %u %r")
+		reactives[1]:set("%a %b %u %r")
 	end
 end)
 
-hitokage.dispatch(clockers)
 -- hitokage.dispatch(css_boxes_test)

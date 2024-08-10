@@ -133,6 +133,13 @@ impl<'de> serde::de::Visitor<'de> for ReactiveStringVisitor {
     formatter.write_str("a byte buffer representing a raw pointer")
   }
 
+  fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+  where
+    E: serde::de::Error,
+  {
+    Ok(ReactiveString::Str(v.to_owned()))
+  }
+
   fn visit_bytes<E>(self, value: &[u8]) -> Result<Self::Value, E>
   where
     E: serde::de::Error,

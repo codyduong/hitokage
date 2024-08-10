@@ -158,10 +158,13 @@ where
     let event: Table = event::make(&lua, &sender)?;
     let reactive: Table = reactive::make(&lua)?;
 
+    let r#unsafe: Table = lua.create_table()?;
+    r#unsafe.set("reactive", reactive)?;
+
     hitokage_mod.set("monitor", monitor)?;
     hitokage_mod.set("bar", bar)?;
     hitokage_mod.set("event", event)?;
-    hitokage_mod.set("reactive", reactive)?;
+    hitokage_mod.set("unsafe", r#unsafe)?;
 
     hitokage_mod.set(
       // https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/lua-api-crates/logging/src/lib.rs#L17

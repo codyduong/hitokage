@@ -98,8 +98,6 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
       Value::LightUserData(ud) if ud.0.is_null() => visitor.visit_none(),
       Value::UserData(ref ud) => {
         // Handle UserData specifically
-        log::error!("Encountered UserData: {:?}", ud);
-
         if let Ok(ud) = ud.borrow::<Reactive<String>>() {
           let ud = ud.to_owned();
           let ptr = Arc::as_ptr(&ud.value) as *const Mutex<i32>;
@@ -110,8 +108,7 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
           return visitor.visit_byte_buf(bytes.to_vec());
         }
 
-        // how do i get this to the ud to the visitor??
-        visitor.visit_str("fuck")
+        visitor.visit_unit()
       }
       _ => {
         self.inner.deserialize_any(visitor)

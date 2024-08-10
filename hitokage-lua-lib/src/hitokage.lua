@@ -62,6 +62,10 @@ function hitokage.timeout(timeout, action) end
 
 -------------------------------------------------------------------------------
 --- Compose hitokage
+local unsafe = {
+  reactive = reactive
+}
+
 hitokage.bar = bar
 hitokage.monitor = monitor
-hitokage.reactive = reactive
+hitokage.unsafe = unsafe
