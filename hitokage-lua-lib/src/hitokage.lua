@@ -18,6 +18,7 @@ _G._subscriptions = {}
 
 local bar = require("hitokage.api.bar")
 local monitor = require("hitokage.api.monitor")
+local reactive = require("hitokage.api.reactive")
 
 -------------------------------------------------------------------------------
 --- Utility functions
@@ -63,3 +64,4 @@ function hitokage.timeout(timeout, action) end
 --- Compose hitokage
 hitokage.bar = bar
 hitokage.monitor = monitor
+hitokage.reactive = reactive

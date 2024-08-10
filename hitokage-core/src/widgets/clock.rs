@@ -1,6 +1,8 @@
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::reactive::Reactive;
+use crate::structs::reactive::ReactiveString;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
@@ -29,7 +31,7 @@ pub enum ClockMsg {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ClockProps {
-  format: String,
+  format: ReactiveString,
   #[serde(flatten)]
   base: BaseProps,
 }
@@ -37,9 +39,9 @@ pub struct ClockProps {
 impl From<ClockProps> for Clock {
   fn from(props: ClockProps) -> Self {
     Clock {
-      current_time: chrono::Local::now().format(&props.format).to_string(),
+      current_time: chrono::Local::now().format(&props.format.as_str()).to_string(),
       destroyed: Arc::new(Mutex::new(false)),
-      format: props.format.clone(),
+      format: props.format.into(),
       base: props.base.into(),
     }
   }
@@ -48,8 +50,7 @@ impl From<ClockProps> for Clock {
 pub struct Clock {
   current_time: String,
   destroyed: Arc<Mutex<bool>>,
-
-  format: String,
+  format: Reactive<String>,
   base: Base,
 }
 
@@ -98,17 +99,18 @@ impl Component for Clock {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       ClockMsg::Tick => {
-        self.current_time = chrono::Local::now().format(&self.format).to_string();
+
+        self.current_time = chrono::Local::now().format(&self.format.clone().into_inner()).to_string();
       }
       ClockMsg::LuaHook(hook) => match hook {
         ClockMsgHook::BaseHook(base) => {
           generate_base_match_arms!(self, "clock", root, base)
         }
         ClockMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone()).unwrap();
+          tx.send(self.format.clone().into_inner()).unwrap();
         }
         ClockMsgHook::SetFormat(format) => {
-          self.format = format;
+          self.format = Reactive::new(format);
         }
       },
     }

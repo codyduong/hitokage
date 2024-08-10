@@ -1,4 +1,5 @@
 pub mod common;
+pub mod deserializer;
 pub mod event;
 pub mod flowbox;
 pub mod structs;

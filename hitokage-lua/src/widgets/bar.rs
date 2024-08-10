@@ -1,5 +1,6 @@
 use super::WidgetUserDataVec;
 use crate::{impl_getter_fn, impl_setter_fn};
+use hitokage_core::deserializer::LuaDeserializer;
 use hitokage_core::structs::{Align, CssClass, Monitor, MonitorGeometry};
 use hitokage_core::widgets::bar::BarLuaHook::BoxHook;
 use hitokage_core::widgets::bar::BarLuaHook::GetGeometry;
@@ -9,12 +10,13 @@ use hitokage_core::widgets::base::BaseMsgHook::{
 };
 use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
 use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
-use mlua::FromLuaMulti;
+use mlua::{FromLuaMulti, Table};
 use mlua::{
   Lua, LuaSerdeExt, UserData, UserDataMethods,
   Value::{self},
 };
 use relm4::{Component, ComponentSender};
+use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
 struct BarUserData {
@@ -177,6 +179,7 @@ impl UserData for BarUserData {
   }
 }
 
+#[derive(Serialize, Deserialize)]
 struct BarPropsExtended {
   monitor: Monitor,
   props: BarProps,
@@ -233,8 +236,13 @@ where
       "create",
       lua.create_function({
         let sender = sender.clone();
-        move |_, props_extended: BarPropsExtended| {
-          let BarPropsExtended { monitor, props } = props_extended;
+        move |lua, value: (Table, Table)| {
+          let opts = mlua::serde::de::Options::new().deny_unsupported_types(false);
+
+          let monitor: Monitor = lua.from_value(mlua::Value::Table(value.0))?;
+          let props = BarProps::deserialize(LuaDeserializer::new(mlua::Value::Table(value.1), opts))?;
+          // let props: BarProps = lua.from_value_with(mlua::Value::Table(value.1), opts)?;
+
           let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 
           sender.input(<C as Component>::Input::LuaHook(crate::LuaHook {
