@@ -18,10 +18,10 @@ local clock_instance = {}
 function clock_instance:get_type() end
 
 --- Get the format string
---- @return string
+--- @return ReactiveString
 function clock_instance:get_format() end
 
 --- Set the format string
---- @param string string
+--- @param string string | ReactiveString
 --- @return nil
 function clock_instance:set_format(string) end
