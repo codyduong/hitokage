@@ -150,14 +150,14 @@ local css_boxes_test = hitokage.timeout(0, function()
 	end
 end)
 
-local reactives = hitokage.timeout(500, function()
-	local current_format = reactives[1]:get()
-	if current_format == "%a %b %u %r" then
-		reactives[1]:set("reactive demo")
-	else
-		reactives[1]:set("%a %b %u %r")
-	end
-end)
+-- local reactives = hitokage.timeout(500, function()
+-- 	local current_format = reactives[1]:get()
+-- 	if current_format == "%a %b %u %r" then
+-- 		reactives[1]:set("reactive demo")
+-- 	else
+-- 		reactives[1]:set("%a %b %u %r")
+-- 	end
+-- end)
 
-hitokage.dispatch(reactives)
+-- hitokage.dispatch(reactives)
 -- hitokage.dispatch(css_boxes_test)
