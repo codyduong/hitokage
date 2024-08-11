@@ -4,6 +4,7 @@ local monitors = hitokage.monitor.get_all()
 local bars = {}
 
 local reactives = {}
+local reactives2 = {}
 
 for _, monitor in ipairs(monitors) do
 	if monitor.model == "LG SDQHD" then
@@ -71,7 +72,7 @@ for _, monitor in ipairs(monitors) do
 					},
 				},
 				-- { Box = {} },
-				{ Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
+				{ Workspace = { halign = "Center", item_height = 22, item_width = 22, format="{{add index 1}}" } },
 				{ Clock = { format = reactive_format, halign = "End" } },
 			},
 			width = monitor.geometry.width - 16,
@@ -145,7 +146,7 @@ end
 --   end
 -- end)
 
-local css_boxes_test = hitokage.timeout(0, function()
+local css_boxes_test = hitokage.timeout(1000, function()
 	local widgets = boxes[1]:get_widgets()
 
 	local first = widgets[1]:get_class()
@@ -158,14 +159,14 @@ local css_boxes_test = hitokage.timeout(0, function()
 	end
 end)
 
--- local reactives = hitokage.timeout(500, function()
--- 	local current_format = reactives[1]:get()
--- 	if current_format == "%a %b %u %r" then
--- 		reactives[1]:set("reactive demo")
--- 	else
--- 		reactives[1]:set("%a %b %u %r")
--- 	end
--- end)
+local reactives = hitokage.timeout(1000, function()
+	local current_format = reactives[1]:get()
+	if current_format == "%a %b %u %r" then
+		reactives[1]:set("demo demo demo")
+	else
+		reactives[1]:set("%a %b %u %r")
+	end
+end)
 
 -- hitokage.dispatch(reactives)
 -- hitokage.dispatch(css_boxes_test)

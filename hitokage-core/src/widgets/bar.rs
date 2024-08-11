@@ -3,8 +3,6 @@ use super::r#box::{BoxInner, BoxMsgHook, BoxProps};
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
 use crate::structs::{Monitor, MonitorGeometry, MonitorScaleFactor};
-use crate::widgets::clock::Clock;
-use crate::widgets::workspace::Workspace;
 use crate::win_utils::get_windows_version;
 use crate::{
   generate_base_match_arms, generate_box_match_arms, generate_box_widgets, prepend_css_class,

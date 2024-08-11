@@ -6,6 +6,7 @@ use hitokage_core::widgets;
 use hitokage_core::widgets::bar;
 use hitokage_lua::AppMsg;
 use hitokage_lua::LuaHookType;
+use log::LevelFilter;
 use notify::Watcher;
 use notify_debouncer_full::new_debouncer;
 use relm4::component::Connector;
@@ -335,7 +336,10 @@ impl Component for App {
 }
 
 fn main() {
-  simple_logger::SimpleLogger::new().init().unwrap();
+  simple_logger::SimpleLogger::new()
+    .with_module_level("handlebars", LevelFilter::Warn)
+    .init()
+    .unwrap();
 
   unsafe {
     SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE).expect("Failed to set process DPI awareness");
