@@ -3,6 +3,8 @@ use super::base::BaseProps;
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::reactive::Reactive;
+use crate::structs::reactive::ReactiveString;
 use crate::widgets::base::BaseMsgHook;
 use gtk4::prelude::*;
 use relm4::prelude::*;
@@ -14,8 +16,8 @@ use std::sync::mpsc::Sender;
 #[derive(Debug, Clone)]
 pub enum LabelMsgHook {
   BaseHook(BaseMsgHook),
-  GetLabel(Sender<String>),
-  SetLabel(String),
+  GetLabel(Sender<Reactive<String>>),
+  SetLabel(ReactiveString),
 }
 
 #[derive(Debug, Clone)]
@@ -27,12 +29,12 @@ pub enum LabelMsg {
 pub struct LabelProps {
   #[serde(flatten)]
   base: BaseProps,
-  label: String,
+  label: ReactiveString,
 }
 
 pub struct Label {
   base: Base,
-  label: String,
+  label: Reactive<String>,
 }
 
 #[relm4::component(pub)]
@@ -46,7 +48,7 @@ impl Component for Label {
   view! {
     gtk::Label {
       #[watch]
-      set_label: &model.label,
+      set_label: &model.label.clone().into_inner(),
     }
   }
 
@@ -59,7 +61,7 @@ impl Component for Label {
         valign: props.base.valign,
         vexpand: props.base.vexpand.or(Some(true)),
       },
-      label: props.label,
+      label: props.label.into(),
     };
 
     prepend_css_class_to_model!("label", model, root);
@@ -82,7 +84,16 @@ impl Component for Label {
           tx.send(self.label.clone()).unwrap();
         }
         LabelMsgHook::SetLabel(label) => {
-          self.label = label;
+          match label {
+            ReactiveString::Str(s) => {
+              let arc = self.label.value.clone();
+              let mut arc_label = arc.lock().unwrap();
+              *arc_label = s;
+            }
+            ReactiveString::Reactive(r) => {
+              self.label = r;
+            }
+          };
         }
       },
     }

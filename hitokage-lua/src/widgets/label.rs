@@ -1,4 +1,5 @@
 use crate::{impl_getter_fn, impl_setter_fn};
+use hitokage_core::structs::reactive::{Reactive, ReactiveString};
 use hitokage_core::structs::Align;
 use hitokage_core::widgets::base::BaseMsgHook::{
   GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
@@ -36,8 +37,8 @@ impl LabelUserData {
   impl_setter_fn!(set_vexpand, LabelMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
   // BASE PROPERTIES END
 
-  impl_getter_fn!(get_label, LabelMsg::LuaHook, GetLabel, String);
-  impl_setter_fn!(set_label, LabelMsg::LuaHook, SetLabel, String);
+  impl_getter_fn!(get_label, LabelMsg::LuaHook, GetLabel, Reactive<String>);
+  impl_setter_fn!(set_label, LabelMsg::LuaHook, SetLabel, ReactiveString);
 }
 
 impl UserData for LabelUserData {
