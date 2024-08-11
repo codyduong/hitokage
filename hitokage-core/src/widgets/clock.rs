@@ -19,8 +19,9 @@ use super::base::BaseProps;
 #[derive(Debug, Clone)]
 pub enum ClockMsgHook {
   BaseHook(BaseMsgHook),
-  GetFormat(Sender<Reactive<String>>),
-  SetFormat(ReactiveString),
+  GetFormat(Sender<String>),
+  GetFormatReactive(Sender<Reactive<String>>),
+  SetFormat(String),
 }
 
 #[derive(Debug, Clone)]
@@ -108,19 +109,15 @@ impl Component for Clock {
           generate_base_match_arms!(self, "clock", root, base)
         }
         ClockMsgHook::GetFormat(tx) => {
+          tx.send(self.format.clone().into_inner()).unwrap();
+        }
+        ClockMsgHook::GetFormatReactive(tx) => {
           tx.send(self.format.clone()).unwrap();
         }
         ClockMsgHook::SetFormat(format) => {
-          match format {
-            ReactiveString::Str(s) => {
-              let arc = self.format.value.clone();
-              let mut str = arc.lock().unwrap();
-              *str = s;
-            }
-            ReactiveString::Reactive(r) => {
-              self.format = r;
-            }
-          };
+          let arc = self.format.value.clone();
+          let mut str = arc.lock().unwrap();
+          *str = format;
         }
       },
     }

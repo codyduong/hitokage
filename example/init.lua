@@ -19,7 +19,9 @@ for _, monitor in ipairs(monitors) do
 	--   }
 	-- })
 
+	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
 	local reactive_format = hitokage.unsafe.reactive.create("%a %b %u %r")
+
 	table.insert(reactives, reactive_format)
 
 	table.insert(
@@ -148,7 +150,7 @@ local css_boxes_test = hitokage.timeout(0, function()
 	end
 end)
 
-local clockers = hitokage.timeout(500, function()
+local reactives = hitokage.timeout(500, function()
 	local current_format = reactives[1]:get()
 	if current_format == "%a %b %u %r" then
 		reactives[1]:set("reactive demo")
@@ -157,4 +159,5 @@ local clockers = hitokage.timeout(500, function()
 	end
 end)
 
+hitokage.dispatch(reactives)
 -- hitokage.dispatch(css_boxes_test)

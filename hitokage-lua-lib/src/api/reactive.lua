@@ -3,6 +3,7 @@
 -------------------------------------------------------------------------------
 --- Represents the monitor module for String type
 --- @class ReactiveString
+--- @field value string
 local reactive_string_userdata = {}
 
 --- Get the value of the reactive variable

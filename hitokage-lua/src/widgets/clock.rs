@@ -1,12 +1,12 @@
 use crate::{impl_getter_fn, impl_setter_fn};
-use hitokage_core::structs::reactive::{Reactive, ReactiveString};
+use hitokage_core::structs::reactive::Reactive;
 use hitokage_core::structs::Align;
 use hitokage_core::widgets::base::BaseMsgHook::{
   GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
 };
 use hitokage_core::widgets::clock::ClockMsg;
 use hitokage_core::widgets::clock::ClockMsgHook::BaseHook;
-use hitokage_core::widgets::clock::ClockMsgHook::{GetFormat, SetFormat};
+use hitokage_core::widgets::clock::ClockMsgHook::{GetFormat, GetFormatReactive, SetFormat};
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
 #[derive(Debug, Clone)]
@@ -37,8 +37,14 @@ impl ClockUserData {
   impl_setter_fn!(set_vexpand, ClockMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
   // BASE PROPERTIES END
 
-  impl_getter_fn!(get_format, ClockMsg::LuaHook, GetFormat, Reactive<String>);
-  impl_setter_fn!(set_format, ClockMsg::LuaHook, SetFormat, ReactiveString);
+  impl_getter_fn!(get_format, ClockMsg::LuaHook, GetFormat, String);
+  impl_getter_fn!(
+    get_format_reactive,
+    ClockMsg::LuaHook,
+    GetFormatReactive,
+    Reactive<String>
+  );
+  impl_setter_fn!(set_format, ClockMsg::LuaHook, SetFormat, String);
 }
 
 impl UserData for ClockUserData {
@@ -77,6 +83,9 @@ impl UserData for ClockUserData {
     // BASE PROPERTIES END
 
     methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
+    methods.add_method("get_format_reactive", |_, this: &ClockUserData, _: ()| {
+      Ok(this.get_format_reactive()?)
+    });
     methods.add_method("set_format", |lua, this, value: mlua::Value| {
       this.set_format(lua, value)
     });

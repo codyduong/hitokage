@@ -16,8 +16,9 @@ use std::sync::mpsc::Sender;
 #[derive(Debug, Clone)]
 pub enum LabelMsgHook {
   BaseHook(BaseMsgHook),
-  GetLabel(Sender<Reactive<String>>),
-  SetLabel(ReactiveString),
+  GetLabel(Sender<String>),
+  GetLabelReactive(Sender<Reactive<String>>),
+  SetLabel(String),
 }
 
 #[derive(Debug, Clone)]
@@ -81,19 +82,15 @@ impl Component for Label {
           generate_base_match_arms!(self, "label", root, base)
         }
         LabelMsgHook::GetLabel(tx) => {
+          tx.send(self.label.clone().into_inner()).unwrap();
+        }
+        LabelMsgHook::GetLabelReactive(tx) => {
           tx.send(self.label.clone()).unwrap();
         }
         LabelMsgHook::SetLabel(label) => {
-          match label {
-            ReactiveString::Str(s) => {
-              let arc = self.label.value.clone();
-              let mut arc_label = arc.lock().unwrap();
-              *arc_label = s;
-            }
-            ReactiveString::Reactive(r) => {
-              self.label = r;
-            }
-          };
+          let arc = self.label.value.clone();
+          let mut str = arc.lock().unwrap();
+          *str = label;
         }
       },
     }

@@ -1,4 +1,4 @@
-use mlua::{FromLua, Lua, LuaSerdeExt, UserData, UserDataMethods, Value};
+use mlua::{FromLua, Lua, LuaSerdeExt, MetaMethod, UserData, UserDataMethods, Value};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::borrow::Cow;
 use std::fmt;
@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 #[derive(Debug, Clone)]
 pub struct Reactive<T>
 where
-  T: Serialize + for<'de> Deserialize<'de> + Clone,
+  T: Clone + std::fmt::Debug + Serialize + for<'de> Deserialize<'de>,
 {
   // @codyduong todo remove pub
   pub value: Arc<Mutex<T>>,
@@ -15,7 +15,7 @@ where
 
 impl<T> Reactive<T>
 where
-  T: Serialize + for<'de> Deserialize<'de> + Clone,
+  T: Clone + std::fmt::Debug + Serialize + for<'de> Deserialize<'de>,
 {
   pub fn new(t: T) -> Self {
     Reactive {
@@ -31,7 +31,7 @@ where
 
 impl<T> Serialize for Reactive<T>
 where
-  T: Serialize + Clone + for<'de> Deserialize<'de> + std::marker::Send + 'static,
+  T: Clone + std::fmt::Debug + Serialize + for<'de> Deserialize<'de> + std::marker::Send + 'static,
 {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
@@ -63,7 +63,13 @@ where
 
 impl<'lua, T> FromLua<'lua> for Reactive<T>
 where
-  T: Serialize + Clone + for<'de2> Deserialize<'de2> + std::marker::Send + for<'lua2> mlua::FromLua<'lua2> + 'static,
+  T: Clone
+    + std::fmt::Debug
+    + Serialize
+    + for<'de2> Deserialize<'de2>
+    + std::marker::Send
+    + for<'lua2> mlua::FromLua<'lua2>
+    + 'static,
 {
   fn from_lua(value: Value<'lua>, _lua: &'lua Lua) -> mlua::Result<Self> {
     match value {
@@ -82,7 +88,7 @@ where
 
 impl<T> UserData for Reactive<T>
 where
-  T: Serialize + for<'de> Deserialize<'de> + Clone + Send + 'static,
+  T: Clone + std::fmt::Debug + Serialize + for<'de> Deserialize<'de> + Send + 'static,
 {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get", |lua, this, _: ()| {
@@ -109,10 +115,49 @@ where
       let deserialized_value: T = lua.from_value(new_value.clone())?;
       *value = deserialized_value.clone();
 
-      // Serialize back to Lua value to ensure it's valid
-      // let lua_value: Value = lua.to_value(&deserialized_value)?;
-      // println!("Value updated to: {:?}", lua_value); // Output the changes
       Ok(())
+    });
+
+    methods.add_meta_method(MetaMethod::Index, |lua, instance, key| match key {
+      Value::String(k) => match k.to_str()? {
+        "value" => {
+          let value = instance.value.lock().unwrap();
+          Ok(lua.to_value(&*value)?)
+        }
+        _ => Ok(Value::Nil),
+      },
+      _ => Ok(Value::Nil),
+    });
+
+    methods.add_meta_method(MetaMethod::NewIndex, |lua, instance, args: mlua::Variadic<Value>| {
+      if args.len() > 2 {
+        return Err(mlua::Error::BindError);
+      }
+
+      let key = args.get(0).unwrap();
+      let val = args.get(1).unwrap();
+
+      match key {
+        Value::String(s) => match s.to_str()? {
+          "value" => {
+            let deserialized_value: T = match lua.from_value(val.clone()) {
+              Ok(o) => o,
+              Err(e) => {
+                return Err(mlua::Error::WithContext {
+                  context: "Failed to modify reactive value".into(),
+                  cause: Arc::new(e),
+                })
+              }
+            };
+            let mut value = instance.value.lock().unwrap();
+            *value = deserialized_value.clone();
+            return Ok(());
+          }
+          _ => (),
+        },
+        _ => (),
+      };
+      Err(mlua::Error::RuntimeError("Attempt to modify readonly field".into()))
     });
   }
 }
