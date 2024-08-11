@@ -96,8 +96,7 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
         // Handle UserData specifically
         if let Ok(ud) = ud.borrow::<Reactive<String>>() {
           let ud = ud.to_owned();
-          let ptr = Arc::as_ptr(&ud.value) as *const Mutex<i32>;
-
+          let ptr = Arc::into_raw(ud.value) as *const Mutex<i32>;
           let ptr_value = ptr as usize;
           let bytes = ptr_value.to_ne_bytes();
 
