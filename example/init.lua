@@ -55,15 +55,15 @@ for _, monitor in ipairs(monitors) do
 										{
 											Label = {
 												label = "foo \u{EECB}  \u{F0E0}",
-												hexpand = true
+												hexpand = true,
 											},
 										},
 										{
 											Icon = {
 												file = "./smiley.png",
-												hexpand = false
-											}
-										}
+												hexpand = false,
+											},
+										},
 									},
 								},
 							},

@@ -21,7 +21,6 @@ local label_instance = {}
 --- @return 'Label'
 function label_instance:get_type() end
 
-
 --- Fetches the text from a label.
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Label.get_label.html)

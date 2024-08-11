@@ -4,11 +4,11 @@
 --- Links to IconProps in 'hitokage-core\src\widgets\icon.rs'
 --- @class IconProps : BaseProps
 ---
---- The contents of the icon.
+--- A path to the file to display.
 ---
---- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Icon.icon.html)
+--- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Image.file.html)
 ---
---- @field icon string
+--- @field file string
 
 -------------------------------------------------------------------------------
 --- Links to IconUserData hitokage-lua\src\widgets\icon.rs
@@ -21,7 +21,7 @@ local icon_instance = {}
 --- @return 'Icon'
 function icon_instance:get_type() end
 
---- Gets the file for the icon.
+--- Gets the path to the file the icon is displaying.
 ---
 --- @return nil
 function icon_instance:get_file() end
@@ -32,10 +32,10 @@ function icon_instance:get_file() end
 --- @nodiscard
 function icon_instance:get_file_reactive() end
 
---- Sets the icon from file.
+--- Sets the icon from from the a path for displaying.
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Image.set_from_file.html)
---- 
+---
 --- @param string string
 --- @return string
 function icon_instance:set_file(string) end
