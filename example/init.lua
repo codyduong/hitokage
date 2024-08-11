@@ -50,12 +50,20 @@ for _, monitor in ipairs(monitors) do
 							{
 								Box = {
 									class = { "red", "green blue" },
+									homogeneous = false,
 									widgets = {
 										{
 											Label = {
-												label = "foo",
+												label = "foo \u{EECB}  \u{F0E0}",
+												hexpand = true
 											},
 										},
+										{
+											Icon = {
+												file = "./smiley.png",
+												hexpand = false
+											}
+										}
 									},
 								},
 							},

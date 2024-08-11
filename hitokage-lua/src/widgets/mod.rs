@@ -1,23 +1,26 @@
-use std::sync::Arc;
-
 use clock::ClockUserData;
 use hitokage_core::widgets::{
-  clock::ClockMsg, label::LabelMsg, r#box::BoxMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData,
+  clock::ClockMsg, icon::IconMsg, label::LabelMsg, r#box::BoxMsg, workspace::WorkspaceMsg,
+  WidgetUserData as CoreWidgetUserData,
 };
+use icon::IconUserData;
 use label::LabelUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
+use std::sync::Arc;
 use workspace::WorkspaceUserData;
 
 pub mod bar;
 pub mod r#box;
 pub mod clock;
+pub mod icon;
 pub mod label;
 pub mod workspace;
 
 enum WidgetUserData {
   Box(relm4::Sender<BoxMsg>),
   Clock(relm4::Sender<ClockMsg>),
+  Icon(relm4::Sender<IconMsg>),
   Label(relm4::Sender<LabelMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
 }
@@ -38,6 +41,13 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
           sender,
         };
         lua.pack(clock_userdata)
+      }
+      WidgetUserData::Icon(sender) => {
+        let image_userdata = IconUserData {
+          r#type: "Icon".to_string(),
+          sender,
+        };
+        lua.pack(image_userdata)
       }
       WidgetUserData::Label(sender) => {
         let label_userdata = LabelUserData {
@@ -62,6 +72,7 @@ impl From<CoreWidgetUserData> for WidgetUserData {
     match sender {
       CoreWidgetUserData::Box(sender) => WidgetUserData::Box(sender),
       CoreWidgetUserData::Clock(sender) => WidgetUserData::Clock(sender),
+      CoreWidgetUserData::Icon(sender) => WidgetUserData::Icon(sender),
       CoreWidgetUserData::Label(sender) => WidgetUserData::Label(sender),
       CoreWidgetUserData::Workspace(sender) => WidgetUserData::Workspace(sender),
     }

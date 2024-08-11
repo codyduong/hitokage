@@ -2,12 +2,15 @@ pub mod bar;
 pub mod base;
 pub mod r#box;
 pub mod clock;
+pub mod icon;
 pub mod label;
 pub mod workspace;
 
 use std::fmt;
 
 use clock::{Clock, ClockMsg};
+use icon::Icon;
+use icon::IconMsg;
 use label::Label;
 use label::LabelMsg;
 use r#box::BoxMsg;
@@ -21,23 +24,26 @@ use workspace::{Workspace, WorkspaceMsg};
 #[derive(Debug, Deserialize, Serialize)]
 pub enum WidgetProps {
   Box(r#box::BoxProps),
-  Label(label::LabelProps),
   Clock(clock::ClockProps),
+  Icon(icon::IconProps),
+  Label(label::LabelProps),
   Workspace(workspace::WorkspaceProps),
 }
 
 pub enum WidgetController {
   Box(Controller<HitokageBox>),
-  Label(Controller<Label>),
   Clock(Controller<Clock>),
+  Icon(Controller<Icon>),
+  Label(Controller<Label>),
   Workspace(Controller<Workspace>),
 }
 
 #[derive(Debug, Clone)]
 pub enum WidgetUserData {
   Box(relm4::Sender<BoxMsg>),
-  Label(relm4::Sender<LabelMsg>),
   Clock(relm4::Sender<ClockMsg>),
+  Icon(relm4::Sender<IconMsg>),
+  Label(relm4::Sender<LabelMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
 }
 
@@ -46,6 +52,7 @@ impl<'a> From<&'a WidgetController> for WidgetUserData {
     match controller {
       WidgetController::Box(item) => WidgetUserData::Box(item.sender().clone()),
       WidgetController::Clock(item) => WidgetUserData::Clock(item.sender().clone()),
+      WidgetController::Icon(item) => WidgetUserData::Icon(item.sender().clone()),
       WidgetController::Label(item) => WidgetUserData::Label(item.sender().clone()),
       WidgetController::Workspace(item) => WidgetUserData::Workspace(item.sender().clone()),
     }

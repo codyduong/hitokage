@@ -8,7 +8,7 @@ license = "MIT"
 
 [dependencies]
 notify = "6.1.1"
-dirs = "5.0.1"
+dirs = { workspace = true }
 hitokage-core = { path = "../hitokage-core/" }
 hitokage-lua = { path = "../hitokage-lua/" }
 anyhow = { workspace = true }

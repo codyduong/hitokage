@@ -33,7 +33,7 @@
 --- },
 --- ```
 ---
---- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetLabelProps | WidgetWorkspaceProps>?
+--- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetIconProps | WidgetLabelProps | WidgetWorkspaceProps>?
 
 -------------------------------------------------------------------------------
 --- Links to BoxUserData hitokage-lua\src\widgets\box.rs

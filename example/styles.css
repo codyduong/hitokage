@@ -1,14 +1,15 @@
 window {
   /* Be careful about setting values here, this also modifies the debugger appearance */
-  font-family: 'MesloLGS NF', 'Courier New', 'Bars', 'Font Awesome 5 Free';
+  font-family: 'MesloLGS Nerd Font', 'Courier New', 'Bars', 'Font Awesome 5 Free';
   font-size: 14px;
+  color: #000000;
 }
 
 .bar {
   background-color: rgba(29, 32, 33, 0.0);
   color: #f2e5bc;
   
-  font-family: 'MesloLGS NF', 'Courier New', 'Bars', 'Font Awesome 5 Free';
+  font-family: 'MesloLGS Nerd Font', 'Courier New', 'Bars', 'Font Awesome 5 Free';
   font-size: 14px;
 }
 

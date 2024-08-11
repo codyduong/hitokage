@@ -23,9 +23,7 @@ pub fn start(sender: relm4::ComponentSender<crate::App>) -> std::thread::JoinHan
           if matches!(reader.read_to_end(&mut buffer), Ok(0)) {
             log::debug!("Komorebi shutdown");
             // keep trying to reconnect to komorebi
-            while komorebi_client::send_message(&SocketMessage::AddSubscriberSocket(NAME.to_string()))
-              .is_err()
-            {
+            while komorebi_client::send_message(&SocketMessage::AddSubscriberSocket(NAME.to_string())).is_err() {
               log::debug!("Attempting to reconnect to komorebi");
               std::thread::sleep(Duration::from_secs(1));
             }

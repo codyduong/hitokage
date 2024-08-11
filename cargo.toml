@@ -23,6 +23,7 @@ relm4 = "0.8.1"
 relm4-macros = "0.8.1"
 serde = { version = "1.0.117", features = ["derive"] }
 serde_json = { version = "1.0.117" }
+dirs = "5.0.1"
 # there is some issues with patching win32-display-data, so use this rev
 komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "3f6e19b8b48b27b77810c469b9baa3e5b25c9af9"}
 win32-display-data = { git = "https://github.com/LGUG2Z/win32-display-data", rev = "32a45cebf132c3d651ee22c0c40033a6b7edc945" }

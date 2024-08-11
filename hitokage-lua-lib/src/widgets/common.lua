@@ -13,3 +13,5 @@
 --- @field Label LabelProps
 --- @class WidgetWorkspaceProps
 --- @field Workspace WorkspaceProps
+--- @class WidgetIconProps
+--- @field Icon IconProps
