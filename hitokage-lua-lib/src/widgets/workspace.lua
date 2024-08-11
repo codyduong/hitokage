@@ -5,9 +5,9 @@
 --- @class WorkspaceProps : BaseProps
 --- @field item_width integer?
 --- @field item_height integer?
---- 
+---
 --- A handlebars format string
---- 
+---
 --- @field format string?
 
 -------------------------------------------------------------------------------

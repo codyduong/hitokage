@@ -72,7 +72,7 @@ for _, monitor in ipairs(monitors) do
 					},
 				},
 				-- { Box = {} },
-				{ Workspace = { halign = "Center", item_height = 22, item_width = 22, format="{{add index 1}}" } },
+				{ Workspace = { halign = "Center", item_height = 22, item_width = 22, format = "{{add index 1}}" } },
 				{ Clock = { format = reactive_format, halign = "End" } },
 			},
 			width = monitor.geometry.width - 16,
