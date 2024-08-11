@@ -20,7 +20,7 @@ for _, monitor in ipairs(monitors) do
 	-- })
 
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
-	local reactive_format = hitokage.unsafe.reactive.create("%a %b %u %r")
+	local reactive_format = hitokage.unstable.reactive.create("%a %b %u %r")
 
 	table.insert(reactives, reactive_format)
 
