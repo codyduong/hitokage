@@ -3,6 +3,7 @@ use super::base::BaseProps;
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::reactive::create_react_sender;
 use crate::structs::reactive::Reactive;
 use crate::structs::reactive::ReactiveString;
 use crate::widgets::base::BaseMsgHook;
@@ -24,6 +25,7 @@ pub enum LabelMsgHook {
 #[derive(Debug, Clone)]
 pub enum LabelMsg {
   LuaHook(LabelMsgHook),
+  React,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -33,9 +35,13 @@ pub struct LabelProps {
   label: ReactiveString,
 }
 
+#[tracker::track]
 pub struct Label {
+  #[tracker::do_not_track]
   base: Base,
+  #[tracker::do_not_track]
   label: Reactive<String>,
+  react: bool,
 }
 
 #[relm4::component(pub)]
@@ -48,12 +54,12 @@ impl Component for Label {
 
   view! {
     gtk::Label {
-      #[watch]
-      set_label: &model.label.clone().into_inner(),
+      #[track = "model.changed(Label::react())"]
+      set_label: &model.label.clone().get(),
     }
   }
 
-  fn init(props: Self::Init, root: Self::Root, _sender: ComponentSender<Self>) -> ComponentParts<Self> {
+  fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let mut model = Label {
       base: Base {
         classes: props.base.class.unwrap_or_default().into(),
@@ -62,7 +68,11 @@ impl Component for Label {
         valign: props.base.valign,
         vexpand: props.base.vexpand.or(Some(true)),
       },
-      label: props.label.into(),
+      label: props
+        .label
+        .as_reactive_string(create_react_sender(sender.input_sender(), LabelMsg::React)),
+      react: false,
+      tracker: 0,
     };
 
     prepend_css_class_to_model!("label", model, root);
@@ -82,7 +92,7 @@ impl Component for Label {
           generate_base_match_arms!(self, "label", root, base)
         }
         LabelMsgHook::GetLabel(tx) => {
-          tx.send(self.label.clone().into_inner()).unwrap();
+          tx.send(self.label.clone().get()).unwrap();
         }
         LabelMsgHook::GetLabelReactive(tx) => {
           tx.send(self.label.clone()).unwrap();
@@ -93,6 +103,10 @@ impl Component for Label {
           *str = label;
         }
       },
+      LabelMsg::React => {
+        self.set_react(!self.react);
+        root.show()
+      }
     }
   }
 }

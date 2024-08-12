@@ -6,8 +6,6 @@ pub mod icon;
 pub mod label;
 pub mod workspace;
 
-use std::fmt;
-
 use clock::{Clock, ClockMsg};
 use icon::Icon;
 use icon::IconMsg;
@@ -19,6 +17,7 @@ use relm4::ComponentController;
 use relm4::Controller;
 use serde::de;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use workspace::{Workspace, WorkspaceMsg};
 
 #[derive(Debug, Deserialize, Serialize)]

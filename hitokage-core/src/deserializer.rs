@@ -96,9 +96,15 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
         // Handle UserData specifically
         if let Ok(ud) = ud.borrow::<Reactive<String>>() {
           let ud = ud.to_owned();
-          let ptr = Arc::into_raw(ud.value) as *const Mutex<i32>;
-          let ptr_value = ptr as usize;
-          let bytes = ptr_value.to_ne_bytes();
+          let ptr1 = Arc::into_raw(ud.value) as *const Mutex<String>;
+          let ptr2 = Arc::into_raw(ud.sender) as *const Mutex<Option<std::sync::mpsc::Sender<()>>>;
+
+          let ptr1_value = ptr1 as usize;
+          let ptr2_value = ptr2 as usize;
+
+          let mut bytes = Vec::with_capacity(std::mem::size_of::<usize>() * 2);
+          bytes.extend_from_slice(&ptr1_value.to_ne_bytes());
+          bytes.extend_from_slice(&ptr2_value.to_ne_bytes());
 
           return visitor.visit_byte_buf(bytes.to_vec());
         }

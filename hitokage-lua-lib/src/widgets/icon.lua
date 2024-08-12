@@ -8,7 +8,7 @@
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Image.file.html)
 ---
---- @field file string
+--- @field file string | ReactiveString
 
 -------------------------------------------------------------------------------
 --- Links to IconUserData hitokage-lua\src\widgets\icon.rs

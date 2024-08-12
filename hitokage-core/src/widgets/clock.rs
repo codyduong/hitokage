@@ -42,7 +42,7 @@ impl From<ClockProps> for Clock {
     Clock {
       current_time: chrono::Local::now().format(&props.format.as_str()).to_string(),
       destroyed: Arc::new(Mutex::new(false)),
-      format: props.format.into(),
+      format: props.format.as_reactive_string(None), // we don't need a reactive sender since we reload this regularly
       base: props.base.into(),
     }
   }
@@ -101,7 +101,7 @@ impl Component for Clock {
     match msg {
       ClockMsg::Tick => {
         self.current_time = chrono::Local::now()
-          .format(&self.format.clone().into_inner())
+          .format(&self.format.clone().get())
           .to_string();
       }
       ClockMsg::LuaHook(hook) => match hook {
@@ -109,7 +109,7 @@ impl Component for Clock {
           generate_base_match_arms!(self, "clock", root, base)
         }
         ClockMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone().into_inner()).unwrap();
+          tx.send(self.format.clone().get()).unwrap();
         }
         ClockMsgHook::GetFormatReactive(tx) => {
           tx.send(self.format.clone()).unwrap();

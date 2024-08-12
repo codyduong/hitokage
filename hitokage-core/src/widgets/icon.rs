@@ -3,6 +3,7 @@ use super::base::BaseProps;
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::reactive::create_react_sender;
 use crate::structs::reactive::Reactive;
 use crate::structs::reactive::ReactiveString;
 use crate::widgets::base::BaseMsgHook;
@@ -26,6 +27,7 @@ pub enum IconMsgHook {
 #[derive(Debug, Clone)]
 pub enum IconMsg {
   LuaHook(IconMsgHook),
+  React
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -35,9 +37,13 @@ pub struct IconProps {
   file: ReactiveString,
 }
 
+#[tracker::track]
 pub struct Icon {
+  #[tracker::do_not_track]
   base: Base,
+  #[tracker::do_not_track]
   file: Reactive<String>,
+  react: bool,
 }
 
 #[relm4::component(pub)]
@@ -50,12 +56,12 @@ impl Component for Icon {
 
   view! {
     gtk::Image {
-      #[watch]
-      set_file: Some(get_relative_path(model.file.clone().into_inner()).as_str()),
+      #[track = "model.changed(Icon::react())"]
+      set_file: Some(get_relative_path(model.file.clone().get()).as_str()),
     }
   }
 
-  fn init(props: Self::Init, root: Self::Root, _sender: ComponentSender<Self>) -> ComponentParts<Self> {
+  fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let mut model = Icon {
       base: Base {
         classes: props.base.class.unwrap_or_default().into(),
@@ -64,10 +70,12 @@ impl Component for Icon {
         valign: props.base.valign,
         vexpand: props.base.vexpand.or(Some(true)),
       },
-      file: props.file.into(),
+      file: props.file.as_reactive_string(create_react_sender(sender.input_sender(), IconMsg::React)),
+      react: false,
+      tracker: 0,
     };
 
-    log::debug!("{:?}", get_relative_path(model.file.clone().into_inner()));
+    log::debug!("{:?}", get_relative_path(model.file.clone().get()));
 
     prepend_css_class_to_model!("icon", model, root);
     set_initial_base_props!(model, root);
@@ -86,7 +94,7 @@ impl Component for Icon {
           generate_base_match_arms!(self, "icon", root, base)
         }
         IconMsgHook::GetFile(tx) => {
-          tx.send(self.file.clone().into_inner()).unwrap();
+          tx.send(self.file.clone().get()).unwrap();
         }
         IconMsgHook::GetFileReactive(tx) => {
           tx.send(self.file.clone()).unwrap();
@@ -97,6 +105,10 @@ impl Component for Icon {
           *str = icon;
         }
       },
+      IconMsg::React => {
+        self.set_react(!self.react);
+        root.show()
+      }
     }
   }
 }

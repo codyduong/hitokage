@@ -3,8 +3,9 @@ local monitors = hitokage.monitor.get_all()
 --- @type BarArray
 local bars = {}
 
-local reactives = {}
-local reactives2 = {}
+local reactive_formats = {}
+local reactive_labels = {}
+local reactive_imgs = {}
 
 for _, monitor in ipairs(monitors) do
 	if monitor.model == "LG SDQHD" then
@@ -22,8 +23,12 @@ for _, monitor in ipairs(monitors) do
 
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
 	local reactive_format = hitokage.unstable.reactive.create("%a %b %u %r")
+	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}  \u{F0E0}")
+	local reactive_img = hitokage.unstable.reactive.create("./smiley.png")
 
-	table.insert(reactives, reactive_format)
+	table.insert(reactive_formats, reactive_format)
+	table.insert(reactive_labels, reactive_label)
+	table.insert(reactive_imgs, reactive_img)
 
 	table.insert(
 		bars,
@@ -55,13 +60,13 @@ for _, monitor in ipairs(monitors) do
 									widgets = {
 										{
 											Label = {
-												label = "foo \u{EECB}  \u{F0E0}",
+												label = reactive_label,
 												hexpand = true,
 											},
 										},
 										{
 											Icon = {
-												file = "./smiley.png",
+												file = reactive_img,
 												hexpand = false,
 											},
 										},
@@ -159,14 +164,34 @@ local css_boxes_test = hitokage.timeout(1000, function()
 	end
 end)
 
-local reactives = hitokage.timeout(1000, function()
-	local current_format = reactives[1]:get()
+local format_reactor = hitokage.timeout(1000, function()
+	local current_format = reactive_formats[1]:get()
 	if current_format == "%a %b %u %r" then
-		reactives[1]:set("demo demo demo")
+		reactive_formats[1]:set("demo demo demo")
 	else
-		reactives[1]:set("%a %b %u %r")
+		reactive_formats[1]:set("%a %b %u %r")
 	end
 end)
 
--- hitokage.dispatch(reactives)
+local label_reactor = hitokage.timeout(1000, function()
+	local current_format = reactive_labels[1]:get()
+	if current_format == "foo \u{EECB}  \u{F0E0}" then
+		reactive_labels[1]:set("demo demo demo")
+	else
+		reactive_labels[1]:set("foo \u{EECB}  \u{F0E0}")
+	end
+end)
+
+local img_reactor = hitokage.timeout(1000, function()
+	local current_format = reactive_imgs[1]:get()
+	if current_format == "./smiley.png" then
+		reactive_imgs[1]:set("")
+	else
+		reactive_imgs[1]:set("./smiley.png")
+	end
+end)
+
+hitokage.dispatch(format_reactor)
+hitokage.dispatch(label_reactor)
+hitokage.dispatch(img_reactor)
 hitokage.dispatch(css_boxes_test)

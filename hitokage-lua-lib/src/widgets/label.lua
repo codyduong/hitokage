@@ -8,7 +8,7 @@
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Label.label.html)
 ---
---- @field label string
+--- @field label string | ReactiveString
 
 -------------------------------------------------------------------------------
 --- Links to LabelUserData hitokage-lua\src\widgets\label.rs
