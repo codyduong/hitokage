@@ -169,4 +169,4 @@ local reactives = hitokage.timeout(1000, function()
 end)
 
 -- hitokage.dispatch(reactives)
--- hitokage.dispatch(css_boxes_test)
+hitokage.dispatch(css_boxes_test)

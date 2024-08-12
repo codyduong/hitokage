@@ -8,6 +8,7 @@ members = [
   "hitokage",
   "hitokage-core",
   "hitokage-lua",
+  "hitokage-macros",
 ]
 
 [workspace.dependencies]
