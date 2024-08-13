@@ -191,7 +191,7 @@ local img_reactor = hitokage.timeout(1000, function()
 	end
 end)
 
-hitokage.dispatch(format_reactor)
-hitokage.dispatch(label_reactor)
-hitokage.dispatch(img_reactor)
-hitokage.dispatch(css_boxes_test)
+-- hitokage.dispatch(format_reactor)
+-- hitokage.dispatch(label_reactor)
+-- hitokage.dispatch(img_reactor)
+-- hitokage.dispatch(css_boxes_test)

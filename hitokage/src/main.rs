@@ -2,7 +2,7 @@ use config::reload_css_provider;
 use gtk4::prelude::*;
 use hitokage_core::event::{CONFIG_UPDATE, STATE};
 use hitokage_core::event::{EVENT, NEW_EVENT};
-use hitokage_core::widgets;
+use hitokage_core::{get_hitokage_asset, widgets};
 use hitokage_core::widgets::bar;
 use hitokage_lua::AppMsg;
 use hitokage_lua::LuaHookType;
@@ -80,25 +80,11 @@ impl Component for App {
   fn init(_: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     // start the lua hook
 
-    let lua_file_path = if cfg!(feature = "development") {
-      let mut path = Path::new(file!()).to_path_buf();
-      path.push("../../../example/init.lua");
-      fs::canonicalize(path).expect("Failed to canonicalize path")
-    } else {
-      let mut path = dirs::home_dir().expect("Could not find home directory");
-      path.push(".config/hitokage/init.lua");
-      path
-    };
+    let lua_file_path = get_hitokage_asset("init.lua");
+    let css_file_path = get_hitokage_asset("styles.css");
 
-    let css_file_path = if cfg!(feature = "development") {
-      let mut path = Path::new(file!()).to_path_buf();
-      path.push("../../../example/styles.css");
-      fs::canonicalize(path).expect("Failed to canonicalize path")
-    } else {
-      let mut path = dirs::home_dir().expect("Could not find home directory");
-      path.push(".config/hitokage/styles.css");
-      path
-    };
+    log::info!("attempting to load lua init.lua at: {}", lua_file_path.display());
+    log::info!("attempting to load lua styles.css at: {}", css_file_path.display());
 
     let preventer_called = Arc::new(Mutex::new(false));
     let is_stopped = Arc::new(Mutex::new(false));

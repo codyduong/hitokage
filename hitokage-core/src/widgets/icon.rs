@@ -1,6 +1,7 @@
 use super::base::Base;
 use super::base::BaseProps;
 use crate::generate_base_match_arms;
+use crate::get_hitokage_asset;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
 use crate::structs::reactive::create_react_sender;
@@ -75,8 +76,6 @@ impl Component for Icon {
       tracker: 0,
     };
 
-    log::debug!("{:?}", get_relative_path(model.file.clone().get()));
-
     prepend_css_class_to_model!("icon", model, root);
     set_initial_base_props!(model, root);
 
@@ -114,16 +113,5 @@ impl Component for Icon {
 }
 
 fn get_relative_path(s: String) -> String {
-  let file_path = if cfg!(feature = "development") {
-    let mut path = Path::new(file!()).parent().unwrap().to_path_buf();
-    path.push("../../../example/");
-    path.push(s);
-    fs::canonicalize(path).expect("Failed to canonicalize path")
-  } else {
-    let mut path = dirs::home_dir().expect("Could not find home directory");
-    path.push(".config/hitokage/");
-    path.push(s);
-    path
-  };
-  file_path.into_os_string().into_string().unwrap()
+  get_hitokage_asset(s).into_os_string().into_string().unwrap()
 }
