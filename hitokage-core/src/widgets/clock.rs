@@ -64,13 +64,11 @@ impl Component for Clock {
   type CommandOutput = ();
 
   view! {
-    gtk::Box {
-      gtk::Label {
-        set_hexpand: false,
-        #[watch]
-        set_label: &model.current_time,
-      },
-    }
+    gtk::Label {
+      set_hexpand: false,
+      #[watch]
+      set_label: &model.current_time,
+    },
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {

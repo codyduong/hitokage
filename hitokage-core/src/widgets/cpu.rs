@@ -1,7 +1,6 @@
 use super::base::Base;
 use super::base::BaseProps;
 use crate::generate_base_match_arms;
-use crate::handlebar::mult_helper;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
@@ -19,8 +18,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
-use std::sync::Mutex;
 use systemstat::CPULoad;
 use systemstat::DelayedMeasurement;
 use systemstat::Platform;
@@ -71,12 +68,9 @@ impl Component for Cpu {
   type CommandOutput = ();
 
   view! {
-    gtk::Box {
-      gtk::Label {
-        set_hexpand: false,
-        #[track = "model.changed(Cpu::react() | Cpu::cpu())"]
-        set_label: format_cpu(&model.format.clone().get(), &model.cpu.clone().into()).as_str(),
-      }
+    gtk::Label {
+      #[track = "model.changed(Cpu::react() | Cpu::cpu())"]
+      set_label: format_cpu(&model.format.clone().get(), &model.cpu.clone().into()).as_str(),
     }
   }
 
@@ -87,9 +81,9 @@ impl Component for Cpu {
       base: Base {
         classes: props.base.class.unwrap_or_default().into(),
         halign: props.base.halign,
-        hexpand: props.base.hexpand.or(Some(false)),
+        hexpand: props.base.hexpand,
         valign: props.base.valign,
-        vexpand: props.base.vexpand.or(Some(true)),
+        vexpand: props.base.vexpand,
       },
       cpu: CPULoadWrapper::new(Vec::new()),
       cpu_inflight: sys.cpu_load(),
@@ -252,18 +246,14 @@ fn format_cpu(format: &String, cpu_loads: &Vec<CPULoad>) -> String {
     args.insert(format!("core{}_interrupt", index), cpu.interrupt);
     args.insert(format!("core{}_idle", index), cpu.idle);
 
-    let core_load = cpu.user + cpu.nice + cpu.system + cpu.interrupt;
     let overall_core_usage = 1.0 - cpu.idle;
     overall_usage += overall_core_usage;
 
     args.insert(format!("core{}_usage", index), overall_core_usage);
   }
 
-  // Calculate the aggregate values
-  let total_load = total_user + total_nice + total_system + total_interrupt;
   let overall_cpu_usage = overall_usage / cores as f32;
 
-  // Insert aggregate values into args
   args.insert("user".to_string(), total_user);
   args.insert("nice".to_string(), total_nice);
   args.insert("system".to_string(), total_system);

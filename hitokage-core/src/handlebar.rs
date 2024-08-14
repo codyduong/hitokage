@@ -7,6 +7,7 @@ pub fn register_hitokage_helpers<'h>(mut reg: Handlebars<'h>) -> Handlebars<'h> 
   reg.register_helper("mult", Box::new(mult_helper));
   reg.register_helper("round", Box::new(round_helper));
   reg.register_helper("pad", Box::new(pad_helper));
+  reg.register_helper("concat", Box::new(concat_helper));
   reg
 }
 
@@ -206,6 +207,40 @@ pub fn pad_helper(
   };
 
   // Write the padded string to the output
+  out.write(&result)?;
+  Ok(())
+}
+
+pub fn concat_helper(
+  h: &Helper,
+  _: &Handlebars,
+  _: &Context,
+  _: &mut RenderContext,
+  out: &mut dyn Output,
+) -> Result<(), RenderError> {
+  if h.params().len() < 2 {
+    return Err(
+      RenderErrorReason::MissingVariable(Some("The `concat` helper expects at least two arguments.".to_string()))
+        .into(),
+    );
+  }
+
+  let mut result = String::new();
+
+  for i in 0..h.params().len() {
+    let param = h
+      .param(i)
+      .ok_or(RenderErrorReason::ParamNotFoundForIndex("concat", i))?
+      .value();
+
+    if let Some(s) = param.as_str() {
+      result.push_str(s);
+    } else {
+      return Err(RenderErrorReason::InvalidParamType("All parameters should be strings").into());
+    }
+  }
+
+  // Write the concatenated string to the output
   out.write(&result)?;
   Ok(())
 }

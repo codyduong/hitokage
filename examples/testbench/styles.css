@@ -38,7 +38,7 @@ window {
 }
 
 .workspacechild:selected {
-  min-width: 32px;
+  /* min-width: 32px; */
   border: 1px solid #f2e5bc;
   background-color: #f2e5bc;
   color: #333333;

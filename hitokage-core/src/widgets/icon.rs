@@ -13,8 +13,6 @@ use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::Path;
 use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]

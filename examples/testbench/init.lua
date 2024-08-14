@@ -30,15 +30,15 @@ for _, monitor in ipairs(monitors) do
 	table.insert(reactive_labels, reactive_label)
 	table.insert(reactive_imgs, reactive_img)
 
-	local cpu_str = 'C0: {{pad "right" (round (mult core0_usage 100) 1) 5}}'
-		.. 'C1: {{pad "right" (round (mult core1_usage 100) 1) 5}}'
-		.. 'C2: {{pad "right" (round (mult core2_usage 100) 1) 5}}'
-		.. 'C3: {{pad "right" (round (mult core3_usage 100) 1) 5}}'
-		.. 'C4: {{pad "right" (round (mult core4_usage 100) 1) 5}}'
-		.. 'C5: {{pad "right" (round (mult core5_usage 100) 1) 5}}'
-		.. 'C6: {{pad "right" (round (mult core6_usage 100) 1) 5}}'
-		.. 'C7: {{pad "right" (round (mult core7_usage 100) 1) 5}}'
-		.. ' A: {{pad "right" (round (mult usage 100) 1) 6}}'
+	local cpu_str = 'CPU: {{pad "right" (concat (round (mult usage 100) 1) "%") 8}}'
+	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
+	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
+	-- .. 'C2: {{pad "right" (concat (round (mult core2_usage 100) 1) "%") 6}}'
+	-- .. 'C3: {{pad "right" (concat (round (mult core3_usage 100) 1) "%") 6}}'
+	-- .. 'C4: {{pad "right" (concat (round (mult core4_usage 100) 1) "%") 6}}'
+	-- .. 'C5: {{pad "right" (concat (round (mult core5_usage 100) 1) "%") 6}}'
+	-- .. 'C6: {{pad "right" (concat (round (mult core6_usage 100) 1) "%") 6}}'
+	-- .. 'C7: {{pad "right" (concat (round (mult core7_usage 100) 1) "%") 6}}'
 
 	table.insert(
 		bars,
@@ -46,6 +46,8 @@ for _, monitor in ipairs(monitors) do
 			widgets = {
 				{
 					Box = {
+						hexpand = false,
+						homogeneous = true,
 						widgets = {
 							{
 								Box = {
@@ -59,7 +61,6 @@ for _, monitor in ipairs(monitors) do
 							},
 							{
 								Box = {
-									widgets = {},
 									class = "blue",
 								},
 							},
@@ -86,7 +87,6 @@ for _, monitor in ipairs(monitors) do
 						},
 					},
 				},
-				-- { Box = {} },
 				{ Workspace = { halign = "Center", item_height = 22, item_width = 22, format = "{{add index 1}}" } },
 				{ Cpu = { format = cpu_str, halign = "End" } },
 				-- { Box = {
