@@ -6,10 +6,7 @@ use hitokage_core::widgets::base::BaseMsgHook::{
 };
 use hitokage_core::widgets::cpu::CpuMsg;
 use hitokage_core::widgets::cpu::CpuMsgHook::BaseHook;
-use hitokage_core::widgets::cpu::CpuMsgHook::{
-  GetFormat,
-  GetFormatReactive,
-  SetFormat};
+use hitokage_core::widgets::cpu::CpuMsgHook::{GetFormat, GetFormatReactive, SetFormat};
 use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
@@ -42,7 +39,9 @@ impl UserData for CpuUserData {
 
     methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
     methods.add_method("get_format_reactive", |_, this, _: ()| Ok(this.get_format_reactive()?));
-    methods.add_method("set_format", |lua, this, value: mlua::Value| this.set_format(lua, value));
+    methods.add_method("set_format", |lua, this, value: mlua::Value| {
+      this.set_format(lua, value)
+    });
 
     methods.add_meta_method(
       "__index",

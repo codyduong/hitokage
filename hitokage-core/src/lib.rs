@@ -15,22 +15,20 @@ pub fn get_hitokage_asset(s: impl Into<String>) -> std::path::PathBuf {
   let mut base = if cfg!(feature = "development") {
     let mut path = std::env::current_dir().unwrap();
     path.push(match std::env::var("HITOKAGE_DEV_USE_EXAMPLE") {
-      Ok(v) => {
-        match v.as_str() {
-          "minimal" => "./examples/minimal/",
-          "testbench" => "./examples/",
-          _ => {
-            log::error!("Unsupported example: {}", v);
-            "./examples/testbench/"
-          },
+      Ok(v) => match v.as_str() {
+        "minimal" => "./examples/minimal/",
+        "testbench" => "./examples/",
+        _ => {
+          log::error!("Unsupported example: {}", v);
+          "./examples/testbench/"
         }
-      }
+      },
       Err(err) => {
         match err {
-            std::env::VarError::NotPresent => (),
-            std::env::VarError::NotUnicode(_) => {
-              log::error!("Failed to read HITOKAGE_DEV_USE_EXAMPLE: {:?}", err);
-            },
+          std::env::VarError::NotPresent => (),
+          std::env::VarError::NotUnicode(_) => {
+            log::error!("Failed to read HITOKAGE_DEV_USE_EXAMPLE: {:?}", err);
+          }
         };
         "./examples/testbench/"
       }

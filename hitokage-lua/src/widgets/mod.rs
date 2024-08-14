@@ -1,7 +1,8 @@
 use clock::ClockUserData;
 use cpu::CpuUserData;
 use hitokage_core::widgets::{
-  r#box::BoxMsg, clock::ClockMsg, cpu::CpuMsg, icon::IconMsg, label::LabelMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData
+  clock::ClockMsg, cpu::CpuMsg, icon::IconMsg, label::LabelMsg, r#box::BoxMsg, workspace::WorkspaceMsg,
+  WidgetUserData as CoreWidgetUserData,
 };
 use icon::IconUserData;
 use label::LabelUserData;

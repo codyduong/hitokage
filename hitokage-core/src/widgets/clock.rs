@@ -100,9 +100,7 @@ impl Component for Clock {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       ClockMsg::Tick => {
-        self.current_time = chrono::Local::now()
-          .format(&self.format.clone().get())
-          .to_string();
+        self.current_time = chrono::Local::now().format(&self.format.clone().get()).to_string();
       }
       ClockMsg::LuaHook(hook) => match hook {
         ClockMsgHook::BaseHook(base) => {

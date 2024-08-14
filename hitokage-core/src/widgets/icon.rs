@@ -28,7 +28,7 @@ pub enum IconMsgHook {
 #[derive(Debug, Clone)]
 pub enum IconMsg {
   LuaHook(IconMsgHook),
-  React
+  React,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -71,7 +71,9 @@ impl Component for Icon {
         valign: props.base.valign,
         vexpand: props.base.vexpand.or(Some(true)),
       },
-      file: props.file.as_reactive_string(create_react_sender(sender.input_sender(), IconMsg::React)),
+      file: props
+        .file
+        .as_reactive_string(create_react_sender(sender.input_sender(), IconMsg::React)),
       react: false,
       tracker: 0,
     };

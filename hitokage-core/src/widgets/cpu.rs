@@ -269,7 +269,14 @@ fn format_cpu(format: &String, cpu_loads: &Vec<CPULoad>) -> String {
   args.insert("system".to_string(), total_system);
   args.insert("interrupt".to_string(), total_interrupt);
   args.insert("idle".to_string(), total_idle);
-  args.insert("usage".to_string(), if overall_cpu_usage.is_nan() { 0.0 } else { overall_cpu_usage });
+  args.insert(
+    "usage".to_string(),
+    if overall_cpu_usage.is_nan() {
+      0.0
+    } else {
+      overall_cpu_usage
+    },
+  );
 
   match reg.render_template(format, &args) {
     Ok(name) => return name,
