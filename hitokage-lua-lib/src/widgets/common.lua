@@ -9,6 +9,8 @@
 --- @field Box BoxProps
 --- @class WidgetClockProps
 --- @field Clock ClockProps
+--- @class WidgetCpuProps
+--- @field Cpu CpuProps
 --- @class WidgetLabelProps
 --- @field Label LabelProps
 --- @class WidgetWorkspaceProps

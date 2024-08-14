@@ -121,6 +121,11 @@ macro_rules! generate_box_widgets {
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Clock(controller));
         }
+        WidgetProps::Cpu(inner_props) => {
+          let controller = crate::widgets::cpu::Cpu::builder().launch(inner_props).detach();
+          $root.append(controller.widget());
+          $model.widgets.push(WidgetController::Cpu(controller));
+        }
         WidgetProps::Icon(inner_props) => {
           let controller = crate::widgets::icon::Icon::builder().launch(inner_props).detach();
           $root.append(controller.widget());

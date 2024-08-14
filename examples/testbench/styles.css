@@ -45,6 +45,10 @@ window {
   font-weight: bold;
 }
 
+.cpu {
+  font-family: 'MesloLGS Nerd Font Mono', 'monospace';
+}
+
 .clock {
   background-color: rgba(60, 56, 54, 1);
   border-radius: 0px 0px 0px 24px;

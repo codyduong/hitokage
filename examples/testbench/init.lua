@@ -22,13 +22,24 @@ for _, monitor in ipairs(monitors) do
 	-- })
 
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
-	local reactive_format = hitokage.unstable.reactive.create("%a %b %u %r")
+	local reactive_format = hitokage.unstable.reactive.create("%a %b %e %r")
 	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}  \u{F0E0}")
 	local reactive_img = hitokage.unstable.reactive.create("./smiley.png")
 
 	table.insert(reactive_formats, reactive_format)
 	table.insert(reactive_labels, reactive_label)
 	table.insert(reactive_imgs, reactive_img)
+
+	local cpu_str =
+		'C0: {{pad "right" (round (mult core0_usage 100) 1) 5}}' .. 
+		'C1: {{pad "right" (round (mult core1_usage 100) 1) 5}}' ..
+		'C2: {{pad "right" (round (mult core2_usage 100) 1) 5}}' ..
+		'C3: {{pad "right" (round (mult core3_usage 100) 1) 5}}' ..
+		'C4: {{pad "right" (round (mult core4_usage 100) 1) 5}}' ..
+		'C5: {{pad "right" (round (mult core5_usage 100) 1) 5}}' ..
+		'C6: {{pad "right" (round (mult core6_usage 100) 1) 5}}' ..
+		'C7: {{pad "right" (round (mult core7_usage 100) 1) 5}}' ..
+		' A: {{pad "right" (round (mult usage 100) 1) 6}}'
 
 	table.insert(
 		bars,
@@ -78,8 +89,24 @@ for _, monitor in ipairs(monitors) do
 				},
 				-- { Box = {} },
 				{ Workspace = { halign = "Center", item_height = 22, item_width = 22, format = "{{add index 1}}" } },
+				{ Cpu = { format = cpu_str, halign = "End" } },
+				-- { Box = {
+				-- 	widgets = {
+				-- 		{ Cpu = { format = 'C0: {{pad "right" (round (mult core0_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = 'C1: {{pad "right" (round (mult core1_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = 'C2: {{pad "right" (round (mult core2_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = 'C3: {{pad "right" (round (mult core3_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = 'C4: {{pad "right" (round (mult core4_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = 'C5: {{pad "right" (round (mult core5_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = 'C6: {{pad "right" (round (mult core6_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = 'C7: {{pad "right" (round (mult core7_usage 100) 1) 5}}', halign = "End" } },
+				-- 		{ Cpu = { format = ' A: {{pad "right" (round (mult usage 100) 1) 5}}', halign = "End" } },
+				-- 	},
+				-- 	hexpand = false,
+				-- }},
 				{ Clock = { format = reactive_format, halign = "End" } },
 			},
+			homogeneous = false,
 			width = monitor.geometry.width - 16,
 			offset = {
 				x = 8,

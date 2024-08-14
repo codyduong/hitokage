@@ -4,7 +4,6 @@
 --- Links to ClockProps in 'hitokage-core\src\widgets\clock.rs'
 --- @class ClockProps : BaseProps
 --- @field format string | ReactiveString?
---- @field halign Align?
 
 -------------------------------------------------------------------------------
 --- Links to ClockUserData hitokage-lua\src\widgets\clock.rs

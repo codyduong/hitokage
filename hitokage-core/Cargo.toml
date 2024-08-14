@@ -27,6 +27,7 @@ serde-value = "0.7.0"
 strfmt = "0.2.4"
 handlebars = "6.0.0"
 tracker = "0.2.2"
+systemstat = "0.2.3"
 
 [dependencies.windows]
 workspace = true

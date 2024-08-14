@@ -1,7 +1,7 @@
 use clock::ClockUserData;
+use cpu::CpuUserData;
 use hitokage_core::widgets::{
-  clock::ClockMsg, icon::IconMsg, label::LabelMsg, r#box::BoxMsg, workspace::WorkspaceMsg,
-  WidgetUserData as CoreWidgetUserData,
+  r#box::BoxMsg, clock::ClockMsg, cpu::CpuMsg, icon::IconMsg, label::LabelMsg, workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData
 };
 use icon::IconUserData;
 use label::LabelUserData;
@@ -13,6 +13,7 @@ use workspace::WorkspaceUserData;
 pub mod bar;
 pub mod r#box;
 pub mod clock;
+pub mod cpu;
 pub mod icon;
 pub mod label;
 pub mod workspace;
@@ -20,6 +21,7 @@ pub mod workspace;
 enum WidgetUserData {
   Box(relm4::Sender<BoxMsg>),
   Clock(relm4::Sender<ClockMsg>),
+  Cpu(relm4::Sender<CpuMsg>),
   Icon(relm4::Sender<IconMsg>),
   Label(relm4::Sender<LabelMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
@@ -37,6 +39,13 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
       }
       WidgetUserData::Clock(sender) => {
         let clock_userdata = ClockUserData {
+          r#type: "Clock".to_string(),
+          sender,
+        };
+        lua.pack(clock_userdata)
+      }
+      WidgetUserData::Cpu(sender) => {
+        let clock_userdata = CpuUserData {
           r#type: "Clock".to_string(),
           sender,
         };
@@ -72,6 +81,7 @@ impl From<CoreWidgetUserData> for WidgetUserData {
     match sender {
       CoreWidgetUserData::Box(sender) => WidgetUserData::Box(sender),
       CoreWidgetUserData::Clock(sender) => WidgetUserData::Clock(sender),
+      CoreWidgetUserData::Cpu(sender) => WidgetUserData::Cpu(sender),
       CoreWidgetUserData::Icon(sender) => WidgetUserData::Icon(sender),
       CoreWidgetUserData::Label(sender) => WidgetUserData::Label(sender),
       CoreWidgetUserData::Workspace(sender) => WidgetUserData::Workspace(sender),

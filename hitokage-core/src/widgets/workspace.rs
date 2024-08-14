@@ -1,6 +1,6 @@
 use super::base::{Base, BaseMsgHook, BaseProps};
 use crate::event::STATE;
-use crate::handlebar::add_helper;
+use crate::handlebar::register_hitokage_helpers;
 use crate::{generate_base_match_arms, prepend_css_class, prepend_css_class_to_model, set_initial_base_props};
 use anyhow::Context;
 use gtk4::prelude::*;
@@ -245,8 +245,7 @@ fn get_workspaces(
       let name = workspace.get("name").and_then(|v| v.as_str()).map(String::from);
 
       if let Some(ref format) = format {
-        let mut reg = Handlebars::new();
-        reg.register_helper("add", Box::new(add_helper));
+        let reg = register_hitokage_helpers(Handlebars::new());
 
         let mut args = HashMap::new();
         args.insert("name", name.clone().unwrap_or_default());
