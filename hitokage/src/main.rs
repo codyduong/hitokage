@@ -13,8 +13,6 @@ use relm4::component::Connector;
 use relm4::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::fs::{self};
-use std::path::Path;
 use std::rc::Rc;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;

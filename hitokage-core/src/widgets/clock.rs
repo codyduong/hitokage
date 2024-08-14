@@ -9,9 +9,8 @@ use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
-use std::sync::Mutex;
-
+use std::cell::RefCell;
+use std::rc::Rc;
 use super::base::Base;
 use super::base::BaseMsgHook;
 use super::base::BaseProps;
@@ -41,7 +40,7 @@ impl From<ClockProps> for Clock {
   fn from(props: ClockProps) -> Self {
     Clock {
       current_time: chrono::Local::now().format(&props.format.as_str()).to_string(),
-      destroyed: Arc::new(Mutex::new(false)),
+      destroyed: Rc::new(RefCell::new(false)),
       format: props.format.as_reactive_string(None), // we don't need a reactive sender since we reload this regularly
       base: props.base.into(),
     }
@@ -50,7 +49,7 @@ impl From<ClockProps> for Clock {
 
 pub struct Clock {
   current_time: String,
-  destroyed: Arc<Mutex<bool>>,
+  destroyed:  Rc<RefCell<bool>>,
   format: Reactive<String>,
   base: Base,
 }
@@ -77,11 +76,10 @@ impl Component for Clock {
     prepend_css_class_to_model!("clock", model, root);
     set_initial_base_props!(model, root);
 
-    // Timer
     let sender_clone = sender.clone();
-    let destroyed = Arc::clone(&model.destroyed);
+    let destroyed = Rc::clone(&model.destroyed);
     glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-      let destroyed = *destroyed.lock().unwrap();
+      let destroyed = *destroyed.borrow();
       if !destroyed {
         sender_clone.input(ClockMsg::Tick);
         glib::ControlFlow::Continue
@@ -120,6 +118,6 @@ impl Component for Clock {
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _outputt: relm4::Sender<Self::Output>) {
-    *self.destroyed.lock().unwrap() = true;
+    *self.destroyed.borrow_mut() = true;
   }
 }
