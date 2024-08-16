@@ -183,7 +183,7 @@ impl Component for Bar {
       offset_x,
       offset_y,
       r#box: BoxInner {
-        homogeneous: props.r#box.homogeneous.or(Some(true)),
+        homogeneous: props.r#box.homogeneous,
         widgets: Vec::new(),
         base: Base {
           classes: props.r#box.base.class.unwrap_or_default().into(),

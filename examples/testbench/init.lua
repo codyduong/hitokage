@@ -7,6 +7,24 @@ local reactive_formats = {}
 local reactive_labels = {}
 local reactive_imgs = {}
 
+local clock_icons = {
+	"\u{F144A}",
+	"\u{F143F}",
+	"\u{F1440}",
+	"\u{F1441}",
+	"\u{F1442}",
+	"\u{F1443}",
+	"\u{F1444}",
+	"\u{F1445}",
+	"\u{F1446}",
+	"\u{F1447}",
+	"\u{F1448}",
+	"\u{F1449}",
+}
+
+--- @type table<number, ReactiveString>
+local reactive_clock_icons = {}
+
 for _, monitor in ipairs(monitors) do
 	if monitor.model == "LG SDQHD" then
 		goto continue
@@ -22,15 +40,17 @@ for _, monitor in ipairs(monitors) do
 	-- })
 
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
-	local reactive_format = hitokage.unstable.reactive.create("%a %b %e %r")
-	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}  \u{F0E0}")
+	local reactive_format = hitokage.unstable.reactive.create("%A %B %e")
+	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}")
 	local reactive_img = hitokage.unstable.reactive.create("./smiley.png")
+	local reactive_clock_icon = hitokage.unstable.reactive.create(clock_icons[tonumber(os.date("%H")) % 12 + 1])
 
 	table.insert(reactive_formats, reactive_format)
 	table.insert(reactive_labels, reactive_label)
 	table.insert(reactive_imgs, reactive_img)
+	table.insert(reactive_clock_icons, reactive_clock_icon)
 
-	local cpu_str = 'CPU: {{pad "right" (concat (round (mult usage 100) 1) "%") 8}}'
+	local cpu_str = '{{pad "left" (concat (round (mult usage 100) 1) "%") 6}}'
 	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
 	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
 	-- .. 'C2: {{pad "right" (concat (round (mult core2_usage 100) 1) "%") 6}}'
@@ -88,7 +108,6 @@ for _, monitor in ipairs(monitors) do
 					},
 				},
 				{ Workspace = { halign = "Center", item_height = 22, item_width = 22, format = "{{add index 1}}" } },
-				{ Cpu = { format = cpu_str, halign = "End" } },
 				-- { Box = {
 				-- 	widgets = {
 				-- 		{ Cpu = { format = 'C0: {{pad "right" (round (mult core0_usage 100) 1) 5}}', halign = "End" } },
@@ -103,9 +122,44 @@ for _, monitor in ipairs(monitors) do
 				-- 	},
 				-- 	hexpand = false,
 				-- }},
-				{ Clock = { format = reactive_format, halign = "End" } },
+				{
+					Box = {
+						homogeneous = false,
+						halign = "End",
+						class = "right_bar",
+						widgets = {
+							{ Label = { label = "\u{E0B2}", class = "data_start" } },
+							{
+								Box = {
+									homogeneous = false,
+									halign = "Fill",
+									class = "data_wrapper",
+									widgets = {
+										{ Label = { label = "\u{F4BC}", class = "cpu_icon" } },
+										{ Cpu = { format = cpu_str, halign = "End" } },
+										{ Label = { label = "\u{E0B2}", class = "clock_start", halign = "End" } },
+									},
+								},
+							},
+							{
+								Box = {
+									hexpand = false,
+									homogeneous = false,
+									class = "clock_wrapper",
+									widgets = {
+										{ Label = { label = "\u{F00ED}", class = "clock_icon" } },
+										{ Clock = { format = reactive_format, halign = "End" } },
+										{ Label = { label = reactive_clock_icon, class = "clock_icon" } },
+										{ Clock = { format = "%r", halign = "End" } },
+									},
+								},
+							},
+							{ Label = { label = "\u{E0B4}", class = "bar_end" } },
+						},
+					},
+				},
 			},
-			homogeneous = false,
+			homogeneous = true,
 			width = monitor.geometry.width - 16,
 			offset = {
 				x = 8,
@@ -217,7 +271,24 @@ local img_reactor = hitokage.timeout(1000, function()
 	end
 end)
 
+local update_clock_icon = hitokage.timeout(1000, function()
+	for _, clock_icon in ipairs(reactive_clock_icons) do
+		-- local current_icon = clock_icon:get();
+		-- for i, icon in ipairs(clock_icons) do
+		-- 	if current_icon == icon then
+		-- 		local next_icon = clock_icons[(i % #clock_icons) + 1]
+		-- 		clock_icon:set(next_icon)
+		-- 		break
+		-- 	end
+		-- end
+		local hour_24 = tonumber(os.date("%H"))
+		local hour_12 = hour_24 % 12
+		clock_icon:set(clock_icons[hour_12 + 1])
+	end
+end)
+
 -- hitokage.dispatch(format_reactor)
 -- hitokage.dispatch(label_reactor)
 -- hitokage.dispatch(img_reactor)
 -- hitokage.dispatch(css_boxes_test)
+hitokage.dispatch(update_clock_icon)

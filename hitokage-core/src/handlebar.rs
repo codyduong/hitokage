@@ -201,7 +201,7 @@ pub fn pad_helper(
 
   // Perform the padding
   let result = match direction.as_str() {
-    "left" => format!("{:pad$}", input, pad = total_length as usize).replace(" ", pad_char),
+    "left" => format!("{:>pad$}", input, pad = total_length as usize).replace(" ", pad_char),
     "right" => format!("{:<pad$}", input, pad = total_length as usize).replace(" ", pad_char),
     _ => return Err(RenderErrorReason::InvalidParamType("Invalid direction. Use 'left' or 'right'.").into()),
   };

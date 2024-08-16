@@ -1,3 +1,6 @@
+use super::base::Base;
+use super::base::BaseMsgHook;
+use super::base::BaseProps;
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
@@ -8,12 +11,9 @@ use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::{Deserialize, Serialize};
-use std::sync::mpsc::Sender;
 use std::cell::RefCell;
 use std::rc::Rc;
-use super::base::Base;
-use super::base::BaseMsgHook;
-use super::base::BaseProps;
+use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
 pub enum ClockMsgHook {
@@ -49,7 +49,7 @@ impl From<ClockProps> for Clock {
 
 pub struct Clock {
   current_time: String,
-  destroyed:  Rc<RefCell<bool>>,
+  destroyed: Rc<RefCell<bool>>,
   format: Reactive<String>,
   base: Base,
 }

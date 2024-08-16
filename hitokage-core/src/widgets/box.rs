@@ -75,11 +75,11 @@ impl Component for HitokageBox {
         base: Base {
           classes: props.base.class.unwrap_or_default().into(),
           halign: props.base.halign,
-          hexpand: props.base.hexpand.or(Some(true)),
+          hexpand: props.base.hexpand,
           valign: props.base.valign,
-          vexpand: props.base.vexpand.or(Some(true)),
+          vexpand: props.base.vexpand,
         },
-        homogeneous: props.homogeneous.or(Some(true)),
+        homogeneous: props.homogeneous,
       },
     };
 
