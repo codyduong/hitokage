@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+dirs = { workspace = true }
 anyhow = { workspace = true }
 log = { workspace = true }
 simple_logger = { workspace = true }
@@ -17,12 +18,16 @@ mlua = { workspace = true }
 lua-src = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-komorebi-client = {workspace = true}
+komorebi-client = { workspace = true }
 win32-display-data = { workspace = true }
 chrono = "0.4.38"
 indexmap = { version = "2.3.0", features = ["serde"] }
 rustc-hash = "2.0.0"
 serde-value = "0.7.0"
+strfmt = "0.2.4"
+handlebars = "6.0.0"
+tracker = "0.2.2"
+systemstat = "0.2.3"
 
 [dependencies.windows]
 workspace = true
@@ -31,3 +36,6 @@ features = [
   "Win32_System_SystemInformation",
   "Wdk_System_SystemServices",
 ]
+
+[features]
+development = []

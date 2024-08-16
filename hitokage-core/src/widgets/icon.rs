@@ -1,6 +1,7 @@
 use super::base::Base;
 use super::base::BaseProps;
 use crate::generate_base_match_arms;
+use crate::get_hitokage_asset;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
 use crate::structs::reactive::create_react_sender;
@@ -15,52 +16,52 @@ use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
-pub enum LabelMsgHook {
+pub enum IconMsgHook {
   BaseHook(BaseMsgHook),
-  GetLabel(Sender<String>),
-  GetLabelReactive(Sender<Reactive<String>>),
-  SetLabel(String),
+  GetFile(Sender<String>),
+  GetFileReactive(Sender<Reactive<String>>),
+  SetFile(String),
 }
 
 #[derive(Debug, Clone)]
-pub enum LabelMsg {
-  LuaHook(LabelMsgHook),
+pub enum IconMsg {
+  LuaHook(IconMsgHook),
   React,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct LabelProps {
+pub struct IconProps {
   #[serde(flatten)]
   base: BaseProps,
-  label: ReactiveString,
+  file: ReactiveString,
 }
 
 #[tracker::track]
-pub struct Label {
+pub struct Icon {
   #[tracker::do_not_track]
   base: Base,
   #[tracker::do_not_track]
-  label: Reactive<String>,
+  file: Reactive<String>,
   react: bool,
 }
 
 #[relm4::component(pub)]
-impl Component for Label {
-  type Input = LabelMsg;
+impl Component for Icon {
+  type Input = IconMsg;
   type Output = ();
-  type Init = LabelProps;
-  type Widgets = LabelWidgets;
+  type Init = IconProps;
+  type Widgets = IconWidgets;
   type CommandOutput = ();
 
   view! {
-    gtk::Label {
-      #[track = "model.changed(Label::react())"]
-      set_label: &model.label.clone().get(),
+    gtk::Image {
+      #[track = "model.changed(Icon::react())"]
+      set_file: Some(get_relative_path(model.file.clone().get()).as_str()),
     }
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let mut model = Label {
+    let mut model = Icon {
       base: Base {
         classes: props.base.class.unwrap_or_default().into(),
         halign: props.base.halign,
@@ -68,14 +69,14 @@ impl Component for Label {
         valign: props.base.valign,
         vexpand: props.base.vexpand.or(Some(true)),
       },
-      label: props
-        .label
-        .as_reactive_string(create_react_sender(sender.input_sender(), LabelMsg::React)),
+      file: props
+        .file
+        .as_reactive_string(create_react_sender(sender.input_sender(), IconMsg::React)),
       react: false,
       tracker: 0,
     };
 
-    prepend_css_class_to_model!("label", model, root);
+    prepend_css_class_to_model!("icon", model, root);
     set_initial_base_props!(model, root);
 
     let widgets = view_output!();
@@ -87,26 +88,30 @@ impl Component for Label {
 
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
-      LabelMsg::LuaHook(hook) => match hook {
-        LabelMsgHook::BaseHook(base) => {
-          generate_base_match_arms!(self, "label", root, base)
+      IconMsg::LuaHook(hook) => match hook {
+        IconMsgHook::BaseHook(base) => {
+          generate_base_match_arms!(self, "icon", root, base)
         }
-        LabelMsgHook::GetLabel(tx) => {
-          tx.send(self.label.clone().get()).unwrap();
+        IconMsgHook::GetFile(tx) => {
+          tx.send(self.file.clone().get()).unwrap();
         }
-        LabelMsgHook::GetLabelReactive(tx) => {
-          tx.send(self.label.clone()).unwrap();
+        IconMsgHook::GetFileReactive(tx) => {
+          tx.send(self.file.clone()).unwrap();
         }
-        LabelMsgHook::SetLabel(label) => {
-          let arc = self.label.value.clone();
+        IconMsgHook::SetFile(icon) => {
+          let arc = self.file.value.clone();
           let mut str = arc.lock().unwrap();
-          *str = label;
+          *str = icon;
         }
       },
-      LabelMsg::React => {
+      IconMsg::React => {
         self.set_react(!self.react);
         root.show()
       }
     }
   }
+}
+
+fn get_relative_path(s: String) -> String {
+  get_hitokage_asset(s).into_os_string().into_string().unwrap()
 }

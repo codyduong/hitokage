@@ -115,6 +115,6 @@ function base_instance:get_vexpand() end
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.set_vexpand.html)
 ---
---- @param hexpand boolean
+--- @param vexpand boolean
 --- @return nil
-function base_instance:set_vexpand(hexpand) end
+function base_instance:set_vexpand(vexpand) end

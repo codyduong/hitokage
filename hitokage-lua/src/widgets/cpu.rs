@@ -4,42 +4,44 @@ use hitokage_core::structs::Align;
 use hitokage_core::widgets::base::BaseMsgHook::{
   GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
 };
-use hitokage_core::widgets::label::LabelMsg;
-use hitokage_core::widgets::label::LabelMsgHook::BaseHook;
-use hitokage_core::widgets::label::LabelMsgHook::{GetLabel, GetLabelReactive, SetLabel};
+use hitokage_core::widgets::cpu::CpuMsg;
+use hitokage_core::widgets::cpu::CpuMsgHook::BaseHook;
+use hitokage_core::widgets::cpu::CpuMsgHook::{GetFormat, GetFormatReactive, SetFormat};
 use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
 #[derive(Debug, Clone)]
-pub struct LabelUserData {
+pub struct CpuUserData {
   pub r#type: String,
-  pub sender: relm4::Sender<LabelMsg>,
+  pub sender: relm4::Sender<CpuMsg>,
 }
 
-#[impl_lua_base(LabelMsg::LuaHook)]
-impl LabelUserData {
-  fn sender(&self) -> Result<relm4::Sender<LabelMsg>, crate::HitokageError> {
+#[impl_lua_base(CpuMsg::LuaHook)]
+impl CpuUserData {
+  fn sender(&self) -> Result<relm4::Sender<CpuMsg>, crate::HitokageError> {
     Ok(self.sender.clone())
   }
 
-  impl_getter_fn!(get_label, LabelMsg::LuaHook, GetLabel, String);
+  impl_getter_fn!(get_format, CpuMsg::LuaHook, GetFormat, String);
   impl_getter_fn!(
-    get_label_reactive,
-    LabelMsg::LuaHook,
-    GetLabelReactive,
+    get_format_reactive,
+    CpuMsg::LuaHook,
+    GetFormatReactive,
     Reactive<String>
   );
-  impl_setter_fn!(set_label, LabelMsg::LuaHook, SetLabel, String);
+  impl_setter_fn!(set_format, CpuMsg::LuaHook, SetFormat, String);
 }
 
 #[impl_lua_base]
-impl UserData for LabelUserData {
+impl UserData for CpuUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
 
-    methods.add_method("get_label", |_, this, _: ()| Ok(this.get_label()?));
-    methods.add_method("get_label_reactive", |_, this, _: ()| Ok(this.get_label_reactive()?));
-    methods.add_method("set_label", |lua, this, value: mlua::Value| this.set_label(lua, value));
+    methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
+    methods.add_method("get_format_reactive", |_, this, _: ()| Ok(this.get_format_reactive()?));
+    methods.add_method("set_format", |lua, this, value: mlua::Value| {
+      this.set_format(lua, value)
+    });
 
     methods.add_meta_method(
       "__index",

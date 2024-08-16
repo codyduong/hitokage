@@ -10,6 +10,7 @@ use hitokage_core::widgets::base::BaseMsgHook::{
 };
 use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
 use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
+use hitokage_macros::impl_lua_base;
 use mlua::{FromLuaMulti, Table};
 use mlua::{
   Lua, LuaSerdeExt, UserData, UserDataMethods,
@@ -98,49 +99,12 @@ impl BarUserData {
   impl_getter_fn!(get_geometry, BarMsg::LuaHook, GetGeometry, MonitorGeometry);
 }
 
+#[impl_lua_base]
 impl UserData for BarUserData {
   fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(_fields: &mut F) {}
 
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("is_ready", |_, instance, ()| Ok(instance.is_ready()));
-
-    // BASE PROPERTIES START
-    methods.add_method("get_class", |lua, instance, ()| lua.pack(instance.get_class()?));
-    methods.add_method("set_class", |lua, this, args: mlua::Variadic<Value>| {
-      this.set_class(lua, args)
-    });
-
-    methods.add_method("get_halign", |lua, instance, ()| lua.to_value(&instance.get_halign()?));
-    methods.add_method("set_halign", |lua, this, value: mlua::Value| {
-      this.set_halign(lua, value)
-    });
-
-    methods.add_method("get_hexpand", |lua, instance, ()| {
-      lua.to_value(&instance.get_hexpand()?)
-    });
-    methods.add_method("set_hexpand", |lua, this, value: mlua::Value| {
-      this.set_hexpand(lua, value)
-    });
-
-    methods.add_method("get_homogeneous", |lua, instance, ()| {
-      lua.to_value(&instance.get_homogeneous()?)
-    });
-    methods.add_method("set_homogeneous", |lua, this, value: mlua::Value| {
-      this.set_homogeneous(lua, value)
-    });
-
-    methods.add_method("get_valign", |lua, instance, ()| lua.to_value(&instance.get_valign()?));
-    methods.add_method("set_valign", |lua, this, value: mlua::Value| {
-      this.set_valign(lua, value)
-    });
-
-    methods.add_method("get_vexpand", |lua, instance, ()| {
-      lua.to_value(&instance.get_vexpand()?)
-    });
-    methods.add_method("set_vexpand", |lua, this, value: mlua::Value| {
-      this.set_vexpand(lua, value)
-    });
-    // BASE PROPERTIES END
 
     // BOX PROPERTIES START
     methods.add_method("get_homogeneous", |lua, instance, ()| {

@@ -9,9 +9,8 @@ use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::{Deserialize, Serialize};
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
-use std::sync::Mutex;
-
+use std::cell::RefCell;
+use std::rc::Rc;
 use super::base::Base;
 use super::base::BaseMsgHook;
 use super::base::BaseProps;
@@ -20,6 +19,7 @@ use super::base::BaseProps;
 pub enum ClockMsgHook {
   BaseHook(BaseMsgHook),
   GetFormat(Sender<String>),
+  GetFormatReactive(Sender<Reactive<String>>),
   SetFormat(String),
 }
 
@@ -40,8 +40,8 @@ impl From<ClockProps> for Clock {
   fn from(props: ClockProps) -> Self {
     Clock {
       current_time: chrono::Local::now().format(&props.format.as_str()).to_string(),
-      destroyed: Arc::new(Mutex::new(false)),
-      format: props.format.into(),
+      destroyed: Rc::new(RefCell::new(false)),
+      format: props.format.as_reactive_string(None), // we don't need a reactive sender since we reload this regularly
       base: props.base.into(),
     }
   }
@@ -49,7 +49,7 @@ impl From<ClockProps> for Clock {
 
 pub struct Clock {
   current_time: String,
-  destroyed: Arc<Mutex<bool>>,
+  destroyed:  Rc<RefCell<bool>>,
   format: Reactive<String>,
   base: Base,
 }
@@ -63,13 +63,11 @@ impl Component for Clock {
   type CommandOutput = ();
 
   view! {
-    gtk::Box {
-      gtk::Label {
-        set_hexpand: false,
-        #[watch]
-        set_label: &model.current_time,
-      },
-    }
+    gtk::Label {
+      set_hexpand: false,
+      #[watch]
+      set_label: &model.current_time,
+    },
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
@@ -78,11 +76,10 @@ impl Component for Clock {
     prepend_css_class_to_model!("clock", model, root);
     set_initial_base_props!(model, root);
 
-    // Timer
     let sender_clone = sender.clone();
-    let destroyed = Arc::clone(&model.destroyed);
+    let destroyed = Rc::clone(&model.destroyed);
     glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-      let destroyed = *destroyed.lock().unwrap();
+      let destroyed = *destroyed.borrow();
       if !destroyed {
         sender_clone.input(ClockMsg::Tick);
         glib::ControlFlow::Continue
@@ -99,25 +96,28 @@ impl Component for Clock {
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       ClockMsg::Tick => {
-        self.current_time = chrono::Local::now()
-          .format(&self.format.clone().into_inner())
-          .to_string();
+        self.current_time = chrono::Local::now().format(&self.format.clone().get()).to_string();
       }
       ClockMsg::LuaHook(hook) => match hook {
         ClockMsgHook::BaseHook(base) => {
           generate_base_match_arms!(self, "clock", root, base)
         }
         ClockMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone().into_inner()).unwrap();
+          tx.send(self.format.clone().get()).unwrap();
+        }
+        ClockMsgHook::GetFormatReactive(tx) => {
+          tx.send(self.format.clone()).unwrap();
         }
         ClockMsgHook::SetFormat(format) => {
-          self.format = Reactive::new(format);
+          let arc = self.format.value.clone();
+          let mut str = arc.lock().unwrap();
+          *str = format;
         }
       },
     }
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _outputt: relm4::Sender<Self::Output>) {
-    *self.destroyed.lock().unwrap() = true;
+    *self.destroyed.borrow_mut() = true;
   }
 }

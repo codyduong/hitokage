@@ -6,6 +6,7 @@ use hitokage_core::widgets::base::BaseMsgHook::{
 use hitokage_core::widgets::workspace::WorkspaceMsg;
 use hitokage_core::widgets::workspace::WorkspaceMsgHook::BaseHook;
 use hitokage_core::widgets::workspace::WorkspaceMsgHook::{GetItemHeight, GetItemWidth, SetItemHeight, SetItemWidth};
+use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
 #[derive(Debug, Clone)]
@@ -14,27 +15,11 @@ pub struct WorkspaceUserData {
   pub sender: relm4::Sender<WorkspaceMsg>,
 }
 
+#[impl_lua_base(WorkspaceMsg::LuaHook)]
 impl WorkspaceUserData {
   fn sender(&self) -> Result<relm4::Sender<WorkspaceMsg>, crate::HitokageError> {
     Ok(self.sender.clone())
   }
-
-  // BASE PROPERTIES START
-  impl_getter_fn!(get_class, WorkspaceMsg::LuaHook, BaseHook, GetClass, Vec<String>);
-  impl_setter_fn!(set_class, WorkspaceMsg::LuaHook, BaseHook, SetClass, Vec<String>);
-
-  impl_getter_fn!(get_halign, WorkspaceMsg::LuaHook, BaseHook, GetHalign, Align);
-  impl_setter_fn!(set_halign, WorkspaceMsg::LuaHook, BaseHook, SetHalign, Align);
-
-  impl_getter_fn!(get_hexpand, WorkspaceMsg::LuaHook, BaseHook, GetHexpand, Option<bool>);
-  impl_setter_fn!(set_hexpand, WorkspaceMsg::LuaHook, BaseHook, SetHexpand, Option<bool>);
-
-  impl_getter_fn!(get_valign, WorkspaceMsg::LuaHook, BaseHook, GetValign, Align);
-  impl_setter_fn!(set_valign, WorkspaceMsg::LuaHook, BaseHook, SetValign, Align);
-
-  impl_getter_fn!(get_vexpand, WorkspaceMsg::LuaHook, BaseHook, GetVexpand, Option<bool>);
-  impl_setter_fn!(set_vexpand, WorkspaceMsg::LuaHook, BaseHook, SetVexpand, Option<bool>);
-  // BASE PROPERTIES END
 
   impl_getter_fn!(get_item_height, WorkspaceMsg::LuaHook, GetItemHeight, u32);
   impl_setter_fn!(set_item_height, WorkspaceMsg::LuaHook, SetItemHeight, u32);
@@ -43,40 +28,10 @@ impl WorkspaceUserData {
   impl_setter_fn!(set_item_width, WorkspaceMsg::LuaHook, SetItemWidth, u32);
 }
 
+#[impl_lua_base]
 impl UserData for WorkspaceUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
-
-    // BASE PROPERTIES START
-    methods.add_method("get_class", |lua, instance, ()| lua.pack(instance.get_class()?));
-    methods.add_method("set_class", |lua, this, args: mlua::Variadic<Value>| {
-      this.set_class(lua, args)
-    });
-
-    methods.add_method("get_halign", |lua, instance, ()| lua.to_value(&instance.get_halign()?));
-    methods.add_method("set_halign", |lua, this, value: mlua::Value| {
-      this.set_halign(lua, value)
-    });
-
-    methods.add_method("get_hexpand", |lua, instance, ()| {
-      lua.to_value(&instance.get_hexpand()?)
-    });
-    methods.add_method("set_hexpand", |lua, this, value: mlua::Value| {
-      this.set_hexpand(lua, value)
-    });
-
-    methods.add_method("get_valign", |lua, instance, ()| lua.to_value(&instance.get_valign()?));
-    methods.add_method("set_valign", |lua, this, value: mlua::Value| {
-      this.set_valign(lua, value)
-    });
-
-    methods.add_method("get_vexpand", |lua, instance, ()| {
-      lua.to_value(&instance.get_vexpand()?)
-    });
-    methods.add_method("set_vexpand", |lua, this, value: mlua::Value| {
-      this.set_vexpand(lua, value)
-    });
-    // BASE PROPERTIES END
 
     methods.add_method("get_item_height", |_, this, _: ()| Ok(this.get_item_height()?));
     methods.add_method("set_item_height", |lua, this, value: mlua::Value| {

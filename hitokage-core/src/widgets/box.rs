@@ -9,9 +9,7 @@ use crate::set_initial_base_props;
 use crate::set_initial_box_props;
 use crate::structs::Monitor;
 use crate::widgets::base::BaseMsgHook;
-use crate::widgets::clock::Clock;
 use crate::widgets::deserialize_empty_or_seq;
-use crate::widgets::workspace::Workspace;
 use crate::widgets::WidgetController;
 use crate::widgets::WidgetProps;
 use gtk4::prelude::*;
@@ -119,9 +117,19 @@ macro_rules! generate_box_widgets {
           $model.widgets.push(WidgetController::Box(controller));
         }
         WidgetProps::Clock(inner_props) => {
-          let controller = Clock::builder().launch(inner_props).detach();
+          let controller = crate::widgets::clock::Clock::builder().launch(inner_props).detach();
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Clock(controller));
+        }
+        WidgetProps::Cpu(inner_props) => {
+          let controller = crate::widgets::cpu::Cpu::builder().launch(inner_props).detach();
+          $root.append(controller.widget());
+          $model.widgets.push(WidgetController::Cpu(controller));
+        }
+        WidgetProps::Icon(inner_props) => {
+          let controller = crate::widgets::icon::Icon::builder().launch(inner_props).detach();
+          $root.append(controller.widget());
+          $model.widgets.push(WidgetController::Icon(controller));
         }
         WidgetProps::Label(inner_props) => {
           let controller = crate::widgets::label::Label::builder().launch(inner_props).detach();
@@ -129,6 +137,7 @@ macro_rules! generate_box_widgets {
           $model.widgets.push(WidgetController::Label(controller));
         }
         WidgetProps::Workspace(inner_props) => {
+          use crate::widgets::workspace::Workspace;
           let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Workspace(controller));

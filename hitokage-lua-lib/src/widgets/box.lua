@@ -33,7 +33,7 @@
 --- },
 --- ```
 ---
---- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetLabelProps | WidgetWorkspaceProps>?
+--- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetWorkspaceProps>?
 
 -------------------------------------------------------------------------------
 --- Links to BoxUserData hitokage-lua\src\widgets\box.rs
@@ -62,5 +62,5 @@ function box_instance:get_homogeneous() end
 function box_instance:set_homogeneous(homogeneous) end
 
 --- Get the widgets on the box
---- @return table<number, Box | Clock | Label | Workspace>
+--- @return table<number, Box | Clock | Cpu | Icon | Label | Workspace>
 function box_instance:get_widgets() end

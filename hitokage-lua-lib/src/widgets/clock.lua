@@ -4,7 +4,6 @@
 --- Links to ClockProps in 'hitokage-core\src\widgets\clock.rs'
 --- @class ClockProps : BaseProps
 --- @field format string | ReactiveString?
---- @field halign Align?
 
 -------------------------------------------------------------------------------
 --- Links to ClockUserData hitokage-lua\src\widgets\clock.rs
@@ -20,6 +19,11 @@ function clock_instance:get_type() end
 --- Get the format string
 --- @return string
 function clock_instance:get_format() end
+
+--- Get the reactive format string
+--- @return ReactiveString
+--- @nodiscard
+function clock_instance:get_format_reactive() end
 
 --- Set the format string
 --- @param string string

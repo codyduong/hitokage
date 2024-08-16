@@ -8,7 +8,7 @@
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Label.label.html)
 ---
---- @field label string
+--- @field label string | ReactiveString
 
 -------------------------------------------------------------------------------
 --- Links to LabelUserData hitokage-lua\src\widgets\label.rs
@@ -26,7 +26,13 @@ function label_instance:get_type() end
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Label.get_label.html)
 ---
 --- @return string
-function label_instance:set_label() end
+function label_instance:get_label() end
+
+--- Fetches the reactive text from a label.
+---
+--- @return string
+--- @nodiscard
+function label_instance:get_label_reactive() end
 
 --- Sets the text of the label.
 ---
@@ -34,4 +40,4 @@ function label_instance:set_label() end
 ---
 --- @param string string
 --- @return nil
-function label_instance:get_label(string) end
+function label_instance:set_label(string) end

@@ -22,8 +22,8 @@ pub fn make(lua: &Lua) -> anyhow::Result<mlua::Table> {
           // Value::Nil => (),
           _ => Err(mlua::Error::FromLuaConversionError {
             from: f.type_name(),
-            to: "lmao",
-            message: Some("Expected better arguments TODO @codyduong".to_string()),
+            to: "Reactive UserData",
+            message: Some("Failed to create a Reactive of this type. Is this a supported type?".to_string()),
           }),
         }
       }

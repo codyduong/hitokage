@@ -2,41 +2,42 @@ use anyhow::Result;
 use hitokage_core::event::EventNotif;
 use hitokage_lua::AppMsg;
 use komorebi_client::send_message;
-use std::io::BufRead;
-use std::sync::Arc;
-use std::sync::Mutex;
+use komorebi_client::SocketMessage;
+use std::io::BufReader;
+use std::io::Read;
+use std::time::Duration;
 
 const NAME: &str = "hitokage.sock";
 
 pub fn start(sender: relm4::ComponentSender<crate::App>) -> std::thread::JoinHandle<Result<(), anyhow::Error>> {
-  let socket = Arc::new(Mutex::new(
-    komorebi_client::subscribe(NAME).expect("Failed to open socket"),
-  ));
+  let listener = komorebi_client::subscribe(NAME).expect("Failed to open socket");
 
   std::thread::spawn(move || -> Result<()> {
-    for incoming in socket.lock().expect("Failed to lock socket").incoming() {
-      match incoming {
-        Ok(data) => {
-          let reader = std::io::BufReader::new(data.try_clone().expect(""));
+    for client in listener.incoming() {
+      match client {
+        Ok(subscription) => {
+          let mut buffer = Vec::new();
+          let mut reader = BufReader::new(subscription);
 
-          for line in reader.lines().map_while(Result::ok) {
-            // let notification: komorebi_client::Notification = match serde_json::from_str(&line) {
-            let notification: Option<EventNotif> = match serde_json::from_str(&line) {
-              Ok(notification) => notification,
-              Err(error) => {
-                log::warn!("Failed to read notification from komorebic: {:?}", error);
-                None
-              }
-            };
-
-            // match and filter on desired notifications
-            if let Some(notif) = notification {
-              sender.input(AppMsg::Komorebi(notif));
+          // this is when we know a shutdown has been sent
+          if matches!(reader.read_to_end(&mut buffer), Ok(0)) {
+            log::debug!("Komorebi shutdown");
+            // keep trying to reconnect to komorebi
+            while komorebi_client::send_message(&SocketMessage::AddSubscriberSocket(NAME.to_string())).is_err() {
+              log::debug!("Attempting to reconnect to komorebi");
+              std::thread::sleep(Duration::from_secs(1));
             }
+          }
+
+          if let Ok(notification) =
+            // serde_json::from_str::<komorebi_client::Notification>(&String::from_utf8(buffer).unwrap())
+            serde_json::from_str::<EventNotif>(&String::from_utf8(buffer).unwrap())
+          {
+            sender.input(AppMsg::Komorebi(notification));
           }
         }
         Err(error) => {
-          log::debug!("{error}");
+          log::error!("Failed to get komorebi event subscription: {error}");
         }
       }
     }

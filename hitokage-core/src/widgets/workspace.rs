@@ -1,10 +1,12 @@
 use super::base::{Base, BaseMsgHook, BaseProps};
 use crate::event::STATE;
+use crate::handlebar::register_hitokage_helpers;
 use crate::{generate_base_match_arms, prepend_css_class, prepend_css_class_to_model, set_initial_base_props};
 use anyhow::Context;
 use gtk4::prelude::*;
 use gtk4::Constraint;
 use gtk4::ConstraintLayout;
+use handlebars::Handlebars;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -36,6 +38,7 @@ pub enum WorkspaceMsg {
 pub struct WorkspaceProps {
   item_width: Option<u32>,
   item_height: Option<u32>,
+  format: Option<String>,
   #[serde(flatten)]
   base: BaseProps,
 }
@@ -49,6 +52,7 @@ pub struct Workspace {
 
   item_width: i32,
   item_height: i32,
+  format: Option<String>,
   base: Base,
 }
 
@@ -108,6 +112,7 @@ impl Component for Workspace {
       item_width,
       item_height,
       base: props.base.into(),
+      format: props.format.clone(),
     };
 
     prepend_css_class_to_model!("workspace", model, root);
@@ -118,7 +123,7 @@ impl Component for Workspace {
 
       // TODO @codyduong change this to only care about change_workspace events.
 
-      let workspaces = get_workspaces(&state.clone(), id);
+      let workspaces = get_workspaces(&state.clone(), id, &props.format);
 
       WorkspaceMsg::Workspaces(workspaces.unwrap())
     });
@@ -140,7 +145,7 @@ impl Component for Workspace {
       }
       WorkspaceMsg::FocusWorkspace(i) => {
         let state = STATE.read();
-        if let Some((workspace_index, _)) = get_workspaces(&state, self.id)
+        if let Some((workspace_index, _)) = get_workspaces(&state, self.id, &self.format)
           .unwrap()
           .iter()
           .enumerate()
@@ -164,7 +169,7 @@ impl Component for Workspace {
         WorkspaceMsgHook::SetItemHeight(item_height) => {
           self.item_width = item_height as i32;
           let state = STATE.read();
-          let workspaces = get_workspaces(&state.clone(), self.id).unwrap();
+          let workspaces = get_workspaces(&state.clone(), self.id, &self.format).unwrap();
           update_workspaces(
             &self.flowbox,
             &workspaces,
@@ -180,7 +185,7 @@ impl Component for Workspace {
         WorkspaceMsgHook::SetItemWidth(item_width) => {
           self.item_width = item_width as i32;
           let state = STATE.read();
-          let workspaces = get_workspaces(&state.clone(), self.id).unwrap();
+          let workspaces = get_workspaces(&state.clone(), self.id, &self.format).unwrap();
           update_workspaces(
             &self.flowbox,
             &workspaces,
@@ -196,7 +201,11 @@ impl Component for Workspace {
 }
 
 // get workspace from komorebi
-fn get_workspaces(state: &serde_json::Value, monitor_id: u32) -> anyhow::Result<Vec<WorkspaceState>> {
+fn get_workspaces(
+  state: &serde_json::Value,
+  monitor_id: u32,
+  format: &Option<String>,
+) -> anyhow::Result<Vec<WorkspaceState>> {
   let mut workspaces_vec: Vec<WorkspaceState> = Vec::new();
 
   let monitors = state
@@ -231,8 +240,28 @@ fn get_workspaces(state: &serde_json::Value, monitor_id: u32) -> anyhow::Result<
     .as_array()
     .context("Invalid 'elements' format in 'workspaces'")?;
 
-  for workspace in elements {
-    let name = workspace.get("name").and_then(|v| v.as_str()).map(String::from);
+  for (index, workspace) in elements.iter().enumerate() {
+    let name = {
+      let name = workspace.get("name").and_then(|v| v.as_str()).map(String::from);
+
+      if let Some(ref format) = format {
+        let reg = register_hitokage_helpers(Handlebars::new());
+
+        let mut args = HashMap::new();
+        args.insert("name", name.clone().unwrap_or_default());
+        args.insert("index", index.to_string());
+
+        match reg.render_template(format, &args) {
+          Ok(name) => Some(name),
+          Err(err) => {
+            log::error!("{:?}", err);
+            name
+          }
+        }
+      } else {
+        name
+      }
+    };
 
     // check if we actually have anything in the workspace, if not don't show it
     let has_content = workspace
