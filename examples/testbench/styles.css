@@ -1,7 +1,7 @@
 window {
   /* Be careful about setting values here, this also modifies the debugger appearance */
   font-family: 'MesloLGS Nerd Font Mono', 'Courier New', 'Bars', 'Font Awesome 5 Free';
-  font-size: 14px;
+  font-size: 12px;
   color: #000000;
 }
 
@@ -10,8 +10,8 @@ window {
   color: #f2e5bc;
   
   font-family: 'MesloLGS Nerd Font Mono', 'Courier New', 'Bars', 'Font Awesome 5 Free';
-  font-size: 14px;
-  line-height: 14px;
+  font-size: 12px;
+  line-height: 12px;
 }
 
 .workspace {

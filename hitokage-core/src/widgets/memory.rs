@@ -14,9 +14,7 @@ use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::sync::mpsc::Sender;
 use systemstat::Platform;
 use systemstat::System;
@@ -49,7 +47,7 @@ pub struct Memory {
   base: Base,
   mem_and_swap: MemoryAndSwapWrapper,
   #[tracker::do_not_track]
-  destroyed: Rc<RefCell<bool>>,
+  source_id: Option<glib::SourceId>,
   #[tracker::do_not_track]
   format: Reactive<String>,
   #[tracker::do_not_track]
@@ -73,6 +71,12 @@ impl Component for Memory {
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
+    let sender_clone = sender.clone();
+    let source_id = glib::timeout_add_local(std::time::Duration::from_millis(1000), move || {
+      sender_clone.input(MemoryMsg::Tick);
+      glib::ControlFlow::Continue
+    });
+
     let sys = System::new();
 
     let mem_and_swap: MemoryAndSwapWrapper = sys.memory_and_swap().into();
@@ -86,7 +90,7 @@ impl Component for Memory {
         vexpand: props.base.vexpand,
       },
       mem_and_swap,
-      destroyed: Rc::new(RefCell::new(false)),
+      source_id: Some(source_id),
       format: props
         .format
         .as_reactive_string(create_react_sender(sender.input_sender(), MemoryMsg::React)),
@@ -98,17 +102,7 @@ impl Component for Memory {
     prepend_css_class_to_model!("memory", model, root);
     set_initial_base_props!(model, root);
 
-    let sender_clone = sender.clone();
-    let destroyed = Rc::clone(&model.destroyed);
-    glib::timeout_add_local(std::time::Duration::from_millis(1000), move || {
-      let destroyed = *destroyed.borrow();
-      if !destroyed {
-        sender_clone.input(MemoryMsg::Tick);
-        glib::ControlFlow::Continue
-      } else {
-        glib::ControlFlow::Break
-      }
-    });
+    
 
     let widgets = view_output!();
 
@@ -146,7 +140,7 @@ impl Component for Memory {
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-    *self.destroyed.borrow_mut() = true;
+    self.source_id.take().map(glib::SourceId::remove);
   }
 }
 

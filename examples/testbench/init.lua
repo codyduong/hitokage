@@ -3,7 +3,6 @@ local monitors = hitokage.monitor.get_all()
 --- @type BarArray
 local bars = {}
 
-local reactive_formats = {}
 local reactive_labels = {}
 local reactive_imgs = {}
 
@@ -40,12 +39,10 @@ for _, monitor in ipairs(monitors) do
 	-- })
 
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
-	local reactive_format = hitokage.unstable.reactive.create("%A %B %e")
 	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}")
 	local reactive_img = hitokage.unstable.reactive.create("./smiley.png")
 	local reactive_clock_icon = hitokage.unstable.reactive.create(clock_icons[tonumber(os.date("%H")) % 12 + 1])
 
-	table.insert(reactive_formats, reactive_format)
 	table.insert(reactive_labels, reactive_label)
 	table.insert(reactive_imgs, reactive_img)
 	table.insert(reactive_clock_icons, reactive_clock_icon)
@@ -153,7 +150,7 @@ for _, monitor in ipairs(monitors) do
 									class = "clock_wrapper",
 									widgets = {
 										{ Label = { label = "\u{F00ED}", class = "icon clock" } },
-										{ Clock = { format = reactive_format, halign = "End" } },
+										{ Clock = { format = "%a %b %e", halign = "End" } },
 										{ Label = { label = reactive_clock_icon, class = "icon clock" } },
 										{ Clock = { format = "%r", halign = "End" } },
 									},
@@ -246,15 +243,6 @@ local css_boxes_test = hitokage.timeout(1000, function()
 		else
 			bar:set_class(widgets[index + 1]:get_class())
 		end
-	end
-end)
-
-local format_reactor = hitokage.timeout(1000, function()
-	local current_format = reactive_formats[1]:get()
-	if current_format == "%a %b %u %r" then
-		reactive_formats[1]:set("demo demo demo")
-	else
-		reactive_formats[1]:set("%a %b %u %r")
 	end
 end)
 
