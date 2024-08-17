@@ -9,12 +9,6 @@
 --- @field width integer?
 --- @field height integer?
 --- @field offset BarOffset?
----
---- Whether the children should all be the same size. Defaults to `true`
----
---- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Box.homogeneous.html)
----
---- @field homogeneous boolean?
 
 -------------------------------------------------------------------------------
 --- Links to BarUserData in 'hitokage-lua\src\widgets\bar.rs'

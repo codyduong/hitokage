@@ -5,6 +5,7 @@ use std::str::FromStr;
 pub fn register_hitokage_helpers<'h>(mut reg: Handlebars<'h>) -> Handlebars<'h> {
   reg.register_helper("add", Box::new(add_helper));
   reg.register_helper("mult", Box::new(mult_helper));
+  reg.register_helper("div", Box::new(div_helper));
   reg.register_helper("round", Box::new(round_helper));
   reg.register_helper("pad", Box::new(pad_helper));
   reg.register_helper("concat", Box::new(concat_helper));
@@ -100,6 +101,53 @@ pub fn mult_helper(
   };
 
   let result = base_value * other_value;
+
+  write!(out, "{}", result)?;
+  Ok(())
+}
+
+pub fn div_helper(
+  h: &Helper,
+  _: &Handlebars,
+  _: &Context,
+  _: &mut RenderContext,
+  out: &mut dyn Output,
+) -> Result<(), RenderError> {
+  // get parameter from helper or throw an error
+  let base = h
+    .param(0)
+    .ok_or(RenderErrorReason::ParamNotFoundForIndex("format", 0))?
+    .value();
+  let other = h
+    .param(1)
+    .ok_or(RenderErrorReason::ParamNotFoundForIndex("format", 0))?
+    .value();
+
+  let base_value = match base {
+    Value::Number(n) => n
+      .as_f64()
+      .ok_or_else(|| RenderErrorReason::InvalidParamType("First parameter is not a valid f64"))?,
+    Value::String(s) => {
+      f64::from_str(s).map_err(|_| RenderErrorReason::InvalidParamType("First parameter is not a valid f64"))?
+    }
+    _ => Err(RenderErrorReason::InvalidParamType(
+      "First parameter is neither an f64 nor a string that can be parsed as f64",
+    ))?,
+  };
+
+  let other_value = match other {
+    Value::Number(n) => n
+      .as_f64()
+      .ok_or_else(|| RenderErrorReason::InvalidParamType("First parameter is not a valid f64"))?,
+    Value::String(s) => {
+      f64::from_str(s).map_err(|_| RenderErrorReason::InvalidParamType("First parameter is not a valid f64"))?
+    }
+    _ => Err(RenderErrorReason::InvalidParamType(
+      "First parameter is neither an f64 nor a string that can be parsed as f64",
+    ))?,
+  };
+
+  let result = base_value / other_value;
 
   write!(out, "{}", result)?;
   Ok(())
@@ -201,7 +249,7 @@ pub fn pad_helper(
 
   // Perform the padding
   let result = match direction.as_str() {
-    "left" => format!("{:pad$}", input, pad = total_length as usize).replace(" ", pad_char),
+    "left" => format!("{:>pad$}", input, pad = total_length as usize).replace(" ", pad_char),
     "right" => format!("{:<pad$}", input, pad = total_length as usize).replace(" ", pad_char),
     _ => return Err(RenderErrorReason::InvalidParamType("Invalid direction. Use 'left' or 'right'.").into()),
   };

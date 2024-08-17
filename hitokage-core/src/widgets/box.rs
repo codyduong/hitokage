@@ -72,14 +72,8 @@ impl Component for HitokageBox {
     let mut model = HitokageBox {
       r#box: BoxInner {
         widgets: Vec::new(),
-        base: Base {
-          classes: props.base.class.unwrap_or_default().into(),
-          halign: props.base.halign,
-          hexpand: props.base.hexpand.or(Some(true)),
-          valign: props.base.valign,
-          vexpand: props.base.vexpand.or(Some(true)),
-        },
-        homogeneous: props.homogeneous.or(Some(true)),
+        base: props.base.into(),
+        homogeneous: props.homogeneous,
       },
     };
 
@@ -135,6 +129,11 @@ macro_rules! generate_box_widgets {
           let controller = crate::widgets::label::Label::builder().launch(inner_props).detach();
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Label(controller));
+        }
+        WidgetProps::Memory(inner_props) => {
+          let controller = crate::widgets::memory::Memory::builder().launch(inner_props).detach();
+          $root.append(controller.widget());
+          $model.widgets.push(WidgetController::Memory(controller));
         }
         WidgetProps::Workspace(inner_props) => {
           use crate::widgets::workspace::Workspace;

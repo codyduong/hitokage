@@ -334,8 +334,8 @@ fn main() {
   gtk::init().unwrap();
   if let Some(settings) = gtk::Settings::default() {
     // TODO @codyduong we need a primer/FAQ on blurry text
-    settings.set_property("gtk-xft-antialias", 0);
-    settings.set_property("gtk-xft-hinting", 1);
+    settings.set_property("gtk-xft-antialias", -1);
+    settings.set_property("gtk-xft-hinting", -1);
     settings.set_property("gtk-xft-hintstyle", "hintfull");
     settings.set_property("gtk-xft-rgba", "rgb");
     settings.set_property("gtk-xft-dpi", 300);
