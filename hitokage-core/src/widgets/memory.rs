@@ -82,13 +82,7 @@ impl Component for Memory {
     let mem_and_swap: MemoryAndSwapWrapper = sys.memory_and_swap().into();
 
     let mut model = Memory {
-      base: Base {
-        classes: props.base.class.unwrap_or_default().into(),
-        halign: props.base.halign,
-        hexpand: props.base.hexpand,
-        valign: props.base.valign,
-        vexpand: props.base.vexpand,
-      },
+      base: props.base.into(),
       mem_and_swap,
       source_id: Some(source_id),
       format: props

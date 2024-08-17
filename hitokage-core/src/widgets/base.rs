@@ -30,9 +30,9 @@ impl From<BaseProps> for Base {
     Base {
       classes: props.class.unwrap_or_default().into(),
       halign: props.halign,
-      hexpand: props.hexpand,
+      hexpand: props.hexpand.unwrap_or(false),
       valign: props.valign,
-      vexpand: props.vexpand,
+      vexpand: props.vexpand.unwrap_or(false),
     }
   }
 }
@@ -40,9 +40,9 @@ impl From<BaseProps> for Base {
 pub struct Base {
   pub classes: Vec<String>,
   pub halign: Option<Align>,
-  pub hexpand: Option<bool>,
+  pub hexpand: bool,
   pub valign: Option<Align>,
-  pub vexpand: Option<bool>,
+  pub vexpand: bool,
 }
 
 #[macro_export]
@@ -69,21 +69,11 @@ macro_rules! generate_base_match_arms {
         $root.set_halign(halign.into());
       }
       BaseMsgHook::GetHexpand(tx) => {
-        if let Some(hexpand) = $self.base.hexpand {
-          tx.send(hexpand).unwrap();
-        } else {
-          let hexpand: bool = $root.hexpands().into();
-          tx.send(hexpand).unwrap();
-        }
+        tx.send($self.base.hexpand).unwrap();
       }
       BaseMsgHook::SetHexpand(hexpand) => {
-        $self.base.hexpand = hexpand;
-        if let Some(hexpand) = $self.base.hexpand {
-          $root.set_hexpand_set(true);
-          $root.set_hexpand(hexpand);
-        } else {
-          $root.set_hexpand_set(false);
-        }
+        $self.base.hexpand = hexpand.unwrap_or(false);
+        $root.set_hexpand($self.base.hexpand);
       }
       BaseMsgHook::GetValign(tx) => {
         if let Some(valign) = $self.base.valign {
@@ -98,21 +88,11 @@ macro_rules! generate_base_match_arms {
         $root.set_valign(valign.into());
       }
       BaseMsgHook::GetVexpand(tx) => {
-        if let Some(vexpand) = $self.base.vexpand {
-          tx.send(vexpand).unwrap();
-        } else {
-          let vexpand: bool = $root.vexpands().into();
-          tx.send(vexpand).unwrap();
-        }
+        tx.send($self.base.vexpand).unwrap();
       }
       BaseMsgHook::SetVexpand(vexpand) => {
-        $self.base.vexpand = vexpand;
-        if let Some(vexpand) = $self.base.vexpand {
-          $root.set_vexpand_set(true);
-          $root.set_vexpand(vexpand);
-        } else {
-          $root.set_vexpand_set(false);
-        }
+        $self.base.vexpand = vexpand.unwrap_or(false);
+        $root.set_vexpand($self.base.vexpand);
       }
     }
   };
@@ -124,20 +104,12 @@ macro_rules! set_initial_base_props {
     if let Some(halign) = $self.base.halign {
       $root.set_halign(halign.into());
     }
-    if let Some(hexpand) = $self.base.hexpand {
-      $root.set_hexpand_set(true);
-      $root.set_hexpand(hexpand);
-    } else {
-      $root.set_hexpand_set(false);
-    }
+    $root.set_hexpand($self.base.hexpand);
+    $root.set_hexpand_set(true);
     if let Some(valign) = $self.base.valign {
       $root.set_valign(valign.into());
     }
-    if let Some(vexpand) = $self.base.vexpand {
-      $root.set_vexpand_set(true);
-      $root.set_vexpand(vexpand);
-    } else {
-      $root.set_vexpand_set(false);
-    }
+    $root.set_vexpand($self.base.vexpand);
+    $root.set_vexpand_set(true);
   };
 }

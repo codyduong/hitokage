@@ -82,13 +82,7 @@ impl Component for Cpu {
     let sys = System::new();
 
     let mut model = Cpu {
-      base: Base {
-        classes: props.base.class.unwrap_or_default().into(),
-        halign: props.base.halign,
-        hexpand: props.base.hexpand,
-        valign: props.base.valign,
-        vexpand: props.base.vexpand,
-      },
+      base: props.base.into(),
       cpu: CPULoadWrapper::new(Vec::new()),
       cpu_inflight: sys.cpu_load(),
       source_id: Some(source_id),

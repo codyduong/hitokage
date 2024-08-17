@@ -72,13 +72,7 @@ impl Component for HitokageBox {
     let mut model = HitokageBox {
       r#box: BoxInner {
         widgets: Vec::new(),
-        base: Base {
-          classes: props.base.class.unwrap_or_default().into(),
-          halign: props.base.halign,
-          hexpand: props.base.hexpand,
-          valign: props.base.valign,
-          vexpand: props.base.vexpand,
-        },
+        base: props.base.into(),
         homogeneous: props.homogeneous,
       },
     };

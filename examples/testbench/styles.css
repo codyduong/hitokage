@@ -79,7 +79,6 @@ window {
 
 .clock_start {
   font-size: 24px;
-  max-height: 24px;
   color: rgba(60, 56, 54, 1);
   padding-left: 16px;
 }
