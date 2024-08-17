@@ -1,11 +1,12 @@
 use clock::ClockUserData;
 use cpu::CpuUserData;
 use hitokage_core::widgets::{
-  clock::ClockMsg, cpu::CpuMsg, icon::IconMsg, label::LabelMsg, r#box::BoxMsg, workspace::WorkspaceMsg,
-  WidgetUserData as CoreWidgetUserData,
+  clock::ClockMsg, cpu::CpuMsg, icon::IconMsg, label::LabelMsg, memory::MemoryMsg, r#box::BoxMsg,
+  workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData,
 };
 use icon::IconUserData;
 use label::LabelUserData;
+use memory::MemoryUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
 use std::sync::Arc;
@@ -17,6 +18,7 @@ pub mod clock;
 pub mod cpu;
 pub mod icon;
 pub mod label;
+pub mod memory;
 pub mod workspace;
 
 enum WidgetUserData {
@@ -25,6 +27,7 @@ enum WidgetUserData {
   Cpu(relm4::Sender<CpuMsg>),
   Icon(relm4::Sender<IconMsg>),
   Label(relm4::Sender<LabelMsg>),
+  Memory(relm4::Sender<MemoryMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
 }
 
@@ -46,11 +49,11 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
         lua.pack(clock_userdata)
       }
       WidgetUserData::Cpu(sender) => {
-        let clock_userdata = CpuUserData {
-          r#type: "Clock".to_string(),
+        let cpu_userdata = CpuUserData {
+          r#type: "Cpu".to_string(),
           sender,
         };
-        lua.pack(clock_userdata)
+        lua.pack(cpu_userdata)
       }
       WidgetUserData::Icon(sender) => {
         let image_userdata = IconUserData {
@@ -65,6 +68,13 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
           sender,
         };
         lua.pack(label_userdata)
+      }
+      WidgetUserData::Memory(sender) => {
+        let memory_userdata = MemoryUserData {
+          r#type: "Memory".to_string(),
+          sender,
+        };
+        lua.pack(memory_userdata)
       }
       WidgetUserData::Workspace(sender) => {
         let workspace_userdata = WorkspaceUserData {
@@ -85,6 +95,7 @@ impl From<CoreWidgetUserData> for WidgetUserData {
       CoreWidgetUserData::Cpu(sender) => WidgetUserData::Cpu(sender),
       CoreWidgetUserData::Icon(sender) => WidgetUserData::Icon(sender),
       CoreWidgetUserData::Label(sender) => WidgetUserData::Label(sender),
+      CoreWidgetUserData::Memory(sender) => WidgetUserData::Memory(sender),
       CoreWidgetUserData::Workspace(sender) => WidgetUserData::Workspace(sender),
     }
   }

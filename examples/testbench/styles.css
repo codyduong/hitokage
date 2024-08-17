@@ -59,7 +59,7 @@ window {
   background-color: #86BBD8;
 }
 
-.cpu_icon {
+.icon {
   font-size: 20px;
   line-height: 20px;
   padding-top: 2px;
@@ -67,6 +67,9 @@ window {
   font-weight: bold;
   padding-left: 24px;
   padding-right: 8px;
+}
+
+.memory {
   color: #fff;
 }
 
@@ -84,16 +87,6 @@ window {
 .clock_wrapper {
   background-color: rgba(60, 56, 54, 1);
   padding-right: 16px;
-}
-
-.clock_icon {
-  font-size: 20px;
-  line-height: 20px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  font-weight: bold;
-  padding-left: 24px;
-  padding-right: 8px;
 }
 
 .bar_end {

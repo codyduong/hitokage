@@ -105,7 +105,6 @@ impl Component for Label {
       },
       LabelMsg::React => {
         self.set_react(!self.react);
-        root.show()
       }
     }
   }

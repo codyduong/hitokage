@@ -50,7 +50,9 @@ for _, monitor in ipairs(monitors) do
 	table.insert(reactive_imgs, reactive_img)
 	table.insert(reactive_clock_icons, reactive_clock_icon)
 
+	local mem_str = '{{pad "left" (round (div used 1024) 1) 4}} ({{ pad "left" (concat (round (mult (div used total) 100) 1) "%") 4 }})'
 	local cpu_str = '{{pad "left" (concat (round (mult usage 100) 1) "%") 6}}'
+
 	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
 	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
 	-- .. 'C2: {{pad "right" (concat (round (mult core2_usage 100) 1) "%") 6}}'
@@ -135,7 +137,9 @@ for _, monitor in ipairs(monitors) do
 									halign = "Fill",
 									class = "data_wrapper",
 									widgets = {
-										{ Label = { label = "\u{F4BC}", class = "cpu_icon" } },
+										{ Label = { label = "\u{EFC5}", class = "icon memory" } },
+										{ Memory = { format = mem_str, halign = "End" } },
+										{ Label = { label = "\u{F4BC}", class = "icon cpu" } },
 										{ Cpu = { format = cpu_str, halign = "End" } },
 										{ Label = { label = "\u{E0B2}", class = "clock_start", halign = "End" } },
 									},
@@ -147,9 +151,9 @@ for _, monitor in ipairs(monitors) do
 									homogeneous = false,
 									class = "clock_wrapper",
 									widgets = {
-										{ Label = { label = "\u{F00ED}", class = "clock_icon" } },
+										{ Label = { label = "\u{F00ED}", class = "icon clock" } },
 										{ Clock = { format = reactive_format, halign = "End" } },
-										{ Label = { label = reactive_clock_icon, class = "clock_icon" } },
+										{ Label = { label = reactive_clock_icon, class = "icon clock" } },
 										{ Clock = { format = "%r", halign = "End" } },
 									},
 								},

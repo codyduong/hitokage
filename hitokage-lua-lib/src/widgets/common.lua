@@ -13,6 +13,8 @@
 --- @field Cpu CpuProps
 --- @class WidgetLabelProps
 --- @field Label LabelProps
+--- @class WidgetMemoryProps
+--- @field Memory MemoryProps
 --- @class WidgetWorkspaceProps
 --- @field Workspace WorkspaceProps
 --- @class WidgetIconProps

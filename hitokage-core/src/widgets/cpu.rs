@@ -137,7 +137,6 @@ impl Component for Cpu {
       },
       CpuMsg::React => {
         self.set_react(!self.react);
-        root.show()
       }
       CpuMsg::Tick => {
         match &self.cpu_inflight {
@@ -178,7 +177,7 @@ impl CPULoadWrapper {
 }
 
 impl PartialEq for CPULoadWrapper {
-  fn eq(&self, other: &Self) -> bool {
+  fn ne(&self, other: &Self) -> bool {
     self
       .cpu_loads
       .clone()
@@ -186,15 +185,15 @@ impl PartialEq for CPULoadWrapper {
       .zip(other.cpu_loads.clone().last())
       .map_or(false, |(a, b)| {
         (a.user != b.user)
-          && (a.nice != b.nice)
-          && (a.system != b.system)
-          && (a.interrupt != b.interrupt)
-          && (a.idle != b.idle)
+          || (a.nice != b.nice)
+          || (a.system != b.system)
+          || (a.interrupt != b.interrupt)
+          || (a.idle != b.idle)
       })
   }
 
-  fn ne(&self, other: &Self) -> bool {
-    !self.eq(other)
+  fn eq(&self, other: &Self) -> bool {
+    !self.ne(other)
   }
 }
 

@@ -106,7 +106,6 @@ impl Component for Icon {
       },
       IconMsg::React => {
         self.set_react(!self.react);
-        root.show()
       }
     }
   }

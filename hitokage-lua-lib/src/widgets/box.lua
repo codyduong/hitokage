@@ -15,7 +15,7 @@
 --- },
 --- ```
 ---
---- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetWorkspaceProps>?
+--- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWorkspaceProps>?
 
 -------------------------------------------------------------------------------
 --- Links to BoxUserData hitokage-lua\src\widgets\box.rs

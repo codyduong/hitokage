@@ -136,6 +136,11 @@ macro_rules! generate_box_widgets {
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Label(controller));
         }
+        WidgetProps::Memory(inner_props) => {
+          let controller = crate::widgets::memory::Memory::builder().launch(inner_props).detach();
+          $root.append(controller.widget());
+          $model.widgets.push(WidgetController::Memory(controller));
+        }
         WidgetProps::Workspace(inner_props) => {
           use crate::widgets::workspace::Workspace;
           let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();

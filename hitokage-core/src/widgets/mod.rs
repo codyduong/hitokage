@@ -5,6 +5,7 @@ pub mod clock;
 pub mod cpu;
 pub mod icon;
 pub mod label;
+pub mod memory;
 pub mod workspace;
 
 use clock::{Clock, ClockMsg};
@@ -16,6 +17,8 @@ use label::Label;
 use label::LabelMsg;
 use r#box::BoxMsg;
 use r#box::HitokageBox;
+use memory::Memory;
+use memory::MemoryMsg;
 use relm4::ComponentController;
 use relm4::Controller;
 use serde::de;
@@ -30,6 +33,7 @@ pub enum WidgetProps {
   Cpu(cpu::CpuProps),
   Icon(icon::IconProps),
   Label(label::LabelProps),
+  Memory(memory::MemoryProps),
   Workspace(workspace::WorkspaceProps),
 }
 
@@ -39,6 +43,7 @@ pub enum WidgetController {
   Cpu(Controller<Cpu>),
   Icon(Controller<Icon>),
   Label(Controller<Label>),
+  Memory(Controller<Memory>),
   Workspace(Controller<Workspace>),
 }
 
@@ -49,6 +54,7 @@ pub enum WidgetUserData {
   Cpu(relm4::Sender<CpuMsg>),
   Icon(relm4::Sender<IconMsg>),
   Label(relm4::Sender<LabelMsg>),
+  Memory(relm4::Sender<MemoryMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
 }
 
@@ -60,6 +66,7 @@ impl<'a> From<&'a WidgetController> for WidgetUserData {
       WidgetController::Cpu(item) => WidgetUserData::Cpu(item.sender().clone()),
       WidgetController::Icon(item) => WidgetUserData::Icon(item.sender().clone()),
       WidgetController::Label(item) => WidgetUserData::Label(item.sender().clone()),
+      WidgetController::Memory(item) => WidgetUserData::Memory(item.sender().clone()),
       WidgetController::Workspace(item) => WidgetUserData::Workspace(item.sender().clone()),
     }
   }
