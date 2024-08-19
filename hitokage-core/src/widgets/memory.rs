@@ -96,8 +96,6 @@ impl Component for Memory {
     prepend_css_class_to_model!("memory", model, root);
     set_initial_base_props!(model, root, props.base);
 
-    
-
     let widgets = view_output!();
 
     root.show();
@@ -182,14 +180,11 @@ impl From<std::io::Result<(systemstat::Memory, systemstat::Swap)>> for MemoryAnd
 }
 
 fn handle_optional_sys_and_mem(format: &String, mem_and_swap: &MemoryAndSwapWrapper) -> String {
-  
   mem_and_swap
-  .memory
-  .clone()
-  .zip(mem_and_swap.swap.clone())
-  .map_or(String::new(), |(mem, swap)| {
-    format_memory(format, &mem, &swap)
-  })
+    .memory
+    .clone()
+    .zip(mem_and_swap.swap.clone())
+    .map_or(String::new(), |(mem, swap)| format_memory(format, &mem, &swap))
 }
 
 fn format_memory(format: &String, memory: &systemstat::Memory, swap: &systemstat::Swap) -> String {

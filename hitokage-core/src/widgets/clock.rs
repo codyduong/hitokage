@@ -109,7 +109,7 @@ impl Component for Clock {
 }
 
 fn format_time(format: &String) -> String {
-  let time_string= chrono::Local::now().format(&format).to_string();
+  let time_string = chrono::Local::now().format(&format).to_string();
 
   let reg = register_hitokage_helpers(Handlebars::new());
 

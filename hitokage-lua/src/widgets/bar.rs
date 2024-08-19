@@ -51,8 +51,22 @@ impl BarUserData {
   impl_setter_fn!(set_class, BarMsg::LuaHook, BoxHook, BaseHook, SetClass, Vec<String>);
 
   impl_getter_fn!(get_height, BarMsg::LuaHook, BoxHook, BaseHook, GetHeight, i32);
-  impl_getter_fn!(get_height_request, BarMsg::LuaHook, BoxHook, BaseHook, GetHeightRequest, i32);
-  impl_setter_fn!(set_height_request, BarMsg::LuaHook, BoxHook, BaseHook, SetHeightRequest, Option<i32>);
+  impl_getter_fn!(
+    get_height_request,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    GetHeightRequest,
+    i32
+  );
+  impl_setter_fn!(
+    set_height_request,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    SetHeightRequest,
+    Option<i32>
+  );
 
   impl_getter_fn!(get_halign, BarMsg::LuaHook, BoxHook, BaseHook, GetHalign, Align);
   impl_setter_fn!(set_halign, BarMsg::LuaHook, BoxHook, BaseHook, SetHalign, Align);
@@ -74,8 +88,22 @@ impl BarUserData {
     Option<bool>
   );
 
-  impl_getter_fn!(get_size_request, BarMsg::LuaHook, BoxHook, BaseHook, GetSizeRequest, (i32, i32));
-  impl_setter_fn!(set_size_request, BarMsg::LuaHook, BoxHook, BaseHook, SetSizeRequest, (Option<i32>, Option<i32>));
+  impl_getter_fn!(
+    get_size_request,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    GetSizeRequest,
+    (i32, i32)
+  );
+  impl_setter_fn!(
+    set_size_request,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    SetSizeRequest,
+    (Option<i32>, Option<i32>)
+  );
 
   impl_getter_fn!(get_valign, BarMsg::LuaHook, BoxHook, BaseHook, GetValign, Align);
   impl_setter_fn!(set_valign, BarMsg::LuaHook, BoxHook, BaseHook, SetValign, Align);
@@ -98,8 +126,22 @@ impl BarUserData {
   );
 
   impl_getter_fn!(get_width, BarMsg::LuaHook, BoxHook, BaseHook, GetWidth, i32);
-  impl_getter_fn!(get_width_request, BarMsg::LuaHook, BoxHook, BaseHook, GetWidthRequest, i32);
-  impl_setter_fn!(set_width_request, BarMsg::LuaHook, BoxHook, BaseHook, SetWidthRequest, Option<i32>);
+  impl_getter_fn!(
+    get_width_request,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    GetWidthRequest,
+    i32
+  );
+  impl_setter_fn!(
+    set_width_request,
+    BarMsg::LuaHook,
+    BoxHook,
+    BaseHook,
+    SetWidthRequest,
+    Option<i32>
+  );
   // BASE PROPERTIES END
 
   // BOX PROPERTIES START
