@@ -37,29 +37,53 @@ impl IntoIterator for CssClass {
   }
 }
 
+pub fn normalize_prepend(prepend: impl IntoPrepend) -> Vec<String> {
+  prepend.into_prepend()
+}
+
+pub trait IntoPrepend {
+  fn into_prepend(self) -> Vec<String>;
+}
+
+impl IntoPrepend for &str {
+  fn into_prepend(self) -> Vec<String> {
+    vec![self.to_string()]
+  }
+}
+
+impl IntoPrepend for Vec<String> {
+  fn into_prepend(self) -> Vec<String> {
+    self
+  }
+}
+
 /// Splits a CssClass or Iterable into unique Strings seperated by whitespace while preserving ordering
 #[macro_export]
 macro_rules! prepend_css_class {
-  ($prepend:expr, $class:expr) => {
-    std::iter::once($prepend.to_string())
+  ($prepend:expr, $class:expr) => {{
+    use crate::structs::css_class::normalize_prepend;
+    use indexmap::IndexSet;
+
+    let prepend_vec = normalize_prepend($prepend);
+
+    prepend_vec
+      .into_iter()
       .chain($class.into_iter())
       .collect::<IndexSet<String>>()
       .into_iter()
       .collect::<Vec<String>>()
-  };
+  }};
 }
 
 #[macro_export]
 macro_rules! prepend_css_class_to_model {
   ($prepend:expr, $model:expr, $root:expr) => {{
-    use indexmap::IndexSet;
     use $crate::prepend_css_class;
     $model.base.classes = prepend_css_class!($prepend, $model.base.classes);
     let classes_ref: Vec<&str> = $model.base.classes.iter().map(AsRef::as_ref).collect();
     $root.set_css_classes(&classes_ref);
   }};
   ($self:expr, $prepend:expr, $classes:expr, $root:expr) => {
-    use indexmap::IndexSet;
     use $crate::prepend_css_class;
     $self.base.classes = prepend_css_class!($prepend, $classes);
     let classes_ref: Vec<&str> = $self.base.classes.iter().map(AsRef::as_ref).collect();
