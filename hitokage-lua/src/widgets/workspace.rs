@@ -1,7 +1,9 @@
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::structs::Align;
 use hitokage_core::widgets::base::BaseMsgHook::{
-  GetClass, GetHalign, GetHexpand, GetValign, GetVexpand, SetClass, SetHalign, SetHexpand, SetValign, SetVexpand,
+  GetClass, GetHalign, GetHeight, GetHeightRequest, GetHexpand, GetSizeRequest, GetValign, GetVexpand, GetWidth,
+  GetWidthRequest, SetClass, SetHalign, SetHeightRequest, SetHexpand, SetSizeRequest, SetValign, SetVexpand,
+  SetWidthRequest,
 };
 use hitokage_core::widgets::workspace::WorkspaceMsg;
 use hitokage_core::widgets::workspace::WorkspaceMsgHook::BaseHook;

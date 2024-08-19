@@ -82,7 +82,7 @@ impl Component for Cpu {
     let sys = System::new();
 
     let mut model = Cpu {
-      base: props.base.into(),
+      base: props.base.clone().into(),
       cpu: CPULoadWrapper::new(Vec::new()),
       cpu_inflight: sys.cpu_load(),
       source_id: Some(source_id),
@@ -94,7 +94,7 @@ impl Component for Cpu {
     };
 
     prepend_css_class_to_model!("cpu", model, root);
-    set_initial_base_props!(model, root);
+    set_initial_base_props!(model, root, props.base);
 
     let widgets = view_output!();
 

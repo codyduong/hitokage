@@ -111,12 +111,12 @@ impl Component for Workspace {
       workspaces_to_check_constraints: Arc::new(Mutex::new(HashMap::new())),
       item_width,
       item_height,
-      base: props.base.into(),
+      base: props.base.clone().into(),
       format: props.format.clone(),
     };
 
     prepend_css_class_to_model!("workspace", model, root);
-    set_initial_base_props!(model, root);
+    set_initial_base_props!(model, root, props.base);
 
     STATE.subscribe(sender.input_sender(), move |state| {
       // we only care about the most recent state

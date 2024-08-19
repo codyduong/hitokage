@@ -42,14 +42,25 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
         impl_getter_fn!(get_halign, #path, BaseHook, GetHalign, Align);
         impl_setter_fn!(set_halign, #path, BaseHook, SetHalign, Align);
 
+        impl_getter_fn!(get_height, #path, BaseHook, GetHeight, i32);
+        impl_getter_fn!(get_height_request, #path, BaseHook, GetHeightRequest, i32);
+        impl_setter_fn!(set_height_request, #path, BaseHook, SetHeightRequest, Option<i32>);
+
         impl_getter_fn!(get_hexpand, #path, BaseHook, GetHexpand, Option<bool>);
         impl_setter_fn!(set_hexpand, #path, BaseHook, SetHexpand, Option<bool>);
+
+        impl_getter_fn!(get_size_request, #path, BaseHook, GetSizeRequest, (i32, i32));
+        impl_setter_fn!(set_size_request, #path, BaseHook, SetSizeRequest, (Option<i32>, Option<i32>));
 
         impl_getter_fn!(get_valign, #path, BaseHook, GetValign, Align);
         impl_setter_fn!(set_valign, #path, BaseHook, SetValign, Align);
 
         impl_getter_fn!(get_vexpand, #path, BaseHook, GetVexpand, Option<bool>);
         impl_setter_fn!(set_vexpand, #path, BaseHook, SetVexpand, Option<bool>);
+
+        impl_getter_fn!(get_width, #path, BaseHook, GetWidth, i32);
+        impl_getter_fn!(get_width_request, #path, BaseHook, GetWidthRequest, i32);
+        impl_setter_fn!(set_width_request, #path, BaseHook, SetWidthRequest, Option<i32>);
     };
 
     item_impl.items.push(syn::ImplItem::Verbatim(struct_code));
@@ -70,14 +81,25 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
       methods.add_method("get_halign", |lua, instance, ()| lua.to_value(&instance.get_halign()?));
       methods.add_method("set_halign", |lua, this, value: mlua::Value| { this.set_halign(lua, value) });
 
+      methods.add_method("get_height", |lua, instance, ()| lua.to_value(&instance.get_height()?));
+      methods.add_method("get_height_request", |lua, instance, ()| lua.to_value(&instance.get_height_request()?));
+      methods.add_method("set_height_request", |lua, this, args: mlua::Value| { this.set_height_request(lua, args) });
+
       methods.add_method("get_hexpand", |lua, instance, ()| { lua.to_value(&instance.get_hexpand()?) });
       methods.add_method("set_hexpand", |lua, this, value: mlua::Value| { this.set_hexpand(lua, value) });
+
+      methods.add_method("get_size_request", |lua, instance, ()| lua.to_value(&instance.get_size_request()?));
+      methods.add_method("set_size_request", |lua, this, value: mlua::Value| { this.set_size_request(lua, value) });
 
       methods.add_method("get_valign", |lua, instance, ()| lua.to_value(&instance.get_valign()?));
       methods.add_method("set_valign", |lua, this, value: mlua::Value| { this.set_valign(lua, value) });
 
       methods.add_method("get_vexpand", |lua, instance, ()| { lua.to_value(&instance.get_vexpand()?) });
       methods.add_method("set_vexpand", |lua, this, value: mlua::Value| { this.set_vexpand(lua, value) });
+
+      methods.add_method("get_width", |lua, instance, ()| lua.to_value(&instance.get_width()?));
+      methods.add_method("get_width_request", |lua, instance, ()| lua.to_value(&instance.get_width_request()?));
+      methods.add_method("set_width_request", |lua, this, args: mlua::Value| { this.set_width_request(lua, args) });
     };
 
     if let Some(ImplItem::Fn(ref mut method)) = item_impl.items.iter_mut().find(|item| match item {

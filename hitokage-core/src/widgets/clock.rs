@@ -69,12 +69,12 @@ impl Component for Clock {
     let mut model = Clock {
       current_time: format_time(&props.format.clone().into()),
       format: props.format.as_reactive_string(None),
-      base: props.base.into(),
+      base: props.base.clone().into(),
       source_id: Some(source_id),
     };
 
     prepend_css_class_to_model!("clock", model, root);
-    set_initial_base_props!(model, root);
+    set_initial_base_props!(model, root, props.base);
 
     let widgets = view_output!();
 

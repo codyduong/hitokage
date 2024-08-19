@@ -82,7 +82,7 @@ impl Component for Memory {
     let mem_and_swap: MemoryAndSwapWrapper = sys.memory_and_swap().into();
 
     let mut model = Memory {
-      base: props.base.into(),
+      base: props.base.clone().into(),
       mem_and_swap,
       source_id: Some(source_id),
       format: props
@@ -94,7 +94,7 @@ impl Component for Memory {
     };
 
     prepend_css_class_to_model!("memory", model, root);
-    set_initial_base_props!(model, root);
+    set_initial_base_props!(model, root, props.base);
 
     
 
