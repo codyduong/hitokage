@@ -1,4 +1,4 @@
-use super::base::{Base, BaseMsgHook};
+use super::base::BaseMsgHook;
 use super::r#box::{BoxInner, BoxMsgHook, BoxProps};
 use super::WidgetUserData;
 use super::{WidgetController, WidgetProps};
@@ -185,14 +185,14 @@ impl Component for Bar {
       r#box: BoxInner {
         homogeneous: props.r#box.homogeneous,
         widgets: Vec::new(),
-        base: props.r#box.base.into(),
+        base: props.r#box.base.clone().into(),
       },
     };
 
     root.set_transient_for(Some(&application_root));
     prepend_css_class_to_model!("bar", model.r#box, root);
     let widgets = view_output!();
-    set_initial_box_props!(model, widgets.main_box);
+    set_initial_box_props!(model, widgets.main_box, props.r#box.base);
     generate_box_widgets!(props.r#box.widgets, model.r#box, monitor, widgets.main_box);
 
     // manually realize/show

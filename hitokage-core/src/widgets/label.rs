@@ -61,7 +61,7 @@ impl Component for Label {
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let mut model = Label {
-      base: props.base.into(),
+      base: props.base.clone().into(),
       label: props
         .label
         .as_reactive_string(create_react_sender(sender.input_sender(), LabelMsg::React)),
@@ -70,7 +70,7 @@ impl Component for Label {
     };
 
     prepend_css_class_to_model!("label", model, root);
-    set_initial_base_props!(model, root);
+    set_initial_base_props!(model, root, props.base);
 
     let widgets = view_output!();
 

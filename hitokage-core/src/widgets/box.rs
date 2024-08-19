@@ -72,13 +72,13 @@ impl Component for HitokageBox {
     let mut model = HitokageBox {
       r#box: BoxInner {
         widgets: Vec::new(),
-        base: props.base.into(),
+        base: props.base.clone().into(),
         homogeneous: props.homogeneous,
       },
     };
 
     prepend_css_class_to_model!("box", model.r#box, root);
-    set_initial_box_props!(model, root);
+    set_initial_box_props!(model, root, props.base);
     let widgets = view_output!();
     generate_box_widgets!(props.widgets, model.r#box, monitor, root);
 
@@ -175,8 +175,8 @@ macro_rules! generate_box_match_arms {
 
 #[macro_export]
 macro_rules! set_initial_box_props {
-  ($self: expr,$root:expr) => {
-    set_initial_base_props!($self.r#box, $root);
+  ($self: expr,$root:expr,$base_props:expr) => {
+    set_initial_base_props!($self.r#box, $root,$base_props);
     if let Some(homogeneous) = $self.r#box.homogeneous {
       $root.set_homogeneous(homogeneous);
     }

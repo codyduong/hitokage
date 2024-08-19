@@ -62,7 +62,7 @@ impl Component for Icon {
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     let mut model = Icon {
-      base: props.base.into(),
+      base: props.base.clone().into(),
       file: props
         .file
         .as_reactive_string(create_react_sender(sender.input_sender(), IconMsg::React)),
@@ -71,7 +71,7 @@ impl Component for Icon {
     };
 
     prepend_css_class_to_model!("icon", model, root);
-    set_initial_base_props!(model, root);
+    set_initial_base_props!(model, root, props.base);
 
     let widgets = view_output!();
 
