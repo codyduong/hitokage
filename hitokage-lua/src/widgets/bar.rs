@@ -5,11 +5,6 @@ use hitokage_core::structs::{Align, Monitor, MonitorGeometry};
 use hitokage_core::widgets::bar::BarLuaHook::BoxHook;
 use hitokage_core::widgets::bar::BarLuaHook::GetGeometry;
 use hitokage_core::widgets::bar::{BarMsg, BarProps};
-use hitokage_core::widgets::base::BaseMsgHook::{
-  GetClass, GetHalign, GetHeight, GetHeightRequest, GetHexpand, GetSizeRequest, GetValign, GetVexpand, GetWidth,
-  GetWidthRequest, SetClass, SetHalign, SetHeightRequest, SetHexpand, SetSizeRequest, SetValign, SetVexpand,
-  SetWidthRequest,
-};
 use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
 use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
 use hitokage_macros::impl_lua_base;

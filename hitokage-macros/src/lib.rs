@@ -1,6 +1,8 @@
 extern crate proc_macro;
+use std::f32::consts::E;
+
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{
   parse::{Parse, ParseStream},
   parse_macro_input, ImplItem, ItemImpl, Path,
@@ -30,6 +32,14 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
 
   // Check if this is the regular `impl` block (not a trait impl)
   let is_regular_impl = item_impl.trait_.is_none();
+
+  let imports = quote! {
+    use hitokage_core::widgets::base::BaseMsgHook::{
+      GetClass, GetHalign, GetHeight, GetHeightRequest, GetHexpand, GetSizeRequest, GetValign, GetVexpand, GetWidth,
+      GetWidthRequest, SetClass, SetHalign, SetHeightRequest, SetHexpand, SetSizeRequest, SetValign, SetVexpand,
+      SetWidthRequest,
+    };
+  };
 
   if is_regular_impl {
     let path = path.path.unwrap();
@@ -119,8 +129,12 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
     }
   }
 
-  // Return the modified impl block
-  TokenStream::from(quote! {
+  if !is_regular_impl {
+    TokenStream::from(quote! {
+      #imports
       #item_impl
-  })
+    })
+  } else {
+    item_impl.to_token_stream().into()
+  }
 }
