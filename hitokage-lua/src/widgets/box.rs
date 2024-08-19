@@ -1,11 +1,6 @@
 use super::WidgetUserDataVec;
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::structs::Align;
-use hitokage_core::widgets::base::BaseMsgHook::{
-  GetClass, GetHalign, GetHeight, GetHeightRequest, GetHexpand, GetSizeRequest, GetValign, GetVexpand, GetWidth,
-  GetWidthRequest, SetClass, SetHalign, SetHeightRequest, SetHexpand, SetSizeRequest, SetValign, SetVexpand,
-  SetWidthRequest,
-};
 use hitokage_core::widgets::r#box::BoxMsg;
 use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
 use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
