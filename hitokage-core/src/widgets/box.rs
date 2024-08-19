@@ -176,7 +176,7 @@ macro_rules! generate_box_match_arms {
 #[macro_export]
 macro_rules! set_initial_box_props {
   ($self: expr,$root:expr,$base_props:expr) => {
-    set_initial_base_props!($self.r#box, $root,$base_props);
+    set_initial_base_props!($self.r#box, $root, $base_props);
     if let Some(homogeneous) = $self.r#box.homogeneous {
       $root.set_homogeneous(homogeneous);
     }
