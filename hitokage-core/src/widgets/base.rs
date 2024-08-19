@@ -39,6 +39,7 @@ impl From<BaseProps> for Base {
   fn from(props: BaseProps) -> Self {
     Base {
       classes: props.class.unwrap_or_default().into(),
+      classes_temp: Vec::new(),
       halign: props.halign,
       hexpand: props.hexpand.unwrap_or(false),
       valign: props.valign,
@@ -49,6 +50,7 @@ impl From<BaseProps> for Base {
 
 pub struct Base {
   pub classes: Vec<String>,
+  pub classes_temp: Vec<String>,
   pub halign: Option<Align>,
   pub hexpand: bool,
   pub valign: Option<Align>,
@@ -60,7 +62,16 @@ macro_rules! generate_base_match_arms {
   ($self:expr, $box_str:expr, $root:expr, $hook:expr) => {
     match $hook {
       BaseMsgHook::GetClass(tx) => {
-        tx.send($self.base.classes.clone()).unwrap();
+        tx.send(
+          $self
+            .base
+            .classes
+            .clone()
+            .into_iter()
+            .chain($self.base.classes_temp.clone().into_iter())
+            .collect(),
+        )
+        .unwrap();
       }
       BaseMsgHook::SetClass(classes) => {
         use crate::structs::CssClass;
@@ -97,9 +108,7 @@ macro_rules! generate_base_match_arms {
       BaseMsgHook::GetSizeRequest(tx) => {
         tx.send($root.size_request()).unwrap();
       }
-      BaseMsgHook::SetSizeRequest((width, height)) => {
-        $root.set_size_request(width.unwrap_or(-1), height.unwrap_or(-1))
-      }
+      BaseMsgHook::SetSizeRequest((width, height)) => $root.set_size_request(width.unwrap_or(-1), height.unwrap_or(-1)),
       BaseMsgHook::GetValign(tx) => {
         if let Some(valign) = $self.base.valign {
           tx.send(valign).unwrap();
@@ -135,7 +144,10 @@ macro_rules! generate_base_match_arms {
 #[macro_export]
 macro_rules! set_initial_base_props {
   ($self: expr, $root:expr, $base_props:expr) => {
-    $root.set_size_request($base_props.width_request.unwrap_or(-1), $base_props.height_request.unwrap_or(-1));
+    $root.set_size_request(
+      $base_props.width_request.unwrap_or(-1),
+      $base_props.height_request.unwrap_or(-1),
+    );
     if let Some(halign) = $self.base.halign {
       $root.set_halign(halign.into());
     }

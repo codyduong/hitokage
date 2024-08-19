@@ -77,6 +77,14 @@ window {
   color: #fff;
 }
 
+/* .cpu.usage-10 {
+  color: #00ff00;
+}
+
+.cpu.usage-20 {
+  color: #ff0000;
+} */
+
 .clock_start {
   font-size: 24px;
   color: rgba(60, 56, 54, 1);

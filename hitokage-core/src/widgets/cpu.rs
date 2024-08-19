@@ -2,6 +2,7 @@ use super::base::Base;
 use super::base::BaseProps;
 use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
+use crate::prepend_css_class;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
 use crate::structs::reactive::create_react_sender;
@@ -134,6 +135,10 @@ impl Component for Cpu {
                 Vec::new()
               }
             };
+            self.base.classes_temp = generate_cpu_classes(&res);
+            let joined = prepend_css_class!(self.base.classes.clone(), self.base.classes_temp.clone());
+            let classes_ref: Vec<&str> = joined.iter().map(AsRef::as_ref).collect();
+            root.set_css_classes(&classes_ref);
             self.set_cpu(res.into());
           }
           Err(err) => {
@@ -261,4 +266,31 @@ fn format_cpu(format: &String, cpu_loads: &Vec<CPULoad>) -> String {
   };
 
   "".to_owned()
+}
+
+// prepend numbers
+fn generate_cpu_classes(cpu_loads: &Vec<CPULoad>) -> Vec<String> {
+  let mut class_names = vec!["cpu".to_string()];
+  let mut total_usage = 0.0;
+  let num_cores = cpu_loads.len();
+
+  for (index, cpu) in cpu_loads.iter().enumerate() {
+    let usage = 1.0 - cpu.idle;
+    let usage_percentage = (usage * 100.0).trunc() as i32;
+
+    total_usage += usage;
+
+    for percent in (10..=usage_percentage).step_by(10) {
+      class_names.push(format!("core{}-usage-{}", index, percent));
+    }
+  }
+
+  let overall_usage = total_usage / num_cores as f32;
+  let overall_usage_percentage = (overall_usage * 100.0).trunc() as i32;
+
+  for percent in (10..=overall_usage_percentage).step_by(10) {
+    class_names.push(format!("usage-{}", percent));
+  }
+
+  class_names
 }
