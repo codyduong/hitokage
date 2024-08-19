@@ -143,6 +143,8 @@
             
             <ComponentRef Id='binary0'/>
 
+            <ComponentGroupRef Id="GtkDependencies" />
+
             <Feature
                 Id='Environment'
                 Title='PATH Environment Variable'
@@ -150,6 +152,7 @@
                 Level='1'
                 Absent='allow'>
                 <ComponentRef Id='Path'/>
+                <ComponentGroupRef Id='GtkDependencies' />
             </Feature>
         </Feature>
 
@@ -175,7 +178,7 @@
           2. Change the value for `Value` attribute of the following
              `Property` tag to a valid URL.
         -->
-        <!--<Property Id='ARPHELPLINK' Value='ChangeMe'/>-->
+        <Property Id='ARPHELPLINK' Value='https://github.com/codyduong/hitokage'/>
 
         <UI>
             <UIRef Id='WixUI_FeatureTree'/>

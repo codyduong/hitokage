@@ -2,12 +2,16 @@ name: Check Lua styling with StyLua
 
 on:
   push:
+    paths:
+      - '.github/workflows/stylua.yml'
+      - '**.lua'
     branches:
-      - main
       - master
   pull_request:
+    paths:
+      - '.github/workflows/stylua.yml'
+      - '**.lua'
     branches:
-      - main
       - master
 
 jobs:

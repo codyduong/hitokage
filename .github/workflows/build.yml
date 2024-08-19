@@ -1,0 +1,249 @@
+# Adapted from: https://github.com/LGUG2Z/komorebi/blob/821a12477127459e7414763ad416b0c108e2524d/.github/workflows/windows.yaml
+# which was adapted from: https://github.com/rust-lang/rustup/blob/38d9df16fc7edc38bba9949588ac1b2c1e3c6ac8/.github/workflows/windows-builds-on-master.yaml
+
+name: build
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/build.yml'
+      - '**.lua'
+      - '**.rs'
+      - '!hitokage-lua-lib/**'
+    branches:
+      - "*"
+  push:
+    paths:
+      - '.github/workflows/build.yml'
+      - '**.lua'
+      - '**.rs'
+      - '!hitokage-lua-lib/**'
+    branches:
+      - "master"
+      - "feature/*"
+      - "hotfix/*"
+    tags:
+      - v*
+  schedule:
+    - cron: "30 0 * * *"
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    permissions: write-all
+    env:
+      RUSTFLAGS: -Ctarget-feature=+crt-static
+      GH_TOKEN: ${{ github.token }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest gvsbuild release tag
+        id: gvsbuild-release
+        run: |
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/wingtk/gvsbuild/releases/latest"
+          $tag = $response.tag_name
+          Write-Host $tag
+          echo "tag_name=$tag" | Out-File -Append -FilePath "$env:GITHUB_OUTPUT" -Encoding utf8
+        shell: powershell
+
+      - name: Cache GTK installation
+        uses: actions/cache@v4
+        with:
+          path: C:\gtk-build
+          key: ${{ runner.os }}-gtk-${{ steps.gvsbuild-release.outputs.tag_name }}
+          restore-keys: ${{ runner.os }}-gtk-
+
+      - name: Install GTK if not cached
+        if: steps.gvsbuild-release.outputs.tag_name
+        run: |
+          if (Test-Path 'C:\gtk-build') {
+            Write-Host "GTK already installed in cache"
+          } else {
+            # Download and install gvsbuild
+            $download_uri = "https://github.com/wingtk/gvsbuild/releases/download/${{ steps.gvsbuild-release.outputs.tag_name }}/GTK4_Gvsbuild_${{ steps.gvsbuild-release.outputs.tag_name }}_x64.zip"
+            Write-Host $download_uri
+            Invoke-WebRequest -Uri $download_uri -OutFile gtk-build.zip
+            Expand-Archive -Path gtk-build.zip -DestinationPath "C:\gtk-build"
+          }
+        shell: powershell
+
+      - name: Prep cargo dirs
+        run: |
+          New-Item "${env:USERPROFILE}\.cargo\registry" -ItemType Directory -Force
+          New-Item "${env:USERPROFILE}\.cargo\git" -ItemType Directory -Force
+        shell: powershell
+
+      - name: Set environment variables
+        run: |
+          echo "%USERPROFILE%\.cargo\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          echo "TARGET=${{ matrix.target }}" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo "SKIP_TESTS=" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo "PKG_CONFIG_PATH=C:\gtk-build\lib\pkgconfig" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo "C:\gtk-build\bin" | Out-File -Append -FilePath $env:GITHUB_PATH -Encoding utf8
+          echo "Lib=C:\gtk-build\lib" | Out-File -Append -FilePath $env:GITHUB_ENV -Encoding utf8
+          echo 'C:\Program Files (x86)\WiX Toolset v3.14\bin' | Out-File -Append -FilePath $env:GITHUB_PATH
+
+      - name: Cache cargo registry, git trees and binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            ~/.cargo/bin
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Get rustc commit hash
+        id: cargo-target-cache
+        run: |
+          echo "name=rust_hash::$(rustc -Vv | grep commit-hash | awk '{print $2}')" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ github.base_ref }}-${{ github.head_ref }}-${{ matrix.target }}-cargo-target-dir-${{ steps.cargo-target-cache.outputs.rust_hash }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ github.base_ref }}-${{ matrix.target }}-cargo-target-dir-${{ steps.cargo-target-cache.outputs.rust_hash }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Rustup using win.rustup.rs
+        run: |
+          # Disable the download progress bar which can cause perf issues
+          $ProgressPreference = "SilentlyContinue"
+          Invoke-WebRequest https://win.rustup.rs/ -OutFile rustup-init.exe
+          .\rustup-init.exe -y --default-host=x86_64-pc-windows-msvc --profile=minimal
+        shell: powershell
+
+      - name: Ensure stable toolchain is up to date
+        run: rustup update stable
+        shell: bash
+
+      - name: Install the target
+        run: |
+          rustup target install ${{ matrix.target }}
+
+      - name: Run Cargo checks
+        run: |
+          cargo fmt --check
+          cargo check
+          cargo clippy
+
+      - name: Run a full build
+        run: |
+          cargo build --locked --release --target ${{ matrix.target }}
+
+      - name: Copy GTK4 DLLs
+        run: |
+          New-Item -Path "target\${{ matrix.target }}\release\" -Name "bin" -ItemType "directory" -ErrorAction SilentlyContinue
+          Copy-Item "C:\gtk-build\bin\*.dll" -Destination "target\${{ matrix.target }}\release\bin"
+        shell: powershell
+
+      - name: Cache WiX Toolset installation
+        id: wix-cache
+        uses: actions/cache@v4
+        with:
+          path: C:\Program Files (x86)\WiX Toolset v3.14
+          key: ${{ runner.os }}-wix-v3.14
+          restore-keys: |
+            ${{ runner.os }}-wix-
+
+      - name: Install WiX Toolset v3 if not cached
+        if: steps.wix-cache.outputs.cache-hit != 'true'
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe" -OutFile wix314.exe
+          Start-Process -FilePath "wix314.exe" -ArgumentList "/quiet" -NoNewWindow -Wait
+        shell: powershell
+
+      - name: Heat
+        run: |
+          heat dir target/${{ matrix.target }}/release/bin -cg GtkDependencies -dr Bin -ag -sfrag -srd -sreg -out wix/gtk.wxs
+          New-Item -Path "target\" -Name "wix" -ItemType "directory" -ErrorAction SilentlyContinue
+
+      - name: Create MSI installer
+        run: |
+          $target = "${{matrix.target}}"
+          $version = ($(cargo pkgid hitokage) -split '#')[1]
+          candle wix\main.wxs wix\gtk.wxs -dVersion="$version" -dCargoTargetBinDir="target\$target\release\" -o "target\wix\"
+          Copy-Item "target\$target\release\bin\*.dll" -Destination "target\wix"
+          light -b "target\wix" -ext WixUIExtension -out "target\wix\hitokage-$version-$target.msi" ".\target\wix\main.wixobj" ".\target\wix\gtk.wixobj"
+        shell: powershell
+
+      - name: Upload the built artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hitokage-${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/hitokage.exe
+            target/wix/hitokage-*.msi
+
+      # - name: Check GoReleaser
+      #   uses: goreleaser/goreleaser-action@v3
+      #   env:
+      #     GORELEASER_CURRENT_TAG: v0.1.28
+      #   with:
+      #     version: latest
+      #     args: build --skip=validate --clean
+
+      - name: Prepare nightly artifacts
+        if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+        run: |
+          Compress-Archive .\target\${{ matrix.target }}\release\*.exe hitokage-nightly-x86_64-pc-windows-msvc.zip
+          Copy-Item ./target/wix/*.msi -Destination ./hitokage-nightly-x86_64.msi
+          echo "$((Get-FileHash hitokage-nightly-x86_64-pc-windows-msvc.zip).Hash.ToLower())  hitokage-nightly-x86_64-pc-windows-msvc.zip" >checksums.txt
+
+      - name: Update nightly
+        if: ${{ github.ref == 'refs/heads/master' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+        shell: bash
+        run: |
+          gh release delete nightly --yes || true
+          git push origin :nightly || true
+          gh release create nightly \
+            --target $GITHUB_SHA \
+            --prerelease \
+            --title "hitokage nightly (${GITHUB_SHA})" \
+            --notes "This nightly release of hitokage corresponds to [this commit](https://github.com/codyduong/hitokage/commit/${GITHUB_SHA})." \
+            hitokage-nightly-x86_64-pc-windows-msvc.zip \
+            hitokage-nightly-x86_64.msi \
+            checksums.txt
+
+      # Release
+      # - name: Generate changelog
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   shell: bash
+      #   run: |
+      #     if ! type kokai >/dev/null; then cargo install --locked kokai --force; fi
+      #     git tag -d nightly
+      #     kokai release --no-emoji --add-links github:commits,issues --ref "$(git tag --points-at HEAD)" >"CHANGELOG.md"
+      # - name: Run GoReleaser
+      #   uses: goreleaser/goreleaser-action@v3
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   with:
+      #     version: latest
+      #     args: release --skip=validate --clean --release-notes=CHANGELOG.md
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     SCOOP_TOKEN: ${{ secrets.SCOOP_TOKEN }}
+      # - name: Add MSI to release
+      #   uses: softprops/action-gh-release@v2
+      #   if: startsWith(github.ref, 'refs/tags/v')
+      #   with:
+      #     files: "target/wix/hitokage-*.msi"
+
+  # winget:
+  #   name: Publish to WinGet
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   if: startsWith(github.ref, 'refs/tags/v')
+
+  #   steps:
+  #     - uses: vedantmgoyal2009/winget-releaser@v2
+  #       with:
+  #         identifier: codyduong.hitokage
+  #         token: ${{ secrets.WINGET_TOKEN }}
