@@ -28,8 +28,37 @@ on:
     - cron: "30 0 * * *"
 
 jobs:
+  check-nightly:
+    name: Check nightly against current 
+    runs-on: ubuntu-latest
+    outputs:
+      build: ${{ steps.check-nightly.outputs.build }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check nightly
+        id: check-nightly
+        run: |
+          git fetch origin master
+          LATEST_MASTER_COMMIT=$(git rev-parse origin/master)
+          CURRENT_COMMIT=${GITHUB_SHA}
+          echo "Latest master commit: $LATEST_MASTER_COMMIT"
+          echo "Current commit: $CURRENT_COMMIT"
+
+          if [[ "$LATEST_MASTER_COMMIT" == "$CURRENT_COMMIT" ]]; then
+            echo "No new commit on master. Running build."
+            echo "build=false" >> $GITHUB_OUTPUT
+          else
+            echo "New commits, running build."
+            echo "build=true" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
   build:
-    name: Build
+    name: Build gtk4 rust application
     runs-on: windows-latest
     permissions: write-all
     env:
@@ -40,6 +69,8 @@ jobs:
       matrix:
         target:
           - x86_64-pc-windows-msvc
+    needs: [check-nightly]
+    if: needs.check-nightly.outputs.build == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
