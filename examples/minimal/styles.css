@@ -1,9 +1,12 @@
 .bar {
-  background-color: rgba(29, 32, 33, 0.0);
+  background-color: rgba(29, 32, 33, 1.0);
   color: #f2e5bc;
   
   font-family: 'MesloLGS NF', 'Courier New', 'Bars', 'Font Awesome 5 Free';
   font-size: 14px;
+  line-height: 14px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 .workspace {

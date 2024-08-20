@@ -17,7 +17,7 @@ pub fn get_hitokage_asset(s: impl Into<String>) -> std::path::PathBuf {
     path.push(match std::env::var("HITOKAGE_DEV_USE_EXAMPLE") {
       Ok(v) => match v.as_str() {
         "minimal" => "./examples/minimal/",
-        "testbench" => "./examples/",
+        "testbench" => "./examples/testbench/",
         _ => {
           log::error!("Unsupported example: {}", v);
           "./examples/testbench/"
