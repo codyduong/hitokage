@@ -96,6 +96,7 @@ impl Component for Icon {
           let arc = self.file.value.clone();
           let mut str = arc.lock().unwrap();
           *str = icon;
+          self.set_react(!self.react);
         }
       },
       IconMsg::React => {

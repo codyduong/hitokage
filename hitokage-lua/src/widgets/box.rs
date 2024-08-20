@@ -1,4 +1,5 @@
-use super::WidgetUserDataVec;
+use super::{WidgetUserData, WidgetUserDataVec};
+use crate::impl_lua_get_widget_by_id;
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::structs::Align;
 use hitokage_core::widgets::r#box::BoxMsg;
@@ -6,6 +7,8 @@ use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
 use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
 use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
+use std::collections::VecDeque;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct BoxUserData {
@@ -43,6 +46,8 @@ impl UserData for BoxUserData {
     methods.add_method("get_widgets", |lua, instance, ()| lua.pack(instance.get_widgets()?));
     // BOX PROPERTIES END
 
+    impl_lua_get_widget_by_id!(methods);
+
     methods.add_meta_method(
       "__index",
       |lua, instance, value| -> Result<mlua::Value<'lua>, mlua::Error> {
@@ -57,4 +62,60 @@ impl UserData for BoxUserData {
       },
     )
   }
+}
+
+#[macro_export]
+macro_rules! impl_lua_get_widget_by_id {
+  ($methods: expr) => {
+    $methods.add_method(
+      "get_widget_by_id",
+      |lua, instance, args: mlua::Variadic<mlua::Value>| {
+        if args.len() < 1 || args.len() > 2 {
+          return Err(mlua::Error::RuntimeError("Expected one or two arguments".to_string()));
+        }
+
+        let id: String = lua.from_value(args[0].clone()).map_err(|e| mlua::Error::BadArgument {
+          to: Some("get_widget_by_id".to_string()),
+          pos: 0,
+          name: Some("id".to_string()),
+          cause: Arc::new(e),
+        })?;
+        let recursive: Option<bool> = lua.from_value(args[1].clone()).map_err(|e| mlua::Error::BadArgument {
+          to: Some("get_widget_by_id".to_string()),
+          pos: 0,
+          name: Some("recursive".to_string()),
+          cause: Arc::new(e),
+        })?;
+
+        let mut queue = VecDeque::new();
+
+        let widgets = instance.get_widgets()?;
+        for widget in widgets {
+          queue.push_back(widget);
+        }
+
+        while let Some(widget) = queue.pop_front() {
+          let widget_id = widget.get_id();
+
+          if widget_id.filter(|w_id| *w_id == id).is_some() {
+            return lua.pack(widget);
+          }
+
+          if recursive.unwrap_or(false) {
+            match widget {
+              WidgetUserData::Box(box_userdata) => {
+                let children = box_userdata.get_widgets()?;
+                for child in children {
+                  queue.push_back(child);
+                }
+              }
+              _ => {}
+            }
+          }
+        }
+
+        Ok(mlua::Nil)
+      },
+    );
+  };
 }

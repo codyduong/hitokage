@@ -1,5 +1,5 @@
-use super::WidgetUserDataVec;
-use crate::{impl_getter_fn, impl_setter_fn};
+use super::{WidgetUserData, WidgetUserDataVec};
+use crate::{impl_getter_fn, impl_lua_get_widget_by_id, impl_setter_fn};
 use hitokage_core::deserializer::LuaDeserializer;
 use hitokage_core::structs::{Align, Monitor, MonitorGeometry};
 use hitokage_core::widgets::bar::BarLuaHook::BoxHook;
@@ -15,6 +15,7 @@ use mlua::{
 };
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 struct BarUserData {
@@ -46,97 +47,39 @@ impl BarUserData {
   impl_setter_fn!(set_class, BarMsg::LuaHook, BoxHook, BaseHook, SetClass, Vec<String>);
 
   impl_getter_fn!(get_height, BarMsg::LuaHook, BoxHook, BaseHook, GetHeight, i32);
-  impl_getter_fn!(
-    get_height_request,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    GetHeightRequest,
-    i32
-  );
-  impl_setter_fn!(
-    set_height_request,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    SetHeightRequest,
-    Option<i32>
-  );
+  #[rustfmt::skip]
+  impl_getter_fn!(get_height_request, BarMsg::LuaHook, BoxHook, BaseHook, GetHeightRequest, i32);
+  #[rustfmt::skip]
+  impl_setter_fn!(set_height_request, BarMsg::LuaHook, BoxHook, BaseHook, SetHeightRequest, Option<i32>);
 
   impl_getter_fn!(get_halign, BarMsg::LuaHook, BoxHook, BaseHook, GetHalign, Align);
   impl_setter_fn!(set_halign, BarMsg::LuaHook, BoxHook, BaseHook, SetHalign, Align);
 
-  impl_getter_fn!(
-    get_hexpand,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    GetHexpand,
-    Option<bool>
-  );
-  impl_setter_fn!(
-    set_hexpand,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    SetHexpand,
-    Option<bool>
-  );
+  #[rustfmt::skip]
+  impl_getter_fn!(get_hexpand, BarMsg::LuaHook, BoxHook, BaseHook, GetHexpand, Option<bool>);
+  #[rustfmt::skip]
+  impl_setter_fn!(set_hexpand, BarMsg::LuaHook, BoxHook, BaseHook, SetHexpand, Option<bool>);
 
-  impl_getter_fn!(
-    get_size_request,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    GetSizeRequest,
-    (i32, i32)
-  );
-  impl_setter_fn!(
-    set_size_request,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    SetSizeRequest,
-    (Option<i32>, Option<i32>)
-  );
+  impl_getter_fn!(get_id, BarMsg::LuaHook, BoxHook, BaseHook, GetId, Option<String>);
+
+  #[rustfmt::skip]
+  impl_getter_fn!(get_size_request, BarMsg::LuaHook, BoxHook, BaseHook, GetSizeRequest, (i32, i32));
+  #[rustfmt::skip]
+  impl_setter_fn!(set_size_request, BarMsg::LuaHook, BoxHook, BaseHook, SetSizeRequest, (Option<i32>, Option<i32>));
 
   impl_getter_fn!(get_valign, BarMsg::LuaHook, BoxHook, BaseHook, GetValign, Align);
   impl_setter_fn!(set_valign, BarMsg::LuaHook, BoxHook, BaseHook, SetValign, Align);
 
-  impl_getter_fn!(
-    get_vexpand,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    GetVexpand,
-    Option<bool>
-  );
-  impl_setter_fn!(
-    set_vexpand,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    SetVexpand,
-    Option<bool>
-  );
+  #[rustfmt::skip]
+  impl_getter_fn!(get_vexpand, BarMsg::LuaHook, BoxHook, BaseHook, GetVexpand, Option<bool>);
+  #[rustfmt::skip]
+  impl_setter_fn!(set_vexpand, BarMsg::LuaHook, BoxHook, BaseHook, SetVexpand, Option<bool>);
 
   impl_getter_fn!(get_width, BarMsg::LuaHook, BoxHook, BaseHook, GetWidth, i32);
-  impl_getter_fn!(
-    get_width_request,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    GetWidthRequest,
-    i32
-  );
-  impl_setter_fn!(
-    set_width_request,
-    BarMsg::LuaHook,
-    BoxHook,
-    BaseHook,
-    SetWidthRequest,
-    Option<i32>
-  );
+  #[rustfmt::skip]
+  impl_getter_fn!(get_width_request, BarMsg::LuaHook, BoxHook, BaseHook, GetWidthRequest, i32);
+  #[rustfmt::skip]
+  impl_setter_fn!(set_width_request, BarMsg::LuaHook, BoxHook, BaseHook, SetWidthRequest, Option<i32>);
   // BASE PROPERTIES END
 
   // BOX PROPERTIES START
@@ -170,6 +113,8 @@ impl UserData for BarUserData {
     methods.add_method("get_geometry", |lua, instance, ()| {
       lua.to_value(&instance.get_geometry()?)
     });
+
+    impl_lua_get_widget_by_id!(methods);
 
     methods.add_meta_method(
       "__index",

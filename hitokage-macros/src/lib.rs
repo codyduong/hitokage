@@ -1,6 +1,4 @@
 extern crate proc_macro;
-use std::f32::consts::E;
-
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{
@@ -36,7 +34,7 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
   let imports = quote! {
     use hitokage_core::widgets::base::BaseMsgHook::{
       GetClass, GetHalign, GetHeight, GetHeightRequest, GetHexpand, GetSizeRequest, GetValign, GetVexpand, GetWidth,
-      GetWidthRequest, SetClass, SetHalign, SetHeightRequest, SetHexpand, SetSizeRequest, SetValign, SetVexpand,
+      GetWidthRequest, SetClass, SetHalign, SetHeightRequest, SetHexpand, GetId, SetSizeRequest, SetValign, SetVexpand,
       SetWidthRequest,
     };
   };
@@ -58,6 +56,8 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
 
         impl_getter_fn!(get_hexpand, #path, BaseHook, GetHexpand, Option<bool>);
         impl_setter_fn!(set_hexpand, #path, BaseHook, SetHexpand, Option<bool>);
+
+        impl_getter_fn!(get_id, #path, BaseHook, GetId, Option<String>);
 
         impl_getter_fn!(get_size_request, #path, BaseHook, GetSizeRequest, (i32, i32));
         impl_setter_fn!(set_size_request, #path, BaseHook, SetSizeRequest, (Option<i32>, Option<i32>));
@@ -97,6 +97,8 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
 
       methods.add_method("get_hexpand", |lua, instance, ()| { lua.to_value(&instance.get_hexpand()?) });
       methods.add_method("set_hexpand", |lua, this, value: mlua::Value| { this.set_hexpand(lua, value) });
+
+      methods.add_method("get_id", |lua, instance, ()| { lua.to_value(&instance.get_id()?) });
 
       methods.add_method("get_size_request", |lua, instance, ()| lua.to_value(&instance.get_size_request()?));
       methods.add_method("set_size_request", |lua, this, value: mlua::Value| { this.set_size_request(lua, value) });

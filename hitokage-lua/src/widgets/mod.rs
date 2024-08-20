@@ -1,9 +1,6 @@
 use clock::ClockUserData;
 use cpu::CpuUserData;
-use hitokage_core::widgets::{
-  clock::ClockMsg, cpu::CpuMsg, icon::IconMsg, label::LabelMsg, memory::MemoryMsg, r#box::BoxMsg,
-  workspace::WorkspaceMsg, WidgetUserData as CoreWidgetUserData,
-};
+use hitokage_core::widgets::WidgetUserData as CoreWidgetUserData;
 use icon::IconUserData;
 use label::LabelUserData;
 use memory::MemoryUserData;
@@ -21,68 +18,40 @@ pub mod label;
 pub mod memory;
 pub mod workspace;
 
-enum WidgetUserData {
-  Box(relm4::Sender<BoxMsg>),
-  Clock(relm4::Sender<ClockMsg>),
-  Cpu(relm4::Sender<CpuMsg>),
-  Icon(relm4::Sender<IconMsg>),
-  Label(relm4::Sender<LabelMsg>),
-  Memory(relm4::Sender<MemoryMsg>),
-  Workspace(relm4::Sender<WorkspaceMsg>),
+pub(crate) enum WidgetUserData {
+  Box(BoxUserData),
+  Clock(ClockUserData),
+  Cpu(CpuUserData),
+  Icon(IconUserData),
+  Label(LabelUserData),
+  Memory(MemoryUserData),
+  Workspace(WorkspaceUserData),
+}
+
+impl WidgetUserData {
+  fn get_id(&self) -> Option<String> {
+    match self {
+      WidgetUserData::Box(userdata) => userdata.get_id().unwrap(),
+      WidgetUserData::Clock(userdata) => userdata.get_id().unwrap(),
+      WidgetUserData::Cpu(userdata) => userdata.get_id().unwrap(),
+      WidgetUserData::Icon(userdata) => userdata.get_id().unwrap(),
+      WidgetUserData::Label(userdata) => userdata.get_id().unwrap(),
+      WidgetUserData::Memory(userdata) => userdata.get_id().unwrap(),
+      WidgetUserData::Workspace(userdata) => userdata.get_id().unwrap(),
+    }
+  }
 }
 
 impl<'lua> IntoLua<'lua> for WidgetUserData {
   fn into_lua(self, lua: &'lua Lua) -> mlua::Result<mlua::Value<'lua>> {
     match self {
-      WidgetUserData::Box(sender) => {
-        let box_userdata = BoxUserData {
-          r#type: "Box".to_string(),
-          sender,
-        };
-        lua.pack(box_userdata)
-      }
-      WidgetUserData::Clock(sender) => {
-        let clock_userdata = ClockUserData {
-          r#type: "Clock".to_string(),
-          sender,
-        };
-        lua.pack(clock_userdata)
-      }
-      WidgetUserData::Cpu(sender) => {
-        let cpu_userdata = CpuUserData {
-          r#type: "Cpu".to_string(),
-          sender,
-        };
-        lua.pack(cpu_userdata)
-      }
-      WidgetUserData::Icon(sender) => {
-        let image_userdata = IconUserData {
-          r#type: "Icon".to_string(),
-          sender,
-        };
-        lua.pack(image_userdata)
-      }
-      WidgetUserData::Label(sender) => {
-        let label_userdata = LabelUserData {
-          r#type: "Label".to_string(),
-          sender,
-        };
-        lua.pack(label_userdata)
-      }
-      WidgetUserData::Memory(sender) => {
-        let memory_userdata = MemoryUserData {
-          r#type: "Memory".to_string(),
-          sender,
-        };
-        lua.pack(memory_userdata)
-      }
-      WidgetUserData::Workspace(sender) => {
-        let workspace_userdata = WorkspaceUserData {
-          r#type: "Workspace".to_string(),
-          sender,
-        };
-        lua.pack(workspace_userdata)
-      }
+      WidgetUserData::Box(userdata) => lua.pack(userdata),
+      WidgetUserData::Clock(userdata) => lua.pack(userdata),
+      WidgetUserData::Cpu(userdata) => lua.pack(userdata),
+      WidgetUserData::Icon(userdata) => lua.pack(userdata),
+      WidgetUserData::Label(userdata) => lua.pack(userdata),
+      WidgetUserData::Memory(userdata) => lua.pack(userdata),
+      WidgetUserData::Workspace(userdata) => lua.pack(userdata),
     }
   }
 }
@@ -90,18 +59,39 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
 impl From<CoreWidgetUserData> for WidgetUserData {
   fn from(sender: CoreWidgetUserData) -> Self {
     match sender {
-      CoreWidgetUserData::Box(sender) => WidgetUserData::Box(sender),
-      CoreWidgetUserData::Clock(sender) => WidgetUserData::Clock(sender),
-      CoreWidgetUserData::Cpu(sender) => WidgetUserData::Cpu(sender),
-      CoreWidgetUserData::Icon(sender) => WidgetUserData::Icon(sender),
-      CoreWidgetUserData::Label(sender) => WidgetUserData::Label(sender),
-      CoreWidgetUserData::Memory(sender) => WidgetUserData::Memory(sender),
-      CoreWidgetUserData::Workspace(sender) => WidgetUserData::Workspace(sender),
+      CoreWidgetUserData::Box(sender) => WidgetUserData::Box(BoxUserData {
+        r#type: "Box".to_string(),
+        sender,
+      }),
+      CoreWidgetUserData::Clock(sender) => WidgetUserData::Clock(ClockUserData {
+        r#type: "Clock".to_string(),
+        sender,
+      }),
+      CoreWidgetUserData::Cpu(sender) => WidgetUserData::Cpu(CpuUserData {
+        r#type: "Cpu".to_string(),
+        sender,
+      }),
+      CoreWidgetUserData::Icon(sender) => WidgetUserData::Icon(IconUserData {
+        r#type: "Icon".to_string(),
+        sender,
+      }),
+      CoreWidgetUserData::Label(sender) => WidgetUserData::Label(LabelUserData {
+        r#type: "Label".to_string(),
+        sender,
+      }),
+      CoreWidgetUserData::Memory(sender) => WidgetUserData::Memory(MemoryUserData {
+        r#type: "Memory".to_string(),
+        sender,
+      }),
+      CoreWidgetUserData::Workspace(sender) => WidgetUserData::Workspace(WorkspaceUserData {
+        r#type: "Workspace".to_string(),
+        sender,
+      }),
     }
   }
 }
 
-struct WidgetUserDataVec(Vec<WidgetUserData>);
+pub(crate) struct WidgetUserDataVec(Vec<WidgetUserData>);
 
 impl From<Vec<CoreWidgetUserData>> for WidgetUserDataVec {
   fn from(value: Vec<CoreWidgetUserData>) -> Self {
@@ -119,6 +109,15 @@ impl FromIterator<WidgetUserData> for WidgetUserDataVec {
   }
 }
 
+impl IntoIterator for WidgetUserDataVec {
+  type Item = WidgetUserData;
+  type IntoIter = std::vec::IntoIter<WidgetUserData>;
+
+  fn into_iter(self) -> Self::IntoIter {
+    self.0.into_iter()
+  }
+}
+
 impl<'lua> IntoLua<'lua> for WidgetUserDataVec {
   fn into_lua(self, lua: &'lua Lua) -> Result<mlua::Value<'lua>, mlua::Error> {
     lua.pack(self.0)
@@ -128,7 +127,7 @@ impl<'lua> IntoLua<'lua> for WidgetUserDataVec {
 #[macro_export]
 macro_rules! impl_getter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $ret:ty) => {
-    fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
+    pub(crate) fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
       use std::sync::mpsc;
 
       let sender = self.sender()?;
@@ -141,7 +140,7 @@ macro_rules! impl_getter_fn {
     }
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $ret:ty) => {
-    fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
+    pub(crate) fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
       use std::sync::mpsc;
 
       let sender = self.sender()?;
@@ -154,7 +153,7 @@ macro_rules! impl_getter_fn {
     }
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $msg_enum3:path, $request_enum:path, $ret:ty) => {
-    fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
+    pub(crate) fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
       use std::sync::mpsc;
 
       let sender = self.sender()?;
@@ -172,7 +171,7 @@ macro_rules! impl_getter_fn {
 
 // use mlua::LuaSerdeExt;
 
-pub fn convert_variadic_to_vec<'lua, T>(
+pub(crate) fn convert_variadic_to_vec<'lua, T>(
   lua: &'lua mlua::Lua,
   args: mlua::Variadic<mlua::Value<'lua>>,
   name: &str,
@@ -230,7 +229,7 @@ where
 #[macro_export]
 macro_rules! impl_setter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, Vec<$from:ty>) => {
-    fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
+    pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
       use crate::widgets::convert_variadic_to_vec;
 
       let sender = self.sender()?;
@@ -242,7 +241,7 @@ macro_rules! impl_setter_fn {
     }
   };
   ($fn_name:ident, $msg_enum:path, $request_enum:path, $from:ty) => {
-    fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
+    pub(crate) fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
       let sender = self.sender()?;
       let value: $from = lua.from_value(value)?;
 
@@ -252,7 +251,7 @@ macro_rules! impl_setter_fn {
     }
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, Vec<$from:ty>) => {
-    fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
+    pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
       use crate::widgets::convert_variadic_to_vec;
 
       let sender = self.sender()?;
@@ -264,7 +263,7 @@ macro_rules! impl_setter_fn {
     }
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $from:ty) => {
-    fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
+    pub(crate) fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
       let sender = self.sender()?;
       let value: $from = lua.from_value(value)?;
 
@@ -274,7 +273,7 @@ macro_rules! impl_setter_fn {
     }
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $msg_enum3:path, $request_enum:path, Vec<$from:ty>) => {
-    fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
+    pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
       use crate::widgets::convert_variadic_to_vec;
 
       let sender = self.sender()?;
@@ -288,7 +287,7 @@ macro_rules! impl_setter_fn {
     }
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $msg_enum3:path, $request_enum:path, $from:ty) => {
-    fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
+    pub(crate) fn $fn_name(&self, lua: &mlua::Lua, value: mlua::Value) -> Result<(), mlua::Error> {
       let sender = self.sender()?;
       let value: $from = lua.from_value(value)?;
 

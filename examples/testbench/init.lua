@@ -137,7 +137,7 @@ for _, monitor in ipairs(monitors) do
 									widgets = {
 										{ Label = { label = "\u{EFC5}", class = "icon memory" } },
 										{ Memory = { format = mem_str, halign = "End" } },
-										{ Label = { label = "\u{F4BC}", class = "icon cpu" } },
+										{ Label = { label = "\u{F4BC}", class = "icon cpu", id = "test1" } },
 										{ Cpu = { format = cpu_str, halign = "End" } },
 										{ Label = { label = "\u{E0B2}", class = "clock_start", halign = "End" } },
 									},
@@ -201,6 +201,20 @@ for i, bar in ipairs(bars) do
 			table.insert(boxes, widget)
 		end
 	end
+
+	local label = bar:get_widget_by_id("test1", true)
+	local old_label = label:get_label()
+	hitokage.debug("fooface", label)
+	local routine = hitokage.timeout(1000, function()
+		local current_label = label:get_label()
+		hitokage.debug(current_label)
+		if current_label == "\u{F4BC}" then
+			label:set_label("yeap")
+		else
+			label:set_label("\u{F4BC}")
+		end
+	end)
+	hitokage.dispatch(routine)
 end
 
 -- local halign_test = timeout(1000, function()

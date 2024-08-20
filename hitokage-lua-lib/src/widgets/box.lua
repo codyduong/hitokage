@@ -46,3 +46,13 @@ function box_instance:set_homogeneous(homogeneous) end
 --- Get the widgets on the box
 --- @return table<number, Box | Clock | Cpu | Icon | Label | Workspace>
 function box_instance:get_widgets() end
+
+--- Gets the first item in the widget tree that has the identifier.
+---
+--- When `recursive` is set to `true` the search is performed breadth-first,
+--- then in order of widgets on the tree.
+---
+--- @param id string The identifier
+--- @param recursive boolean? Defaults to `false`
+--- @return nil | Box | Clock | Cpu | Icon | Label | Workspace>
+function box_instance:get_widget_by_id(id, recursive) end
