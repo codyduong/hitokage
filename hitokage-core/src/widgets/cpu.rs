@@ -120,6 +120,7 @@ impl Component for Cpu {
           let arc = self.format.value.clone();
           let mut str = arc.lock().unwrap();
           *str = format;
+          self.set_react(!self.react);
         }
       },
       CpuMsg::React => {

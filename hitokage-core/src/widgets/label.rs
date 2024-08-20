@@ -95,6 +95,7 @@ impl Component for Label {
           let arc = self.label.value.clone();
           let mut str = arc.lock().unwrap();
           *str = label;
+          self.set_react(!self.react);
         }
       },
       LabelMsg::React => {

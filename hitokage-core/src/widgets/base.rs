@@ -13,6 +13,7 @@ pub enum BaseMsgHook {
   SetHeightRequest(Option<i32>),
   GetHexpand(Sender<bool>),
   SetHexpand(Option<bool>),
+  GetId(Sender<Option<String>>),
   GetSizeRequest(Sender<(i32, i32)>),
   SetSizeRequest((Option<i32>, Option<i32>)),
   GetValign(Sender<Align>),
@@ -26,6 +27,7 @@ pub enum BaseMsgHook {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct BaseProps {
+  pub id: Option<String>,
   pub class: Option<CssClass>,
   pub height_request: Option<i32>,
   pub halign: Option<Align>,
@@ -38,6 +40,7 @@ pub struct BaseProps {
 impl From<BaseProps> for Base {
   fn from(props: BaseProps) -> Self {
     Base {
+      id: props.id,
       classes: props.class.unwrap_or_default().into(),
       classes_temp: Vec::new(),
       halign: props.halign,
@@ -49,6 +52,7 @@ impl From<BaseProps> for Base {
 }
 
 pub struct Base {
+  pub id: Option<String>,
   pub classes: Vec<String>,
   pub classes_temp: Vec<String>,
   pub halign: Option<Align>,
@@ -104,6 +108,9 @@ macro_rules! generate_base_match_arms {
       BaseMsgHook::SetHexpand(hexpand) => {
         $self.base.hexpand = hexpand.unwrap_or(false);
         $root.set_hexpand($self.base.hexpand);
+      }
+      BaseMsgHook::GetId(tx) => {
+        tx.send($self.base.id.clone()).unwrap();
       }
       BaseMsgHook::GetSizeRequest(tx) => {
         tx.send($root.size_request()).unwrap();

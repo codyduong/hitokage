@@ -31,6 +31,13 @@
 ---
 --- @field height_request integer?
 ---
+--- A unique identifier.
+---
+--- This is not enforced or checked by hitokage, it is simply used in utility methods such
+--- as [get_widget_by_id](lua://Bar.get_widget_by_id).
+---
+--- @field id string?
+---
 --- Whether to expand horizontally. Defaults to `false`
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/property.Widget.hexpand.html)
