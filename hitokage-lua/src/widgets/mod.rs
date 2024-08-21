@@ -6,7 +6,7 @@ use label::LabelUserData;
 use memory::MemoryUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
-use std::sync::Arc;
+use std::{collections::VecDeque, sync::Arc};
 use workspace::WorkspaceUserData;
 
 pub mod bar;
@@ -101,11 +101,7 @@ impl From<Vec<CoreWidgetUserData>> for WidgetUserDataVec {
 
 impl FromIterator<WidgetUserData> for WidgetUserDataVec {
   fn from_iter<I: IntoIterator<Item = WidgetUserData>>(iter: I) -> Self {
-    let mut vec = Vec::new();
-    for item in iter {
-      vec.push(item);
-    }
-    WidgetUserDataVec(vec)
+    WidgetUserDataVec(iter.into_iter().collect())
   }
 }
 
@@ -115,6 +111,12 @@ impl IntoIterator for WidgetUserDataVec {
 
   fn into_iter(self) -> Self::IntoIter {
     self.0.into_iter()
+  }
+}
+
+impl From<WidgetUserDataVec> for Vec<WidgetUserData> {
+  fn from(value: WidgetUserDataVec) -> Self {
+    value.0
   }
 }
 

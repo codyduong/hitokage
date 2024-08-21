@@ -87,12 +87,7 @@ macro_rules! impl_lua_get_widget_by_id {
           cause: Arc::new(e),
         })?;
 
-        let mut queue = VecDeque::new();
-
-        let widgets = instance.get_widgets()?;
-        for widget in widgets {
-          queue.push_back(widget);
-        }
+        let mut queue = VecDeque::from(Vec::from(instance.get_widgets()?));
 
         while let Some(widget) = queue.pop_front() {
           let widget_id = widget.get_id();
