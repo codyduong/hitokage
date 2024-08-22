@@ -48,7 +48,7 @@ for _, monitor in ipairs(monitors) do
 	table.insert(reactive_clock_icons, reactive_clock_icon)
 
 	local mem_str =
-		'{{pad "left" (round (div used 1024) 1) 4}} ({{ pad "left" (concat (round (mult (div used total) 100) 1) "%") 4 }})'
+	'{{pad "left" (round (div used 1024) 1) 4}} ({{ pad "left" (concat (round (mult (div used total) 100) 1) "%") 4 }})'
 	local cpu_str = '{{pad "left" (concat (round (mult usage 100) 1) "%") 6}}'
 
 	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
@@ -135,11 +135,13 @@ for _, monitor in ipairs(monitors) do
 									halign = "Fill",
 									class = "data_wrapper",
 									widgets = {
+										{ Weather = { latitude = 38.95773795883854, longitude = -95.25382422045898, hexpand = true } },
 										{ Label = { label = "\u{EFC5}", class = "icon memory" } },
 										{ Memory = { format = mem_str, halign = "End" } },
 										{ Label = { label = "\u{F4BC}", class = "icon cpu", id = "test1" } },
 										{ Cpu = { format = cpu_str, halign = "End" } },
 										{ Label = { label = "\u{E0B2}", class = "clock_start", halign = "End" } },
+										
 									},
 								},
 							},
@@ -204,12 +206,12 @@ for i, bar in ipairs(bars) do
 
 	local label = bar:get_widget_by_id("test1", true)
 	local old_label = label:get_label()
-	hitokage.debug("fooface", label)
+	-- hitokage.debug("fooface", label)
 	local routine = hitokage.timeout(1000, function()
 		local current_label = label:get_label()
-		hitokage.debug(current_label)
+		-- hitokage.debug(current_label)
 		if current_label == "\u{F4BC}" then
-			label:set_label("yeap")
+			label:set_label("a")
 		else
 			label:set_label("\u{F4BC}")
 		end
@@ -263,9 +265,9 @@ end)
 local label_reactor = hitokage.timeout(1000, function()
 	local current_format = reactive_labels[1]:get()
 	if current_format == "foo \u{EECB}  \u{F0E0}" then
-		reactive_labels[1]:set("demo demo demo")
+		reactive_labels[1]:set("demo a b")
 	else
-		reactive_labels[1]:set("foo \u{EECB}  \u{F0E0}")
+		reactive_labels[1]:set("foo \u{EECB} \u{F0E0}")
 	end
 end)
 

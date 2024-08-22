@@ -28,6 +28,7 @@ strfmt = "0.2.4"
 handlebars = "6.0.0"
 tracker = "0.2.2"
 systemstat = "0.2.3"
+reqwest = { version = "0.12.7", features = ["default", "json"] }
 
 [dependencies.windows]
 workspace = true

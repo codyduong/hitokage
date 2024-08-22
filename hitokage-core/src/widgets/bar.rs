@@ -1,3 +1,4 @@
+use super::app::AppMsg;
 use super::base::BaseMsgHook;
 use super::r#box::{BoxInner, BoxMsgHook, BoxProps};
 use super::WidgetUserData;
@@ -105,7 +106,7 @@ pub struct Bar {
 #[relm4::component(pub)]
 impl Component for Bar {
   type Input = BarMsg;
-  type Output = ();
+  type Output = AppMsg;
   type Init = (
     Monitor,
     BarProps,
@@ -193,7 +194,7 @@ impl Component for Bar {
     prepend_css_class_to_model!("bar", model.r#box, root);
     let widgets = view_output!();
     set_initial_box_props!(model, widgets.main_box, props.r#box.base);
-    generate_box_widgets!(props.r#box.widgets, model.r#box, monitor, widgets.main_box);
+    generate_box_widgets!(props.r#box.widgets, model.r#box, monitor, widgets.main_box, sender.output_sender());
 
     // manually realize/show
     root.show();
@@ -225,7 +226,7 @@ impl Component for Bar {
     }
   }
 
-  fn shutdown(&mut self, _widgets: &mut Self::Widgets, _outputt: relm4::Sender<Self::Output>) {
+  fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
     let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
       self.index,
       komorebi_client::Rect {
