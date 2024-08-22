@@ -1,7 +1,6 @@
 use super::app::AppMsg;
 use super::base::Base;
 use super::base::BaseProps;
-use super::weather::WeatherStation;
 use super::WidgetUserData;
 use crate::generate_base_match_arms;
 use crate::generate_box_match_arms;
@@ -12,8 +11,6 @@ use crate::set_initial_box_props;
 use crate::structs::Monitor;
 use crate::widgets::base::BaseMsgHook;
 use crate::widgets::deserialize_empty_or_seq;
-use crate::widgets::weather::WeatherMsgOut;
-use crate::widgets::weather::WeatherProps;
 use crate::widgets::WidgetController;
 use crate::widgets::WidgetProps;
 use gtk4::prelude::*;

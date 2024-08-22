@@ -15,18 +15,14 @@ pub enum AppMsg {
     relm4::tokio::sync::oneshot::Sender<WeatherStation>,
     Option<WeatherStationConfig>,
   ),
-  DropWeatherStation
+  DropWeatherStation,
 }
 
 pub enum LuaHookType {
   SubscribeState, // subscribe to a value in global state
   WriteState,     //
   ReadEvent,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateBar(
-    Box<Monitor>,
-    BarProps,
-    Box<dyn Fn(relm4::Sender<BarMsg>) + Send>,
-  ),
+  CreateBar(Box<Monitor>, BarProps, Box<dyn Fn(relm4::Sender<BarMsg>) + Send>),
   CheckConfigUpdate,
   NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
 }
@@ -51,5 +47,5 @@ impl std::fmt::Debug for LuaHookType {
 
 #[derive(Debug)]
 pub struct LuaHook {
-  pub t: LuaHookType
+  pub t: LuaHookType,
 }

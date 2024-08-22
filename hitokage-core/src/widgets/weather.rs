@@ -5,21 +5,18 @@ use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
-use crate::structs::reactive::create_react_sender;
-use crate::structs::reactive::Reactive;
-use crate::structs::reactive::ReactiveString;
 use crate::widgets::base::BaseMsgHook;
 use gtk4::prelude::*;
 use handlebars::Handlebars;
+use relm4::loading_widgets::LoadingWidgets;
 use relm4::prelude::AsyncComponentParts;
 use relm4::prelude::AsyncComponentSender;
 use relm4::prelude::*;
-use relm4::Worker;
-use relm4::WorkerController;
+use relm4::tokio::sync::Semaphore;
+use relm4::view;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -96,11 +93,28 @@ impl AsyncComponent for Weather {
   type CommandOutput = ();
 
   view! {
-    gtk::Label {
-      // #[track = "model.changed(Weather::react() | Weather::forecast())"]
-      // set_label: &format_temperature(model.temperature, model.format.clone().get()),
-      set_label: "foo"
+    gtk::Box {
+      #[name="weather"]
+      gtk::Label {
+        // #[track = "model.changed(Weather::react() | Weather::forecast())"]
+        // set_label: &format_temperature(model.temperature, model.format.clone().get()),
+        set_label: "foo"
+      }
     }
+  }
+
+  fn init_loading_widgets(root: Self::Root) -> Option<LoadingWidgets> {
+    view! {
+      #[local]
+      root {
+        #[name(spinner)]
+        gtk::Spinner {
+          start: (),
+          set_halign: gtk::Align::Center,
+        }
+      }
+    }
+    Some(LoadingWidgets::new(root, spinner))
   }
 
   async fn init(props: Self::Init, root: Self::Root, sender: AsyncComponentSender<Self>) -> AsyncComponentParts<Self> {
@@ -185,12 +199,12 @@ async fn request_forecast_from_station(weather_station: &WeatherStation) -> Weat
 }
 
 // https://github.com/glzr-io/zebar/blob/15f34d02cb351ea7d96f6a9c6c286d5eb23cdabf/packages/desktop/src/providers/weather/open_meteo_res.rs
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, Copy)]
 struct OpenMeteoRes {
   pub current_weather: OpenMeteoWeather,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, Copy)]
 struct OpenMeteoWeather {
   pub temperature: f32,
   #[serde(rename = "windspeed")]
@@ -239,23 +253,23 @@ pub struct WeatherStationConfig {
 
 #[derive(Debug, Clone)]
 pub struct WeatherStation {
-  client: Client,
+  client: Arc<Client>,
   latitude: f32,
   longitude: f32,
-  last_forecast: Arc<Mutex<Option<OpenMeteoWeather>>>,
-  last_time: Arc<Mutex<Option<Instant>>>,
+  last_forecast: Arc<Mutex<Option<(Instant, OpenMeteoWeather)>>>,
+  semaphore: Arc<Semaphore>,
 }
 
 impl WeatherStation {
   pub async fn get_forecast(&self) -> anyhow::Result<WeatherForecast> {
+    let _permit = self.semaphore.acquire().await.unwrap();
+
     let now = Instant::now();
 
-    if let Some(last_time) = self.last_time.lock().unwrap().as_ref() {
-      if now.duration_since(*last_time) < Duration::from_secs(60) {
-        let last_forecast = self.last_forecast.lock().unwrap().clone();
-        return last_forecast
-          .map(|v| v.into())
-          .ok_or_else(|| anyhow::anyhow!("Empty last_forecast"));
+    if let Some(last_forecast) = self.last_forecast.lock().unwrap().as_ref() {
+      if now.duration_since(last_forecast.0) < Duration::from_secs(60) {
+        log::debug!("Using cached weather forecast");
+        return Ok(last_forecast.1.clone().into());
       }
     }
 
@@ -279,18 +293,21 @@ impl WeatherStation {
     let current_weather = res.current_weather;
     let is_daytime = current_weather.is_day == 1;
 
-    log::info!("received forecast: {:?}", current_weather);
+    let mut last_forecast_guard = self.last_forecast.lock().unwrap();
+    *last_forecast_guard = Some((Instant::now(), res.current_weather.clone()));
+
+    log::debug!("Retrieved forecast: {:?}", current_weather);
 
     Ok(current_weather.into())
   }
 
   pub fn new(config: WeatherStationConfig) -> Self {
     WeatherStation {
-      client: Client::new(),
+      client: Arc::new(Client::new()),
       latitude: config.latitude,
       longitude: config.longitude,
       last_forecast: Arc::new(Mutex::new(None)),
-      last_time: Arc::new(Mutex::new(None)),
+      semaphore: Arc::new(Semaphore::new(1)),
     }
   }
 }

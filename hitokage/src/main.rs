@@ -310,31 +310,33 @@ impl Component for App {
         }
       },
       AppMsg::RequestWeatherStation(tx, config) => {
-        log::debug!("requesting weather station");
+        log::debug!("Requesting weather station");
         let mut weather_station_lock = self.weather_station.lock().unwrap();
         if let Some(weather_station) = &*weather_station_lock {
-          log::debug!("sending existing weather station");
+          log::debug!("Sending existing weather station");
           tx.send(weather_station.clone()).unwrap();
         } else {
-          log::debug!("creating new weather station");
+          log::debug!("Creating new weather station");
           let weather_station = WeatherStation::new(
             config.expect("There was no existing weather station and we did not provide props for a new one"),
           );
           *weather_station_lock = Some(weather_station.clone());
-          self
-            .weather_station_count
-            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
           tx.send(weather_station).unwrap();
         }
+        self
+          .weather_station_count
+          .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
       }
       AppMsg::DropWeatherStation => {
-        log::debug!("dropping ref to weather station");
+        log::debug!("Dropping ref to weather station");
         let weather_station_count = &self.weather_station_count;
-        weather_station_count.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+        let curr = self.weather_station_count.load(std::sync::atomic::Ordering::SeqCst);
+        let min = curr.saturating_sub(1);
+        weather_station_count.fetch_min(min, std::sync::atomic::Ordering::SeqCst);
         let mut weather_station_lock = self.weather_station.lock().unwrap();
-        if weather_station_count.load(std::sync::atomic::Ordering::SeqCst) <= 0 {
+        if weather_station_count.load(std::sync::atomic::Ordering::SeqCst) == 0 {
           *weather_station_lock = None;
-          log::info!("Weather Station dropped")
+          log::debug!("Weather Station dropped")
         }
       }
       AppMsg::DestroyActual => {
