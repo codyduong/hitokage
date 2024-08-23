@@ -253,7 +253,7 @@ pub struct WeatherStationConfig {
 
 #[derive(Debug, Clone)]
 pub struct WeatherStation {
-  client: Arc<Client>,
+  client: Client,
   latitude: f32,
   longitude: f32,
   last_forecast: Arc<Mutex<Option<(Instant, OpenMeteoWeather)>>>,
