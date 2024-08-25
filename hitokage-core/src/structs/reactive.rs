@@ -304,7 +304,7 @@ pub fn create_react_sender<T: 'static + Clone + Debug>(relm_sender: &relm4::Send
     Err(error) => match error {
       std::sync::mpsc::TryRecvError::Empty => glib::ControlFlow::Continue,
       std::sync::mpsc::TryRecvError::Disconnected => {
-        log::error!("Reactive watcher dropped");
+        // log::info!("Reactive watcher dropped");
         glib::ControlFlow::Break
       }
     },

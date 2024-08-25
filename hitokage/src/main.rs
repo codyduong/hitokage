@@ -1,19 +1,20 @@
 use config::reload_css_provider;
 use gtk4::prelude::*;
-use hitokage_core::event::{CONFIG_UPDATE, STATE};
-use hitokage_core::event::{EVENT, NEW_EVENT};
+use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT, STATE};
+use hitokage_core::get_hitokage_asset;
+use hitokage_core::widgets;
+use hitokage_core::widgets::app::{AppMsg, LuaHookType};
 use hitokage_core::widgets::bar;
-use hitokage_core::{get_hitokage_asset, widgets};
-use hitokage_lua::AppMsg;
-use hitokage_lua::LuaHookType;
+use hitokage_core::widgets::weather::WeatherStation;
 use log::LevelFilter;
 use notify::Watcher;
 use notify_debouncer_full::new_debouncer;
-use relm4::component::Connector;
+use relm4::component::Controller;
 use relm4::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::atomic::AtomicUsize;
 use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -33,8 +34,11 @@ enum LuaCoroutineMessage {
 }
 
 struct App {
-  bars: Vec<Connector<widgets::bar::Bar>>,
+  bars: Vec<Controller<widgets::bar::Bar>>,
   file_last_checked_at: Arc<Mutex<Instant>>,
+  // so we only keep one weather station to request forecasts (todo @codyduong support multiple weather stations)
+  weather_station: Arc<Mutex<Option<WeatherStation>>>,
+  weather_station_count: Arc<AtomicUsize>,
   // keep alive for lifetime of app
   _debouncer: notify_debouncer_full::Debouncer<notify::ReadDirectoryChangesWatcher, notify_debouncer_full::FileIdMap>,
   _css_debouncer:
@@ -44,7 +48,7 @@ struct App {
 
 #[relm4::component(pub)]
 impl Component for App {
-  type Input = hitokage_lua::AppMsg;
+  type Input = AppMsg;
   type Output = ();
   type Init = ();
   type CommandOutput = ();
@@ -129,7 +133,7 @@ impl Component for App {
             Ok(e) => {
               log::info!("File update: {:?}", e);
 
-              sender.input(hitokage_lua::AppMsg::DestroyActual);
+              sender.input(AppMsg::DestroyActual);
 
               let mut stopped_guard = is_stopped.lock().unwrap();
               if !*stopped_guard {
@@ -248,6 +252,8 @@ impl Component for App {
     let model = App {
       bars: Vec::new(),
       file_last_checked_at,
+      weather_station: Arc::new(Mutex::new(None)),
+      weather_station_count: Arc::new(AtomicUsize::new(0)),
       _debouncer: debouncer,
       _css_debouncer: css_debouncer,
       _tx_lua: tx_lua,
@@ -259,7 +265,7 @@ impl Component for App {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: AppMsg, _sender: ComponentSender<Self>, root: &Self::Root) {
+  fn update(&mut self, msg: AppMsg, sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       // Komorebi States
       AppMsg::Komorebi(notif) => {
@@ -284,8 +290,9 @@ impl Component for App {
         LuaHookType::CreateBar(monitor, props, callback) => {
           let builder = bar::Bar::builder();
 
-          let bar = builder.launch((*monitor, props, callback, root.clone()));
-          // .forward(sender.input_sender(), std::convert::identity);
+          let bar = builder
+            .launch((*monitor, props, callback, root.clone()))
+            .forward(sender.input_sender(), |m| m);
 
           self.bars.push(bar);
         }
@@ -302,12 +309,39 @@ impl Component for App {
           log::warn!("todo");
         }
       },
+      AppMsg::RequestWeatherStation(tx, config) => {
+        log::debug!("Requesting weather station");
+        let mut weather_station_lock = self.weather_station.lock().unwrap();
+        if let Some(weather_station) = &*weather_station_lock {
+          log::debug!("Sending existing weather station");
+          tx.send(weather_station.clone()).unwrap();
+        } else {
+          log::debug!("Creating new weather station");
+          let weather_station = WeatherStation::new(
+            config.expect("There was no existing weather station and we did not provide props for a new one"),
+          );
+          *weather_station_lock = Some(weather_station.clone());
+          tx.send(weather_station).unwrap();
+        }
+        self
+          .weather_station_count
+          .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+      }
+      AppMsg::DropWeatherStation => {
+        log::debug!("Dropping ref to weather station");
+        let weather_station_count = &self.weather_station_count;
+        let curr = self.weather_station_count.load(std::sync::atomic::Ordering::SeqCst);
+        let min = curr.saturating_sub(1);
+        weather_station_count.fetch_min(min, std::sync::atomic::Ordering::SeqCst);
+        let mut weather_station_lock = self.weather_station.lock().unwrap();
+        if weather_station_count.load(std::sync::atomic::Ordering::SeqCst) == 0 {
+          *weather_station_lock = None;
+          log::debug!("Weather Station dropped")
+        }
+      }
       AppMsg::DestroyActual => {
-        // we can't prematurely drop our controllers our we panic!, so wait until we have cleaned up everything we need to
-        for mut bar in self.bars.drain(..) {
+        for bar in self.bars.drain(..) {
           bar.widget().destroy();
-          // explode!
-          bar.detach_runtime();
           drop(bar);
         }
       }

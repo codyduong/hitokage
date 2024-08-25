@@ -2,6 +2,7 @@ use super::{WidgetUserData, WidgetUserDataVec};
 use crate::{impl_getter_fn, impl_lua_get_widget_by_id, impl_setter_fn};
 use hitokage_core::deserializer::LuaDeserializer;
 use hitokage_core::structs::{Align, Monitor, MonitorGeometry};
+use hitokage_core::widgets::app::{LuaHook, LuaHookType};
 use hitokage_core::widgets::bar::BarLuaHook::BoxHook;
 use hitokage_core::widgets::bar::BarLuaHook::GetGeometry;
 use hitokage_core::widgets::bar::{BarMsg, BarProps};
@@ -199,8 +200,8 @@ where
 
           let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 
-          sender.input(<C as Component>::Input::LuaHook(crate::LuaHook {
-            t: crate::LuaHookType::CreateBar(Box::new(monitor), props, {
+          sender.input(<C as Component>::Input::LuaHook(LuaHook {
+            t: LuaHookType::CreateBar(Box::new(monitor), props, {
               let bar_sender = Arc::clone(&bar_sender);
               {
                 Box::new(move |s| {

@@ -1,3 +1,4 @@
+pub mod app;
 pub mod bar;
 pub mod base;
 pub mod r#box;
@@ -6,9 +7,11 @@ pub mod cpu;
 pub mod icon;
 pub mod label;
 pub mod memory;
+pub mod weather;
 pub mod workspace;
 
-use clock::{Clock, ClockMsg};
+use clock::Clock;
+use clock::ClockMsg;
 use cpu::Cpu;
 use cpu::CpuMsg;
 use icon::Icon;
@@ -19,11 +22,15 @@ use memory::Memory;
 use memory::MemoryMsg;
 use r#box::BoxMsg;
 use r#box::HitokageBox;
+use relm4::component::AsyncComponentController;
+use relm4::prelude::AsyncController;
 use relm4::ComponentController;
 use relm4::Controller;
 use serde::de;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use weather::Weather;
+use weather::WeatherMsg;
 use workspace::{Workspace, WorkspaceMsg};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -34,6 +41,7 @@ pub enum WidgetProps {
   Icon(icon::IconProps),
   Label(label::LabelProps),
   Memory(memory::MemoryProps),
+  Weather(weather::WeatherProps),
   Workspace(workspace::WorkspaceProps),
 }
 
@@ -44,6 +52,7 @@ pub enum WidgetController {
   Icon(Controller<Icon>),
   Label(Controller<Label>),
   Memory(Controller<Memory>),
+  Weather(AsyncController<Weather>),
   Workspace(Controller<Workspace>),
 }
 
@@ -55,6 +64,7 @@ pub enum WidgetUserData {
   Icon(relm4::Sender<IconMsg>),
   Label(relm4::Sender<LabelMsg>),
   Memory(relm4::Sender<MemoryMsg>),
+  Weather(relm4::Sender<WeatherMsg>),
   Workspace(relm4::Sender<WorkspaceMsg>),
 }
 
@@ -67,6 +77,7 @@ impl<'a> From<&'a WidgetController> for WidgetUserData {
       WidgetController::Icon(item) => WidgetUserData::Icon(item.sender().clone()),
       WidgetController::Label(item) => WidgetUserData::Label(item.sender().clone()),
       WidgetController::Memory(item) => WidgetUserData::Memory(item.sender().clone()),
+      WidgetController::Weather(item) => WidgetUserData::Weather(item.sender().clone()),
       WidgetController::Workspace(item) => WidgetUserData::Workspace(item.sender().clone()),
     }
   }

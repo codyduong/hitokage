@@ -3,6 +3,8 @@
 -------------------------------------------------------------------------------
 --- Links to CpuProps in 'hitokage-core\src\widgets\cpu.rs'
 --- @class CpuProps : BaseProps
+-- @codyduong TODO add some descriptions here
+---
 --- @field format string | ReactiveString?
 
 -------------------------------------------------------------------------------

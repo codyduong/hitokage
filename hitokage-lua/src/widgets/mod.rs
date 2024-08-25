@@ -7,6 +7,7 @@ use memory::MemoryUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
 use std::{collections::VecDeque, sync::Arc};
+use weather::WeatherUserData;
 use workspace::WorkspaceUserData;
 
 pub mod bar;
@@ -16,6 +17,7 @@ pub mod cpu;
 pub mod icon;
 pub mod label;
 pub mod memory;
+pub mod weather;
 pub mod workspace;
 
 pub(crate) enum WidgetUserData {
@@ -25,6 +27,7 @@ pub(crate) enum WidgetUserData {
   Icon(IconUserData),
   Label(LabelUserData),
   Memory(MemoryUserData),
+  Weather(WeatherUserData),
   Workspace(WorkspaceUserData),
 }
 
@@ -37,6 +40,7 @@ impl WidgetUserData {
       WidgetUserData::Icon(userdata) => userdata.get_id().unwrap(),
       WidgetUserData::Label(userdata) => userdata.get_id().unwrap(),
       WidgetUserData::Memory(userdata) => userdata.get_id().unwrap(),
+      WidgetUserData::Weather(userdata) => userdata.get_id().unwrap(),
       WidgetUserData::Workspace(userdata) => userdata.get_id().unwrap(),
     }
   }
@@ -51,6 +55,7 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
       WidgetUserData::Icon(userdata) => lua.pack(userdata),
       WidgetUserData::Label(userdata) => lua.pack(userdata),
       WidgetUserData::Memory(userdata) => lua.pack(userdata),
+      WidgetUserData::Weather(userdata) => lua.pack(userdata),
       WidgetUserData::Workspace(userdata) => lua.pack(userdata),
     }
   }
@@ -81,6 +86,10 @@ impl From<CoreWidgetUserData> for WidgetUserData {
       }),
       CoreWidgetUserData::Memory(sender) => WidgetUserData::Memory(MemoryUserData {
         r#type: "Memory".to_string(),
+        sender,
+      }),
+      CoreWidgetUserData::Weather(sender) => WidgetUserData::Weather(WeatherUserData {
+        r#type: "Weather".to_string(),
         sender,
       }),
       CoreWidgetUserData::Workspace(sender) => WidgetUserData::Workspace(WorkspaceUserData {

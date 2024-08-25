@@ -1,73 +1,17 @@
-use hitokage_core::{event::EventNotif, structs::monitor::Monitor, widgets::bar::BarMsg};
+use api::{event, monitor, reactive};
+use hitokage_core::{
+  event::EventNotif,
+  structs::monitor::Monitor,
+  widgets::{app::AppMsg, bar::BarMsg},
+};
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
 use std::fmt;
+use widgets::bar;
 
 pub mod api;
 pub mod widgets;
-
-use api::{event, monitor, reactive};
-use widgets::bar;
-
-#[derive(Debug)]
-pub enum AppMsg {
-  Komorebi(EventNotif),
-  KomorebiErr(String),
-  LuaHook(LuaHook),
-  DestroyActual,
-}
-
-pub enum LuaHookType {
-  SubscribeState, // subscribe to a value in global state
-  WriteState,     //
-  ReadEvent,      // This should probably exclusively be used for initializing configurations, it does not subscribe!
-  CreateBar(
-    Box<Monitor>,
-    hitokage_core::widgets::bar::BarProps,
-    Box<dyn Fn(relm4::Sender<BarMsg>) + Send>,
-  ),
-  CheckConfigUpdate,
-  NoAction, // These hooks are used for Relm4 hooking into, so it is very possible we don't need to handle anything
-}
-
-impl std::fmt::Debug for LuaHookType {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    match self {
-      LuaHookType::SubscribeState => write!(f, "SubscribeState"),
-      LuaHookType::WriteState => write!(f, "WriteState"),
-      LuaHookType::ReadEvent => write!(f, "ReadEvent"),
-      LuaHookType::CreateBar(monitor, props, _) => f
-        .debug_struct("CreateBar")
-        .field("monitor", monitor)
-        .field("props", props)
-        .field("callback", &"<function>")
-        .finish(),
-      &LuaHookType::CheckConfigUpdate => write!(f, "CheckConfigUpdate"),
-      LuaHookType::NoAction => write!(f, "NoAction"),
-    }
-  }
-}
-
-pub struct LuaHook {
-  pub t: LuaHookType,
-  // @codyduong TODO, we can't box lua so idk if we need a callback (if we can only modify rust, then
-  // i have yet to forsee why we wouldn't do it immediately based on `t` field
-  // pub callback: Box<dyn Fn() -> mlua::Result<()> + Send>,
-}
-
-pub enum LuaHookInput {
-  LuaHook(crate::LuaHook),
-}
-
-impl fmt::Debug for LuaHook {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("LuaHook")
-      .field("t", &self.t)
-      // .field("callback", &"<function>")
-      .finish()
-  }
-}
 
 // Thanks @wez https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/config/src/lua.rs#L211
 
@@ -144,7 +88,7 @@ async fn sleep_ms<'lua>(_: &'lua Lua, milliseconds: u64) -> mlua::Result<()> {
 
 pub fn make<C>(sender: ComponentSender<C>) -> anyhow::Result<Lua>
 where
-  C: Component<Input = crate::AppMsg>,
+  C: Component<Input = AppMsg>,
   <C as Component>::Output: std::marker::Send,
 {
   let lua = Lua::new();

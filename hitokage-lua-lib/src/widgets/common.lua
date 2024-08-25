@@ -7,15 +7,24 @@
 ---
 --- @class WidgetBoxProps
 --- @field Box BoxProps
+---
 --- @class WidgetClockProps
 --- @field Clock ClockProps
+---
 --- @class WidgetCpuProps
 --- @field Cpu CpuProps
---- @class WidgetLabelProps
---- @field Label LabelProps
---- @class WidgetMemoryProps
---- @field Memory MemoryProps
---- @class WidgetWorkspaceProps
---- @field Workspace WorkspaceProps
+---
 --- @class WidgetIconProps
 --- @field Icon IconProps
+---
+--- @class WidgetLabelProps
+--- @field Label LabelProps
+---
+--- @class WidgetMemoryProps
+--- @field Memory MemoryProps
+---
+--- @class WidgetWeatherProps
+--- @field Weather WeatherProps
+---
+--- @class WidgetWorkspaceProps
+--- @field Workspace WorkspaceProps

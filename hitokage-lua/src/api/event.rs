@@ -1,4 +1,5 @@
 use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
+use hitokage_core::widgets::app::{LuaHook, LuaHookType};
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 
@@ -15,8 +16,8 @@ where
       lua.create_function({
         let sender = sender.clone();
         move |lua_inner, f: Value| {
-          sender.input(crate::AppMsg::LuaHook(crate::LuaHook {
-            t: crate::LuaHookType::ReadEvent,
+          sender.input(crate::AppMsg::LuaHook(LuaHook {
+            t: LuaHookType::ReadEvent,
             // callback: Box::new(|_| Ok(())),
           }));
           let args = EVENT.read();
@@ -45,8 +46,8 @@ where
       lua.create_function({
         let sender = sender.clone();
         move |lua_inner, f: Value| {
-          sender.input(crate::AppMsg::LuaHook(crate::LuaHook {
-            t: crate::LuaHookType::NoAction,
+          sender.input(crate::AppMsg::LuaHook(LuaHook {
+            t: LuaHookType::NoAction,
             // callback: Box::new(|_| Ok(())),
           }));
           let args = NEW_EVENT.read();
@@ -79,8 +80,8 @@ where
       lua.create_function({
         let sender = sender.clone();
         move |lua_inner, _value: Value| {
-          sender.input(crate::AppMsg::LuaHook(crate::LuaHook {
-            t: crate::LuaHookType::CheckConfigUpdate,
+          sender.input(crate::AppMsg::LuaHook(LuaHook {
+            t: LuaHookType::CheckConfigUpdate,
             // callback: Box::new(|_| Ok(())),
           }));
           let args = CONFIG_UPDATE.read();

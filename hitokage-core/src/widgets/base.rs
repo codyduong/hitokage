@@ -37,6 +37,21 @@ pub struct BaseProps {
   pub width_request: Option<i32>,
 }
 
+impl Default for BaseProps {
+  fn default() -> Self {
+    Self {
+      id: None,
+      class: None,
+      height_request: None,
+      halign: None,
+      hexpand: None,
+      valign: None,
+      vexpand: None,
+      width_request: None,
+    }
+  }
+}
+
 impl From<BaseProps> for Base {
   fn from(props: BaseProps) -> Self {
     Base {
@@ -51,6 +66,7 @@ impl From<BaseProps> for Base {
   }
 }
 
+#[derive(Debug)]
 pub struct Base {
   pub id: Option<String>,
   pub classes: Vec<String>,
@@ -59,6 +75,20 @@ pub struct Base {
   pub hexpand: bool,
   pub valign: Option<Align>,
   pub vexpand: bool,
+}
+
+impl Default for Base {
+  fn default() -> Self {
+    Self {
+      id: None,
+      classes: Vec::new(),
+      classes_temp: Vec::new(),
+      halign: None,
+      hexpand: false,
+      valign: None,
+      vexpand: false,
+    }
+  }
 }
 
 #[macro_export]

@@ -25,9 +25,9 @@ local clock_icons = {
 local reactive_clock_icons = {}
 
 for _, monitor in ipairs(monitors) do
-	if monitor.model == "LG SDQHD" then
-		goto continue
-	end
+	-- if monitor.model == "LG SDQHD" then
+	-- 	goto continue
+	-- end
 
 	-- TODO better idiomatic syntax
 	-- monitor.create_bar({
@@ -135,6 +135,15 @@ for _, monitor in ipairs(monitors) do
 									halign = "Fill",
 									class = "data_wrapper",
 									widgets = {
+										{
+											Weather = {
+												class = "icon",
+												latitude = 38.95773795883854,
+												longitude = -95.25382422045898,
+												format = "{{icon}}",
+											},
+										},
+										{ Weather = { format = "{{temp_fahrenheit}} °F" } },
 										{ Label = { label = "\u{EFC5}", class = "icon memory" } },
 										{ Memory = { format = mem_str, halign = "End" } },
 										{ Label = { label = "\u{F4BC}", class = "icon cpu", id = "test1" } },
@@ -204,12 +213,12 @@ for i, bar in ipairs(bars) do
 
 	local label = bar:get_widget_by_id("test1", true)
 	local old_label = label:get_label()
-	hitokage.debug("fooface", label)
+	-- hitokage.debug("fooface", label)
 	local routine = hitokage.timeout(1000, function()
 		local current_label = label:get_label()
-		hitokage.debug(current_label)
+		-- hitokage.debug(current_label)
 		if current_label == "\u{F4BC}" then
-			label:set_label("yeap")
+			label:set_label("a")
 		else
 			label:set_label("\u{F4BC}")
 		end
@@ -263,9 +272,9 @@ end)
 local label_reactor = hitokage.timeout(1000, function()
 	local current_format = reactive_labels[1]:get()
 	if current_format == "foo \u{EECB}  \u{F0E0}" then
-		reactive_labels[1]:set("demo demo demo")
+		reactive_labels[1]:set("demo a b")
 	else
-		reactive_labels[1]:set("foo \u{EECB}  \u{F0E0}")
+		reactive_labels[1]:set("foo \u{EECB} \u{F0E0}")
 	end
 end)
 
