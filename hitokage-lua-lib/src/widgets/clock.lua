@@ -3,6 +3,8 @@
 -------------------------------------------------------------------------------
 --- Links to ClockProps in 'hitokage-core\src\widgets\clock.rs'
 --- @class ClockProps : BaseProps
+-- @codyduong TODO add some descriptions here
+--- 
 --- @field format string | ReactiveString?
 
 -------------------------------------------------------------------------------

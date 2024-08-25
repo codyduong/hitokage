@@ -47,8 +47,7 @@ for _, monitor in ipairs(monitors) do
 	table.insert(reactive_imgs, reactive_img)
 	table.insert(reactive_clock_icons, reactive_clock_icon)
 
-	local mem_str =
-	'{{pad "left" (round (div used 1024) 1) 4}} ({{ pad "left" (concat (round (mult (div used total) 100) 1) "%") 4 }})'
+	local mem_str = '{{pad "left" (round (div used 1024) 1) 4}} ({{ pad "left" (concat (round (mult (div used total) 100) 1) "%") 4 }})'
 	local cpu_str = '{{pad "left" (concat (round (mult usage 100) 1) "%") 6}}'
 
 	-- .. 'C1: {{pad "right" (concat (round (mult core1_usage 100) 1) "%") 6}}'
@@ -135,13 +134,13 @@ for _, monitor in ipairs(monitors) do
 									halign = "Fill",
 									class = "data_wrapper",
 									widgets = {
-										{ Weather = { latitude = 38.95773795883854, longitude = -95.25382422045898, hexpand = true } },
+										{ Weather = { class="icon", latitude = 38.95773795883854, longitude = -95.25382422045898, format="{{icon}}" } },
+										{ Weather = { format="{{temp_fahrenheit}} °F" } },
 										{ Label = { label = "\u{EFC5}", class = "icon memory" } },
 										{ Memory = { format = mem_str, halign = "End" } },
 										{ Label = { label = "\u{F4BC}", class = "icon cpu", id = "test1" } },
 										{ Cpu = { format = cpu_str, halign = "End" } },
 										{ Label = { label = "\u{E0B2}", class = "clock_start", halign = "End" } },
-										
 									},
 								},
 							},

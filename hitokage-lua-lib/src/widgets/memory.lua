@@ -3,6 +3,8 @@
 -------------------------------------------------------------------------------
 --- Links to MemoryProps in 'hitokage-core\src\widgets\memory.rs'
 --- @class MemoryProps : BaseProps
+-- @codyduong TODO add some descriptions here
+--- 
 --- @field format string | ReactiveString?
 
 -------------------------------------------------------------------------------

@@ -3,7 +3,7 @@ use hitokage_core::structs::reactive::Reactive;
 use hitokage_core::structs::Align;
 use hitokage_core::widgets::weather::WeatherMsg;
 use hitokage_core::widgets::weather::WeatherMsgHook::BaseHook;
-// use hitokage_core::widgets::weather::WeatherMsgHook::{GetFormat, GetFormatReactive, SetFormat};
+use hitokage_core::widgets::weather::WeatherMsgHook::{GetFormat, GetFormatReactive, SetFormat};
 use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 
@@ -19,14 +19,14 @@ impl WeatherUserData {
     Ok(self.sender.clone())
   }
 
-  // impl_getter_fn!(get_format, WeatherMsg::LuaHook, GetFormat, String);
-  // impl_getter_fn!(
-  //   get_format_reactive,
-  //   WeatherMsg::LuaHook,
-  //   GetFormatReactive,
-  //   Reactive<String>
-  // );
-  // impl_setter_fn!(set_format, WeatherMsg::LuaHook, SetFormat, String);
+  impl_getter_fn!(get_format, WeatherMsg::LuaHook, GetFormat, String);
+  impl_getter_fn!(
+    get_format_reactive,
+    WeatherMsg::LuaHook,
+    GetFormatReactive,
+    Reactive<String>
+  );
+  impl_setter_fn!(set_format, WeatherMsg::LuaHook, SetFormat, String);
 }
 
 #[impl_lua_base]
@@ -34,11 +34,11 @@ impl UserData for WeatherUserData {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
 
-    // methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
-    // methods.add_method("get_format_reactive", |_, this, _: ()| Ok(this.get_format_reactive()?));
-    // methods.add_method("set_format", |lua, this, value: mlua::Value| {
-    //   this.set_format(lua, value)
-    // });
+    methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
+    methods.add_method("get_format_reactive", |_, this, _: ()| Ok(this.get_format_reactive()?));
+    methods.add_method("set_format", |lua, this, value: mlua::Value| {
+      this.set_format(lua, value)
+    });
 
     methods.add_meta_method(
       "__index",
