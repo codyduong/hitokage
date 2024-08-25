@@ -137,7 +137,9 @@ macro_rules! generate_box_widgets {
           $model.widgets.push(WidgetController::Memory(controller));
         }
         WidgetProps::Weather(inner_props) => {
-          let controller = crate::widgets::weather::Weather::builder().launch(inner_props).forward($output_sender, |m| m.into());
+          let controller = crate::widgets::weather::Weather::builder()
+            .launch(inner_props)
+            .forward($output_sender, |m| m.into());
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Weather(controller));
         }

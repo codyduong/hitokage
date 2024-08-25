@@ -194,7 +194,13 @@ impl Component for Bar {
     prepend_css_class_to_model!("bar", model.r#box, root);
     let widgets = view_output!();
     set_initial_box_props!(model, widgets.main_box, props.r#box.base);
-    generate_box_widgets!(props.r#box.widgets, model.r#box, monitor, widgets.main_box, sender.output_sender());
+    generate_box_widgets!(
+      props.r#box.widgets,
+      model.r#box,
+      monitor,
+      widgets.main_box,
+      sender.output_sender()
+    );
 
     // manually realize/show
     root.show();

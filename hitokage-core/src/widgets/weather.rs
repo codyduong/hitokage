@@ -246,7 +246,7 @@ pub struct Weather {
   forecast: WeatherForecast,
   format: Reactive<String>,
   #[tracker::do_not_track]
-  map: WeatherIcons
+  map: WeatherIcons,
 }
 
 #[relm4::component(async, pub)]

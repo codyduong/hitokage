@@ -39,18 +39,18 @@ pub struct BaseProps {
 
 impl Default for BaseProps {
   fn default() -> Self {
-      Self {
-        id: None,
-        class: None,
-        height_request: None,
-        halign: None,
-        hexpand: None,
-        valign: None,
-        vexpand: None,
-        width_request: None,
-      }
+    Self {
+      id: None,
+      class: None,
+      height_request: None,
+      halign: None,
+      hexpand: None,
+      valign: None,
+      vexpand: None,
+      width_request: None,
+    }
   }
-} 
+}
 
 impl From<BaseProps> for Base {
   fn from(props: BaseProps) -> Self {
@@ -79,17 +79,17 @@ pub struct Base {
 
 impl Default for Base {
   fn default() -> Self {
-      Self {
-        id: None,
-        classes: Vec::new(),
-        classes_temp: Vec::new(),
-        halign: None,
-        hexpand: false,
-        valign: None,
-        vexpand: false,
-      }
+    Self {
+      id: None,
+      classes: Vec::new(),
+      classes_temp: Vec::new(),
+      halign: None,
+      hexpand: false,
+      valign: None,
+      vexpand: false,
+    }
   }
-} 
+}
 
 #[macro_export]
 macro_rules! generate_base_match_arms {

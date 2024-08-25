@@ -1,14 +1,17 @@
-use hitokage_core::{event::EventNotif, structs::monitor::Monitor, widgets::{app::AppMsg, bar::BarMsg}};
+use api::{event, monitor, reactive};
+use hitokage_core::{
+  event::EventNotif,
+  structs::monitor::Monitor,
+  widgets::{app::AppMsg, bar::BarMsg},
+};
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
 use std::fmt;
-use api::{event, monitor, reactive};
 use widgets::bar;
 
 pub mod api;
 pub mod widgets;
-
 
 // Thanks @wez https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/config/src/lua.rs#L211
 

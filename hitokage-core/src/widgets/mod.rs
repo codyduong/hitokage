@@ -22,6 +22,7 @@ use memory::Memory;
 use memory::MemoryMsg;
 use r#box::BoxMsg;
 use r#box::HitokageBox;
+use relm4::component::AsyncComponentController;
 use relm4::prelude::AsyncController;
 use relm4::ComponentController;
 use relm4::Controller;
@@ -31,7 +32,6 @@ use std::fmt;
 use weather::Weather;
 use weather::WeatherMsg;
 use workspace::{Workspace, WorkspaceMsg};
-use relm4::component::AsyncComponentController;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum WidgetProps {

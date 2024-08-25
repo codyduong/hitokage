@@ -6,8 +6,8 @@ use label::LabelUserData;
 use memory::MemoryUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
-use weather::WeatherUserData;
 use std::{collections::VecDeque, sync::Arc};
+use weather::WeatherUserData;
 use workspace::WorkspaceUserData;
 
 pub mod bar;
