@@ -50,3 +50,6 @@ version = "546.0.2"
 [workspace.dependencies.luahelper]
 git = "https://github.com/wez/wezterm/"
 rev = "b8f94c474ce48ac195b51c1aeacf41ae049b774e"
+
+[profile.release]
+debug = true

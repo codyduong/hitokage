@@ -151,6 +151,7 @@ macro_rules! generate_box_widgets {
         }
       }
     }
+    $model.widgets.shrink_to_fit();
   };
 }
 

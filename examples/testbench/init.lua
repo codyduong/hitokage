@@ -212,11 +212,9 @@ for i, bar in ipairs(bars) do
 	end
 
 	local label = bar:get_widget_by_id("test1", true)
-	local old_label = label:get_label()
-	-- hitokage.debug("fooface", label)
+	--- @cast label Label
 	local routine = hitokage.timeout(1000, function()
 		local current_label = label:get_label()
-		-- hitokage.debug(current_label)
 		if current_label == "\u{F4BC}" then
 			label:set_label("a")
 		else
@@ -303,8 +301,12 @@ local update_clock_icon = hitokage.timeout(1000, function()
 	end
 end)
 
+-- hitokage.subscribe("komorebi", function (notification)
+-- 	hitokage.debug("checking " .. notification.event.type);
+-- end)
+
 -- hitokage.dispatch(format_reactor)
-hitokage.dispatch(label_reactor)
-hitokage.dispatch(img_reactor)
-hitokage.dispatch(css_boxes_test)
-hitokage.dispatch(update_clock_icon)
+-- hitokage.dispatch(label_reactor)
+-- hitokage.dispatch(img_reactor)
+-- hitokage.dispatch(css_boxes_test)
+-- hitokage.dispatch(update_clock_icon)

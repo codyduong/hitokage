@@ -13,8 +13,9 @@ use relm4::component::Controller;
 use relm4::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::rc::Rc;
-use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -88,9 +89,9 @@ impl Component for App {
     log::info!("attempting to load lua init.lua at: {}", lua_file_path.display());
     log::info!("attempting to load lua styles.css at: {}", css_file_path.display());
 
-    let preventer_called = Arc::new(Mutex::new(false));
-    let is_stopped = Arc::new(Mutex::new(false));
-    let lua_thread_id = Arc::new(Mutex::new(0));
+    let preventer_called = Arc::new(AtomicBool::new(false));
+    let is_stopped = Arc::new(AtomicBool::new(false));
+    let lua_thread_id = Arc::new(AtomicU32::new(0));
     let file_last_checked_at = Arc::new(Mutex::new(Instant::now())); // when did we last check for a config update through any means?
 
     // these names suck, these are for sending to create a new luahandle for forceful termination
@@ -135,8 +136,7 @@ impl Component for App {
 
               sender.input(AppMsg::DestroyActual);
 
-              let mut stopped_guard = is_stopped.lock().unwrap();
-              if !*stopped_guard {
+              if !is_stopped.load(Ordering::SeqCst) {
                 // if we are stuck in lua execution loop we need to dispatch a response to it for it to implode itself
                 let mut wg = CONFIG_UPDATE.write();
                 *wg = true;
@@ -145,8 +145,6 @@ impl Component for App {
                 match rx_lua.recv() {
                   Ok(true) => {
                     log::info!("Lua thread reset itself within lua environment");
-
-                    *stopped_guard = false;
                   }
                   Ok(false) => {
                     log::info!("Lua thread coroutine deadlocked, starting new lua thread");
@@ -159,12 +157,11 @@ impl Component for App {
                       file_last_checked_at.clone(),
                       tx_lua.clone(),
                     );
-
-                    *stopped_guard = false;
                   }
                   Err(_) => {
                     // @codyduong LOL, todo
-                    log::error!("Lua channel closed before receiving confirmation of launch of lua thread")
+                    log::error!("Lua channel closed before receiving confirmation of launch of lua thread");
+                    is_stopped.store(true, Ordering::SeqCst);
                   }
                 }
               } else {
@@ -179,8 +176,7 @@ impl Component for App {
                   file_last_checked_at.clone(),
                   tx_lua.clone(),
                 );
-
-                *stopped_guard = false;
+                is_stopped.store(false, Ordering::SeqCst);
               }
             }
             Err(e) => {
@@ -246,9 +242,6 @@ impl Component for App {
     let sender_clone = sender.clone();
     socket::start(sender_clone);
 
-    // bar.widget().realize();
-    // gtk4::prelude::WidgetExt::realize(bar.widget());
-
     let model = App {
       bars: Vec::new(),
       file_last_checked_at,
@@ -257,10 +250,11 @@ impl Component for App {
       _debouncer: debouncer,
       _css_debouncer: css_debouncer,
       _tx_lua: tx_lua,
-      // bar,
     };
 
     let widgets = view_output!();
+
+    *EVENT.write() = VecDeque::with_capacity(50);
 
     ComponentParts { model, widgets }
   }
@@ -276,9 +270,11 @@ impl Component for App {
         //   None
         // });
 
-        // let mut sswg = EVENT.write();
-        // sswg.push(notif.clone());
-        // drop(sswg);
+        let mut deque = EVENT.write();
+        if deque.len() == deque.capacity() {
+          deque.pop_front();
+        }
+        deque.push_back(notif.clone());
         *STATE.write() = notif.state;
         *NEW_EVENT.write() = true;
       }
@@ -297,7 +293,6 @@ impl Component for App {
           self.bars.push(bar);
         }
         LuaHookType::ReadEvent => {
-          *EVENT.write() = Vec::new();
           *NEW_EVENT.write() = false;
         }
         LuaHookType::CheckConfigUpdate => {

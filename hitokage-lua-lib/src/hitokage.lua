@@ -6,6 +6,7 @@
 --- @module 'hitokage.widgets.box'
 --- @module 'hitokage.widgets.clock'
 --- @module 'hitokage.widgets.common'
+--- @module 'hitokage.widgets.weather'
 --- @module 'hitokage.widgets.workspace'
 
 --- This is the global module for [hitokage](https://github.com/codyduong/hitokage)
@@ -49,9 +50,9 @@ function hitokage.sleep_ms(ms) end
 --- @return nil
 function hitokage.dispatch(thread_or_threads) end
 
---- @overload fun(name: 'komorebi', callback: fun(states: KomorebiNotification)): nil
+--- @overload fun(name: 'komorebi', callback: fun(notification: KomorebiNotification)): nil
 --- @param name 'komorebi'
---- @param callback fun(value: KomorebiNotification)
+--- @param callback fun(notification: KomorebiNotification)
 --- @return nil
 function hitokage.subscribe(name, callback) end
 

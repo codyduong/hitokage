@@ -9,9 +9,9 @@ _subscriptions = {
 	komorebi = {},
 }
 
---- @overload fun(name: 'komorebi', callback: fun(states: KomorebiNotification)): nil
+--- @overload fun(name: 'komorebi', callback: fun(notification: KomorebiNotification)): nil
 --- @param name 'komorebi'
---- @param callback fun(value: KomorebiNotification)
+--- @param callback fun(notification: KomorebiNotification)
 --- @return nil
 _G.hitokage.subscribe = function(name, callback)
 	local is_subscriber = false
@@ -34,25 +34,6 @@ _G.hitokage.subscribe = function(name, callback)
 	rawset(_G, "_subscriptions", subscriptions)
 end
 
--- subscribe("komorebi", function (unread_states)
---   for _, state in pairs(unread_states) do
---     hitokage.debug("checking " .. state.event.type);
---     if state.event.type == "FocusWorkspaceNumber" then
---       hitokage.debug("we changed workspaces to " .. state.event.content);
---     end
---   end
--- end)
-
--- subscribe("komorebi", function (unread_states)
---   -- for _, state in pairs(unread_states) do
---   --   hitokage.debug("checking " .. state.event.type);
---   --   if state.event.type == "TitleUpdate" then
---   --     hitokage.debug("we updated title to", state.event.content);
---   --   end
---   -- end
---   hitokage.debug(unread_states[#unread_states])
--- end)
-
 local komorebic_coroutine = coroutine.create(function()
 	local subscriptions = rawget(rawget(_G, "_subscriptions"), "komorebi")
 	if #subscriptions == 0 then
@@ -63,16 +44,12 @@ local komorebic_coroutine = coroutine.create(function()
 		local new = hitokage.event.has_unread()
 		if new then
 			local unread_states = hitokage.event.get_unread()
-			-- for _, state in pairs(unread_states) do
-			--   hitokage.debug("checking " .. state.event.type);
-			--   if state.event.type == "FocusWorkspaceNumber" then
-			--     hitokage.debug("we changed workspaces to " .. state.event.content);
-			--   end
-			-- end
 			for id, callback in pairs(subscriptions) do
-				local status, res = pcall(callback, unread_states)
-				if status == false then
-					hitokage.error("Error running subscription callback {" .. id .. "}:", res)
+				for _, state in pairs(unread_states) do
+					local status, res = pcall(callback, state)
+					if status == false then
+						hitokage.error("Error running subscription callback {" .. id .. "}:", res)
+					end
 				end
 			end
 		end

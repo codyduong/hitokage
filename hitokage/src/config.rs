@@ -7,7 +7,11 @@ use std::{
   fs::File,
   io::Read,
   path::PathBuf,
-  sync::{mpsc::Sender, Arc, Mutex},
+  sync::{
+    atomic::{AtomicBool, AtomicU32, Ordering},
+    mpsc::Sender,
+    Arc, Mutex,
+  },
   thread::{self},
   time::{Duration, Instant},
 };
@@ -32,33 +36,25 @@ pub fn load_content(path: Option<PathBuf>) -> String {
 pub fn create_lua_handle(
   sender: ComponentSender<App>,
   file_path: PathBuf,
-  lua_thread_id: Arc<Mutex<u32>>,
-  preventer_called: Arc<Mutex<bool>>,
-  is_stopped: Arc<Mutex<bool>>,
+  lua_thread_id: Arc<AtomicU32>,
+  preventer_called: Arc<AtomicBool>,
+  is_stopped: Arc<AtomicBool>,
   file_last_checked_at: Arc<Mutex<Instant>>,
   tx: Sender<bool>,
 ) -> std::thread::JoinHandle<Result<(), mlua::Error>> {
   return thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
     let lua = hitokage_lua::make(sender).unwrap();
 
-    {
-      let mut thread_id = lua_thread_id.lock().unwrap();
-      *thread_id = win_utils::get_current_thread_id();
-    }
+    lua_thread_id.store(win_utils::get_current_thread_id(), Ordering::SeqCst);
 
-    {
-      let globals = lua.globals();
+    let globals = lua.globals();
 
-      let preventer_fn = lua.create_function(move |_, ()| {
-        let mut called = preventer_called.lock().unwrap();
-        *called = true;
-        Ok(())
-      })?;
+    let preventer_fn = lua.create_function(move |_, ()| {
+      preventer_called.store(true, Ordering::SeqCst);
+      Ok(())
+    })?;
 
-      globals.set("_not_deadlocked", preventer_fn)?;
-
-      Ok::<(), mlua::Error>(())
-    }?;
+    globals.set("_not_deadlocked", preventer_fn)?;
 
     let func_or_err = lua.load(load_content(Some(file_path.clone()))).into_function();
 
@@ -138,8 +134,7 @@ pub fn create_lua_handle(
               Ok(msg) => match msg {
                 LuaCoroutineMessage::Suspend => {
                   log::info!("Received suspend from lua coroutine");
-                  let mut is_stopped = is_stopped.lock().unwrap();
-                  *is_stopped = true;
+                  is_stopped.store(true, Ordering::SeqCst);
                   break Ok(());
                 }
                 LuaCoroutineMessage::Reload => {
@@ -164,22 +159,19 @@ pub fn create_lua_handle(
               },
               Err(err) => {
                 log::error!("Received unknown coroutine return, {:?}, {:?}", err, value);
-                let mut is_stopped = is_stopped.lock().unwrap();
-                *is_stopped = true;
+                is_stopped.store(true, Ordering::SeqCst);
                 break Err(err);
               }
             }
           }
         },
         Err(mlua::Error::CoroutineInactive) => {
-          let mut is_stopped = is_stopped.lock().unwrap();
-          *is_stopped = true;
+          is_stopped.store(true, Ordering::SeqCst);
           break Ok(());
         }
         Err(err) => {
           log::error!("Lua error: {:?}", err);
-          let mut is_stopped = is_stopped.lock().unwrap();
-          *is_stopped = true;
+          is_stopped.store(true, Ordering::SeqCst);
           break Err(err);
         }
       }
@@ -191,20 +183,18 @@ pub fn create_lua_handle(
 }
 
 pub fn create_watcher_handle(
-  preventer_called: Arc<Mutex<bool>>,
-  is_stopped: Arc<Mutex<bool>>,
+  preventer_called: Arc<AtomicBool>,
+  is_stopped: Arc<AtomicBool>,
 ) -> std::thread::JoinHandle<()> {
   return thread::spawn(move || {
     let mut start_time = Instant::now();
 
     loop {
-      {
-        let is_stopped = is_stopped.lock().unwrap();
+      let is_stopped = is_stopped.load(Ordering::SeqCst);
 
-        if *is_stopped {
-          log::debug!("Lua execution finished, stopping lua watcher");
-          break;
-        }
+      if is_stopped {
+        log::debug!("Lua execution finished, stopping lua watcher");
+        break;
       }
 
       let overrun = start_time.elapsed() >= Duration::from_secs(5);
@@ -216,26 +206,24 @@ pub fn create_watcher_handle(
         start_time = Instant::now();
       }
 
-      {
-        let mut called = preventer_called.lock().unwrap();
+      let called = preventer_called.load(Ordering::SeqCst);
 
-        if *called {
-          *called = false;
-          start_time = Instant::now();
-        };
-      }
+      if called {
+        preventer_called.store(true, Ordering::SeqCst);
+        start_time = Instant::now();
+      };
 
       thread::sleep(Duration::from_millis(100));
     }
   });
 }
 
-pub fn terminate_thread(id_arc: Arc<Mutex<u32>>) {
-  let mut id_guard = id_arc.lock().unwrap();
+pub fn terminate_thread(id_arc: Arc<AtomicU32>) {
+  let id_guard = id_arc.load(Ordering::SeqCst);
   log::debug!("Attempting to terminate lua thread with id: {:?}", id_guard);
-  if *id_guard != 0 {
+  if id_guard != 0 {
     unsafe {
-      let handle = OpenThread(THREAD_TERMINATE, false, *id_guard).unwrap();
+      let handle = OpenThread(THREAD_TERMINATE, false, id_guard).unwrap();
 
       if handle != HANDLE(0) {
         let result = TerminateThread(handle, 1);
@@ -254,7 +242,7 @@ pub fn terminate_thread(id_arc: Arc<Mutex<u32>>) {
       }
     }
   }
-  *id_guard = 0;
+  id_arc.store(0, Ordering::SeqCst);
 }
 
 pub fn reload_css_provider(
@@ -273,30 +261,3 @@ pub fn reload_css_provider(
   style_context_add_provider_for_display(&display, &provider, 500);
   provider
 }
-
-// pub fn reload_css(
-//   root: &ApplicationWindow,
-//   css_file_path: &PathBuf,
-//   rx: Receiver<Result<Vec<DebouncedEvent>, Vec<notify::Error>>>,
-// ) -> Result<Vec<DebouncedEvent>, std::sync::mpsc::TryRecvError> {
-//   let mut old_providers: Vec<&gtk4::CssProvider> = vec![];
-
-//   match rx.try_recv() {
-//     Ok(result) => {
-//       match result {
-//         Ok(result) => {
-
-//           result
-//         },
-//         Err(error) => {
-
-//         }
-//       }
-//     }
-//     Err(error) => {
-//       log::error!("There was an error reloading css: {:?}", error);
-//       Err(error)
-//     }
-//   }
-//   // glib::source::idle_add_local(move ||);
-// }
