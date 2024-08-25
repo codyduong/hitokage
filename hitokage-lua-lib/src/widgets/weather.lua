@@ -4,14 +4,14 @@
 --- Links to WeatherProps in 'hitokage-core\src\widgets\weather.rs'
 --- @class WeatherProps : BaseProps
 -- @codyduong TODO add some descriptions here
---- 
+---
 --- @field format string | ReactiveString?
---- 
---- @field latitude number? 
---- 
+---
+--- @field latitude number?
+---
 --- @field longitude number?
---- 
---- @field icons table<string, string>? 
+---
+--- @field icons table<string, string>?
 
 -------------------------------------------------------------------------------
 --- Links to WeatherUserData hitokage-lua\src\widgets\weather.rs

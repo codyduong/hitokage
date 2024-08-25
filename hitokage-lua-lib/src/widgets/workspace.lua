@@ -4,7 +4,7 @@
 --- Links to WorkspaceProps in 'hitokage-core\src\widgets\workspace.rs'
 --- @class WorkspaceProps : BaseProps
 -- @codyduong TODO add some descriptions here
---- 
+---
 --- @field item_width integer?
 --- @field item_height integer?
 --- @field format string?
