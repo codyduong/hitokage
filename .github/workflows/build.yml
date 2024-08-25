@@ -42,13 +42,13 @@ jobs:
       - name: Check nightly
         id: check-nightly
         run: |
-          git fetch origin master
-          LATEST_MASTER_COMMIT=$(git rev-parse origin/master)
+          git fetch origin refs/tags/nightly:refs/tags/nightly
+          LATEST_NIGHTLY_COMMIT=$(git rev-parse refs/tags/nightly)
           CURRENT_COMMIT=${GITHUB_SHA}
-          echo "Latest master commit: $LATEST_MASTER_COMMIT"
+          echo "Latest nightly commit: $LATEST_NIGHTLY_COMMIT"
           echo "Current commit: $CURRENT_COMMIT"
 
-          if [[ "$LATEST_MASTER_COMMIT" == "$CURRENT_COMMIT" ]]; then
+          if [[ "$LATEST_NIGHTLY_COMMIT" == "$CURRENT_COMMIT" ]]; then
             echo "No new commit on master. Running build."
             echo "build=false" >> $GITHUB_OUTPUT
           else
