@@ -1,5 +1,6 @@
 pub mod app;
 pub mod bar;
+pub mod battery;
 pub mod base;
 pub mod r#box;
 pub mod clock;

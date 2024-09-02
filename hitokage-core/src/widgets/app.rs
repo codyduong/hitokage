@@ -4,6 +4,7 @@ use super::weather::WeatherStation;
 use super::weather::WeatherStationConfig;
 use crate::event::EventNotif;
 use crate::structs::Monitor;
+use systemstat::System;
 
 #[derive(Debug)]
 pub enum AppMsg {
@@ -16,6 +17,7 @@ pub enum AppMsg {
     Option<WeatherStationConfig>,
   ),
   DropWeatherStation,
+  RequestBatteryLife(relm4::tokio::sync::oneshot::Sender<systemstat::BatteryLife>),
 }
 
 pub enum LuaHookType {

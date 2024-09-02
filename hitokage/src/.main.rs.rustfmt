@@ -40,9 +40,6 @@ struct App {
   // so we only keep one weather station to request forecasts (todo @codyduong support multiple weather stations)
   weather_station: Arc<Mutex<Option<WeatherStation>>>,
   weather_station_count: Arc<AtomicUsize>,
-
-  system: Arc<System>,
-
   // keep alive for lifetime of app
   _debouncer: notify_debouncer_full::Debouncer<notify::ReadDirectoryChangesWatcher, notify_debouncer_full::FileIdMap>,
   _css_debouncer:
@@ -250,7 +247,6 @@ impl Component for App {
       file_last_checked_at,
       weather_station: Arc::new(Mutex::new(None)),
       weather_station_count: Arc::new(AtomicUsize::new(0)),
-      system: Arc::new(System::new()),
       _debouncer: debouncer,
       _css_debouncer: css_debouncer,
       _tx_lua: tx_lua,
@@ -338,12 +334,12 @@ impl Component for App {
           log::debug!("Weather Station dropped")
         }
       }
-      AppMsg::RequestBatteryLife(tx) => {
-        log::debug!("Requesting battery life");
+            AppMsg::RequestSystem(tx) => {
+         log::debug!("Requesting system");
         let mut system_lock = self.system.lock().unwrap();
         if let Some(system) = &*system_lock {
           log::debug!("Sending existing weather station");
-          tx.send(system.clone().battery).unwrap();
+          tx.send(system.clone()).unwrap();
         } else {
           log::debug!("Creating new weather station");
           let system = WeatherStation::new(
@@ -352,8 +348,22 @@ impl Component for App {
           *system_lock = Some(system.clone());
           tx.send(system).unwrap();
         }
-        self.system_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-      }
+        self
+          .system_count
+          .fetch_add(1, std::sync::atomic::Ordering::SeqCst);        
+            }
+        AppMsg::DestroySystem => {
+ log::debug!("Dropping ref to weather station");
+       let weather_station_count = &self.weather_station_count;
+        let curr = self.weather_station_count.load(std::sync::atomic::Ordering::SeqCst);
+        let min = curr.saturating_sub(1);
+        weather_station_count.fetch_min(min, std::sync::atomic::Ordering::SeqCst);
+        let mut weather_station_lock = self.weather_station.lock().unwrap();
+        if weather_station_count.load(std::sync::atomic::Ordering::SeqCst) == 0 {
+          *weather_station_lock = None;
+          log::debug!("Weather Station dropped")
+        }
+            }
       AppMsg::DestroyActual => {
         for bar in self.bars.drain(..) {
           bar.widget().destroy();

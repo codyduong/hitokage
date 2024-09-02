@@ -11,6 +11,7 @@ use weather::WeatherUserData;
 use workspace::WorkspaceUserData;
 
 pub mod bar;
+pub mod battery;
 pub mod r#box;
 pub mod clock;
 pub mod cpu;
