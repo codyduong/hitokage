@@ -5,6 +5,9 @@
 ---
 --- @source hitokage-core\src\widgets\mod.rs
 ---
+--- @class WidgetBatteryProps
+--- @field Battery BatteryProps
+---
 --- @class WidgetBoxProps
 --- @field Box BoxProps
 ---

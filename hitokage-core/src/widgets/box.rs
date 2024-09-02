@@ -104,6 +104,13 @@ macro_rules! generate_box_widgets {
     for widget in $widgets.unwrap_or_default() {
       let monitor = $monitor.clone();
       match widget {
+        WidgetProps::Battery(inner_props) => {
+          let controller = crate::widgets::battery::Battery::builder()
+            .launch(inner_props)
+            .forward($output_sender, |m| m.into());
+          $root.append(controller.widget());
+          $model.widgets.push(WidgetController::Battery(controller));
+        }
         WidgetProps::Box(inner_props) => {
           let controller = crate::widgets::r#box::HitokageBox::builder()
             .launch((monitor, inner_props))
@@ -149,7 +156,7 @@ macro_rules! generate_box_widgets {
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Workspace(controller));
         }
-      }
+      };
     }
     $model.widgets.shrink_to_fit();
   };

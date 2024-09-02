@@ -15,7 +15,7 @@
 --- },
 --- ```
 ---
---- @field widgets table<number, WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
+--- @field widgets table<number, WidgetBatteryProps | WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
 
 -------------------------------------------------------------------------------
 --- Links to BoxUserData hitokage-lua\src\widgets\box.rs
@@ -44,7 +44,7 @@ function box_instance:get_homogeneous() end
 function box_instance:set_homogeneous(homogeneous) end
 
 --- Get the widgets on the box
---- @return table<number, Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+--- @return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_widgets() end
 
 --- Gets the first item in the widget tree that has the identifier.
@@ -54,5 +54,5 @@ function box_instance:get_widgets() end
 ---
 --- @param id string The identifier
 --- @param recursive boolean? Defaults to `false`
---- @return nil | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+--- @return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_widget_by_id(id, recursive) end

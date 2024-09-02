@@ -129,3 +129,8 @@ window {
   font-weight: bold;
   padding-left: 0px;
 }
+
+.battery.icon {
+  color: #fff;
+  font-size: 14px;
+}
