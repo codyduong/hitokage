@@ -3,6 +3,7 @@ use super::bar::BarProps;
 use super::weather::WeatherStation;
 use super::weather::WeatherStationConfig;
 use crate::event::EventNotif;
+use crate::structs::system::SystemWrapper;
 use crate::structs::Monitor;
 
 #[derive(Debug)]
@@ -16,6 +17,7 @@ pub enum AppMsg {
     Option<WeatherStationConfig>,
   ),
   DropWeatherStation,
+  RequestSystem(relm4::tokio::sync::oneshot::Sender<SystemWrapper>),
 }
 
 pub enum LuaHookType {

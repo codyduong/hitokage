@@ -136,6 +136,12 @@ for _, monitor in ipairs(monitors) do
 									class = "data_wrapper",
 									widgets = {
 										{
+											Battery = {
+												class = "icon",
+												format = "{{icon}}",
+											},
+										},
+										{
 											Weather = {
 												class = "icon",
 												latitude = 38.95773795883854,

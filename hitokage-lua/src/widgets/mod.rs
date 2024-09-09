@@ -1,3 +1,4 @@
+use battery::BatteryUserData;
 use clock::ClockUserData;
 use cpu::CpuUserData;
 use hitokage_core::widgets::WidgetUserData as CoreWidgetUserData;
@@ -6,11 +7,12 @@ use label::LabelUserData;
 use memory::MemoryUserData;
 use mlua::{IntoLua, Lua};
 use r#box::BoxUserData;
-use std::{collections::VecDeque, sync::Arc};
+use std::sync::Arc;
 use weather::WeatherUserData;
 use workspace::WorkspaceUserData;
 
 pub mod bar;
+pub mod battery;
 pub mod r#box;
 pub mod clock;
 pub mod cpu;
@@ -21,6 +23,7 @@ pub mod weather;
 pub mod workspace;
 
 pub(crate) enum WidgetUserData {
+  Battery(BatteryUserData),
   Box(BoxUserData),
   Clock(ClockUserData),
   Cpu(CpuUserData),
@@ -34,6 +37,7 @@ pub(crate) enum WidgetUserData {
 impl WidgetUserData {
   fn get_id(&self) -> Option<String> {
     match self {
+      WidgetUserData::Battery(userdata) => userdata.get_id().unwrap(),
       WidgetUserData::Box(userdata) => userdata.get_id().unwrap(),
       WidgetUserData::Clock(userdata) => userdata.get_id().unwrap(),
       WidgetUserData::Cpu(userdata) => userdata.get_id().unwrap(),
@@ -49,6 +53,7 @@ impl WidgetUserData {
 impl<'lua> IntoLua<'lua> for WidgetUserData {
   fn into_lua(self, lua: &'lua Lua) -> mlua::Result<mlua::Value<'lua>> {
     match self {
+      WidgetUserData::Battery(userdata) => lua.pack(userdata),
       WidgetUserData::Box(userdata) => lua.pack(userdata),
       WidgetUserData::Clock(userdata) => lua.pack(userdata),
       WidgetUserData::Cpu(userdata) => lua.pack(userdata),
@@ -64,6 +69,10 @@ impl<'lua> IntoLua<'lua> for WidgetUserData {
 impl From<CoreWidgetUserData> for WidgetUserData {
   fn from(sender: CoreWidgetUserData) -> Self {
     match sender {
+      CoreWidgetUserData::Battery(sender) => WidgetUserData::Battery(BatteryUserData {
+        r#type: "Battery".to_string(),
+        sender,
+      }),
       CoreWidgetUserData::Box(sender) => WidgetUserData::Box(BoxUserData {
         r#type: "Box".to_string(),
         sender,

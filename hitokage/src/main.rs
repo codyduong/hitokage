@@ -2,6 +2,7 @@ use config::reload_css_provider;
 use gtk4::prelude::*;
 use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT, STATE};
 use hitokage_core::get_hitokage_asset;
+use hitokage_core::structs::system::SystemWrapper;
 use hitokage_core::widgets;
 use hitokage_core::widgets::app::{AppMsg, LuaHookType};
 use hitokage_core::widgets::bar;
@@ -24,7 +25,6 @@ use std::time::Duration;
 use std::time::Instant;
 use windows::Win32::UI::HiDpi::{SetProcessDpiAwareness, PROCESS_PER_MONITOR_DPI_AWARE};
 use windows::Win32::UI::WindowsAndMessaging::{GetWindowLongPtrW, SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_TOOLWINDOW};
-
 mod config;
 mod socket;
 
@@ -40,6 +40,9 @@ struct App {
   // so we only keep one weather station to request forecasts (todo @codyduong support multiple weather stations)
   weather_station: Arc<Mutex<Option<WeatherStation>>>,
   weather_station_count: Arc<AtomicUsize>,
+
+  system: SystemWrapper,
+
   // keep alive for lifetime of app
   _debouncer: notify_debouncer_full::Debouncer<notify::ReadDirectoryChangesWatcher, notify_debouncer_full::FileIdMap>,
   _css_debouncer:
@@ -247,6 +250,7 @@ impl Component for App {
       file_last_checked_at,
       weather_station: Arc::new(Mutex::new(None)),
       weather_station_count: Arc::new(AtomicUsize::new(0)),
+      system: SystemWrapper::new(),
       _debouncer: debouncer,
       _css_debouncer: css_debouncer,
       _tx_lua: tx_lua,
@@ -333,6 +337,10 @@ impl Component for App {
           *weather_station_lock = None;
           log::debug!("Weather Station dropped")
         }
+      }
+      AppMsg::RequestSystem(tx) => {
+        log::debug!("Requesting system");
+        tx.send(self.system.clone()).unwrap();
       }
       AppMsg::DestroyActual => {
         for bar in self.bars.drain(..) {

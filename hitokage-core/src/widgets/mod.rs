@@ -1,6 +1,7 @@
 pub mod app;
 pub mod bar;
 pub mod base;
+pub mod battery;
 pub mod r#box;
 pub mod clock;
 pub mod cpu;
@@ -10,6 +11,8 @@ pub mod memory;
 pub mod weather;
 pub mod workspace;
 
+use battery::Battery;
+use battery::BatteryMsg;
 use clock::Clock;
 use clock::ClockMsg;
 use cpu::Cpu;
@@ -35,6 +38,7 @@ use workspace::{Workspace, WorkspaceMsg};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum WidgetProps {
+  Battery(battery::BatteryProps),
   Box(r#box::BoxProps),
   Clock(clock::ClockProps),
   Cpu(cpu::CpuProps),
@@ -46,6 +50,7 @@ pub enum WidgetProps {
 }
 
 pub enum WidgetController {
+  Battery(AsyncController<Battery>),
   Box(Controller<HitokageBox>),
   Clock(Controller<Clock>),
   Cpu(Controller<Cpu>),
@@ -58,6 +63,7 @@ pub enum WidgetController {
 
 #[derive(Debug, Clone)]
 pub enum WidgetUserData {
+  Battery(relm4::Sender<BatteryMsg>),
   Box(relm4::Sender<BoxMsg>),
   Clock(relm4::Sender<ClockMsg>),
   Cpu(relm4::Sender<CpuMsg>),
@@ -71,6 +77,7 @@ pub enum WidgetUserData {
 impl<'a> From<&'a WidgetController> for WidgetUserData {
   fn from(controller: &'a WidgetController) -> Self {
     match controller {
+      WidgetController::Battery(item) => WidgetUserData::Battery(item.sender().clone()),
       WidgetController::Box(item) => WidgetUserData::Box(item.sender().clone()),
       WidgetController::Clock(item) => WidgetUserData::Clock(item.sender().clone()),
       WidgetController::Cpu(item) => WidgetUserData::Cpu(item.sender().clone()),
