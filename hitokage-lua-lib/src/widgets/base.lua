@@ -109,7 +109,7 @@ function base_instance:get_height() end
 --- A value of `-1` stored in height indicates that it has not been set explicitly and the natural requisition of the widget will be used instead.
 --- To get the height a widget will actually request, call [`measure_height`](lua://Base.measure_height) instead of this function.
 ---
---- See also: [get_width_request](lua://Base.get_width_request), [get_size_request](lua://Base.get_size_request).
+--- See also: [`get_width_request`](lua://Base.get_width_request), [`get_size_request`](lua://Base.get_size_request).
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.get_size_request.html)
 ---
@@ -122,7 +122,7 @@ function base_instance:get_height_request() end
 ---
 --- If the height request in a given direction is `-1` (unset), then the “natural” height request of the widget will be used instead.
 ---
---- See also: [set_width_request](lua://Base.set_width_request), [set_size_request](lua://Base.set_size_request).
+--- See also: [`set_width_request`](lua://Base.set_width_request), [`set_size_request`](lua://Base.set_size_request).
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.set_size_request.html)
 ---
@@ -150,7 +150,7 @@ function base_instance:set_hexpand(hexpand) end
 --- A value of `-1` stored in width or height indicates that that dimension has not been set explicitly and the natural requisition of the widget will be used instead.
 --- To get the size a widget will actually request, call [`measure`](lua://Base.measure) instead of this function.
 ---
---- See also: [get_width_request](lua://Base.get_width_request), [get_height_request](lua://Base.get_height_request).
+--- See also: [`get_width_request`](lua://Base.get_width_request), [`get_height_request`](lua://Base.get_height_request).
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.get_size_request.html)
 ---
@@ -163,7 +163,7 @@ function base_instance:get_size_request() end
 ---
 --- If the size request in a given direction is `-1` (unset), then the “natural” size request of the widget will be used instead.
 ---
---- See also: [set_width_request](lua://Base.set_width_request), [set_height_request](lua://Base.set_height_request).
+--- See also: [`set_width_request`](lua://Base.set_width_request), [`set_height_request`](lua://Base.set_height_request).
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.set_size_request.html)
 ---

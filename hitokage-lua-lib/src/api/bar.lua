@@ -5,6 +5,8 @@
 --- @class barlib
 local bar = {}
 
+--- **Deprecated**. Recommended you use [`monitor:attach`](lua://monitorlib.attach) instead
+--- 
 --- Creates a new bar on a specified monitor.
 ---
 --- **Example**
@@ -22,6 +24,7 @@ local bar = {}
 --- end
 --- ```
 ---
+--- @deprecated
 --- @param monitor Monitor
 --- @param bar_props BarProps
 --- @return Bar

@@ -62,7 +62,7 @@ for _, monitor in ipairs(monitors) do
 
 	table.insert(
 		bars,
-		hitokage.bar.create(monitor, {
+		monitor:attach({
 			widgets = {
 				{
 					Box = {

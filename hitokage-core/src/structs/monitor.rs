@@ -1,4 +1,5 @@
 use crate::win_utils;
+use mlua::{LuaSerdeExt, MultiValue};
 use serde::{Deserialize, Serialize};
 use std::ops::DivAssign;
 
@@ -60,7 +61,7 @@ impl DivAssign<MonitorScaleFactor> for MonitorGeometry {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Monitor {
-  pub connecter: Option<String>,
+  pub connector: Option<String>,
   pub description: Option<String>,
   pub geometry: MonitorGeometry,
   pub manufacturer: Option<String>,
@@ -76,6 +77,37 @@ pub struct Monitor {
   // @codyduong If this ends up being something someone needs... but you can usually just match with a komorebi state if you really need this...
   // pub size: windows::Win32::Foundation::RECT,
   // pub work_area_size: windows::Win32::Foundation::RECT,
+}
+
+impl mlua::UserData for Monitor {
+  fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+    fields.add_field_method_get("field", |_, this| Ok(this.connector.clone()));
+    fields.add_field_method_get("description", |_, this| Ok(this.description.clone()));
+    fields.add_field_method_get("geometry", |lua, this| lua.to_value(&this.geometry));
+    fields.add_field_method_get("manufacturer", |_, this| Ok(this.manufacturer.clone()));
+    fields.add_field_method_get("refresh_rate", |_, this| Ok(this.refresh_rate.clone()));
+    fields.add_field_method_get("is_primary", |_, this| Ok(this.is_primary.clone()));
+    fields.add_field_method_get("device", |_, this| Ok(this.device.clone()));
+    fields.add_field_method_get("device_id", |_, this| Ok(this.device_id.clone()));
+    fields.add_field_method_get("id", |_, this| Ok(this.id.clone()));
+    fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
+    fields.add_field_method_get("scale_factor", |lua, this| lua.to_value(&this.scale_factor));
+    fields.add_field_method_get("index", |_, this| Ok(this.index.clone()));
+  }
+
+  fn add_methods<'lua, M: mlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
+    methods.add_method("attach", |lua, this, props: mlua::Value| {
+      let bar = lua
+        .globals()
+        .get::<&str, mlua::Table>("hitokage")?
+        .get::<&str, mlua::Table>("bar")?
+        .get::<&str, mlua::Function>("create")?;
+
+      let args = MultiValue::from_vec(vec![lua.pack(this.clone())?, props]);
+
+      bar.call::<MultiValue<'_>, mlua::Value>(args)
+    });
+  }
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]

@@ -191,17 +191,16 @@ where
       "create",
       lua.create_function({
         let sender = sender.clone();
-        move |lua, value: (Table, Table)| {
+        move |_, value: (mlua::AnyUserData, Table)| {
           let opts = mlua::serde::de::Options::new().deny_unsupported_types(false);
 
-          let monitor: Monitor = lua.from_value(mlua::Value::Table(value.0))?;
+          let monitor = value.0.borrow::<Monitor>()?;
           let props = BarProps::deserialize(LuaDeserializer::new(mlua::Value::Table(value.1), opts))?;
-          // let props: BarProps = lua.from_value_with(mlua::Value::Table(value.1), opts)?;
 
           let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 
           sender.input(<C as Component>::Input::LuaHook(LuaHook {
-            t: LuaHookType::CreateBar(Box::new(monitor), props, {
+            t: LuaHookType::CreateBar(Box::new(monitor.clone()), props, {
               let bar_sender = Arc::clone(&bar_sender);
               {
                 Box::new(move |s| {

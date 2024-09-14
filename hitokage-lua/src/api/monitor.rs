@@ -125,7 +125,7 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
       .find(|&m| Into::<MonitorGeometry>::into(m.geometry()) == geometry)
     {
       Some(Monitor {
-        connecter: other_monitor.connector().map(|s| s.to_string()),
+        connector: other_monitor.connector().map(|s| s.to_string()),
         description: other_monitor.description().map(|s| s.to_string()),
         geometry,
         manufacturer: other_monitor.manufacturer().map(|s| s.to_string()),
@@ -165,7 +165,7 @@ impl UserData for MonitorUserData {
 fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
   let monitors_vec: Vec<Monitor> = get_monitors().collect();
 
-  let res = lua.to_value(&monitors_vec)?;
+  let res = lua.pack(monitors_vec)?;
 
   Ok(res)
 }
