@@ -348,6 +348,7 @@ impl Component for App {
           drop(bar);
         }
       }
+      AppMsg::NoOp => {}
     }
   }
 

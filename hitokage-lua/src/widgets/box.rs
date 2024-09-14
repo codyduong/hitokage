@@ -2,7 +2,7 @@ use super::{WidgetUserData, WidgetUserDataVec};
 use crate::impl_lua_get_widget_by_id;
 use crate::{impl_getter_fn, impl_setter_fn};
 use hitokage_core::structs::Align;
-use hitokage_core::widgets::r#box::BoxMsg;
+use hitokage_core::widgets::r#box::BoxMsgPortable;
 use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
 use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
 use hitokage_macros::impl_lua_base;
@@ -13,20 +13,20 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct BoxUserData {
   pub r#type: String,
-  pub sender: relm4::Sender<BoxMsg>,
+  pub sender: relm4::Sender<BoxMsgPortable>,
 }
 
-#[impl_lua_base(BoxMsg::LuaHook)]
+#[impl_lua_base(BoxMsgPortable::LuaHook)]
 impl BoxUserData {
-  fn sender(&self) -> Result<relm4::Sender<BoxMsg>, crate::HitokageError> {
+  fn sender(&self) -> Result<relm4::Sender<BoxMsgPortable>, crate::HitokageError> {
     Ok(self.sender.clone())
   }
 
   // BOX PROPERTIES START
-  impl_getter_fn!(get_homogeneous, BoxMsg::LuaHook, GetHomogeneous, bool);
-  impl_setter_fn!(set_homogeneous, BoxMsg::LuaHook, SetHomogeneous, bool);
+  impl_getter_fn!(get_homogeneous, BoxMsgPortable::LuaHook, GetHomogeneous, bool);
+  impl_setter_fn!(set_homogeneous, BoxMsgPortable::LuaHook, SetHomogeneous, bool);
 
-  impl_getter_fn!(get_widgets, BoxMsg::LuaHook, GetWidgets, WidgetUserDataVec);
+  impl_getter_fn!(get_widgets, BoxMsgPortable::LuaHook, GetWidgets, WidgetUserDataVec);
   // BOX PROPERTIES END
 }
 

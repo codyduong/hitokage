@@ -13,6 +13,7 @@ pub mod workspace;
 
 use battery::Battery;
 use battery::BatteryMsg;
+use r#box::BoxMsgPortable;
 use clock::Clock;
 use clock::ClockMsg;
 use cpu::Cpu;
@@ -23,7 +24,6 @@ use label::Label;
 use label::LabelMsg;
 use memory::Memory;
 use memory::MemoryMsg;
-use r#box::BoxMsg;
 use r#box::HitokageBox;
 use relm4::component::AsyncComponentController;
 use relm4::prelude::AsyncController;
@@ -61,10 +61,25 @@ pub enum WidgetController {
   Workspace(Controller<Workspace>),
 }
 
+impl WidgetController {
+  fn widget(&self) -> gtk4::Widget {
+    match self {
+      WidgetController::Battery(c) => c.widget().clone().into(),
+      WidgetController::Box(c) => c.widget().clone().into(),
+      WidgetController::Clock(c) => c.widget().clone().into(),
+      WidgetController::Cpu(c) => c.widget().clone().into(),
+      WidgetController::Icon(c) => c.widget().clone().into(),
+      WidgetController::Label(c) => c.widget().clone().into(),
+      WidgetController::Memory(c) => c.widget().clone().into(),
+      WidgetController::Weather(c) => c.widget().clone().into(),
+      WidgetController::Workspace(c) => c.widget().clone().into(),    }
+  }
+}
+
 #[derive(Debug, Clone)]
 pub enum WidgetUserData {
   Battery(relm4::Sender<BatteryMsg>),
-  Box(relm4::Sender<BoxMsg>),
+  Box(relm4::Sender<BoxMsgPortable>),
   Clock(relm4::Sender<ClockMsg>),
   Cpu(relm4::Sender<CpuMsg>),
   Icon(relm4::Sender<IconMsg>),
@@ -78,7 +93,11 @@ impl<'a> From<&'a WidgetController> for WidgetUserData {
   fn from(controller: &'a WidgetController) -> Self {
     match controller {
       WidgetController::Battery(item) => WidgetUserData::Battery(item.sender().clone()),
-      WidgetController::Box(item) => WidgetUserData::Box(item.sender().clone()),
+      WidgetController::Box(item) => {
+        let (sender, receiver) = relm4::channel::<BoxMsgPortable>();
+        relm4::spawn_local(receiver.forward(item.sender().clone(), |m| m.into()));
+        WidgetUserData::Box(sender)
+      },
       WidgetController::Clock(item) => WidgetUserData::Clock(item.sender().clone()),
       WidgetController::Cpu(item) => WidgetUserData::Cpu(item.sender().clone()),
       WidgetController::Icon(item) => WidgetUserData::Icon(item.sender().clone()),
