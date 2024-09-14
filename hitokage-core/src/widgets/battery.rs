@@ -1,6 +1,8 @@
 use super::app::AppMsg;
 use super::base::Base;
 use super::base::BaseProps;
+use super::r#box::BoxMsg;
+use super::r#box::ChildMsg;
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
@@ -34,12 +36,23 @@ pub enum BatteryMsg {
 #[derive(Debug)]
 pub enum BatteryMsgOut {
   RequestSystem(relm4::tokio::sync::oneshot::Sender<SystemWrapper>),
+  Destroy(gtk4::Widget),
 }
 
 impl From<BatteryMsgOut> for AppMsg {
   fn from(value: BatteryMsgOut) -> Self {
     match value {
       BatteryMsgOut::RequestSystem(tx) => AppMsg::RequestSystem(tx),
+      _ => AppMsg::NoOp,
+    }
+  }
+}
+
+impl From<BatteryMsgOut> for BoxMsg {
+  fn from(value: BatteryMsgOut) -> Self {
+    match value {
+      BatteryMsgOut::RequestSystem(tx) => BoxMsg::AppMsg(AppMsg::RequestSystem(tx)),
+      BatteryMsgOut::Destroy(widget) => BoxMsg::ChildMsg(ChildMsg::Remove(widget))
     }
   }
 }
@@ -99,10 +112,21 @@ impl AsyncComponent for Battery {
     };
 
     let sender_clone = sender.clone();
-    let source_id = glib::timeout_add_local(std::time::Duration::from_secs(60), move || {
+    let source_id = glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
       sender_clone.input(BatteryMsg::RequestBatteryLife);
       glib::ControlFlow::Continue
     });
+
+    let battery = match system.battery_life().await{
+      Ok(b) => b.into(),
+      Err(e) => {
+        if e.to_string() == "Battery absent" {
+          log::info!("No battery detected, removing battery widget");
+          sender.output(BatteryMsgOut::Destroy(root.clone().into())).unwrap();
+        }
+        BatteryWrapper::default()
+      }
+    };
 
     let mut model = Battery {
       base: props.base.clone().into(),
@@ -112,7 +136,7 @@ impl AsyncComponent for Battery {
         .as_reactive_string(create_react_sender(sender.input_sender(), BatteryMsg::React)),
       react: false,
       tracker: 0,
-      battery: system.battery_life().await.into(),
+      battery,
       system,
       icons: props.icons,
     };

@@ -135,6 +135,12 @@ impl From<anyhow::Result<systemstat::BatteryLife>> for BatteryWrapper {
   }
 }
 
+impl From<systemstat::BatteryLife> for BatteryWrapper {
+  fn from(value: systemstat::BatteryLife) -> Self {
+    BatteryWrapper { battery: Some(value) }
+  }
+}
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct BatteryIcons {
   #[serde(default)]

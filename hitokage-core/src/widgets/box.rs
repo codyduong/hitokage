@@ -14,6 +14,7 @@ use crate::widgets::deserialize_empty_or_seq;
 use crate::widgets::WidgetController;
 use crate::widgets::WidgetProps;
 use gtk4::prelude::*;
+use gtk4::Widget;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
@@ -29,8 +30,34 @@ pub enum BoxMsgHook {
 }
 
 #[derive(Debug, Clone)]
+pub enum ChildMsg {
+  Remove(Widget),
+}
+
+#[derive(Debug)]
 pub enum BoxMsg {
   LuaHook(BoxMsgHook),
+  ChildMsg(ChildMsg),
+  AppMsg(AppMsg),
+}
+
+#[derive(Debug)]
+pub enum BoxMsgPortable {
+  LuaHook(BoxMsgHook),
+}
+
+impl From<BoxMsgPortable> for BoxMsg {
+  fn from(value: BoxMsgPortable) -> Self {
+    match value {
+      BoxMsgPortable::LuaHook(luahook) => BoxMsg::LuaHook(luahook),
+    }
+  }
+}
+
+impl Into<BoxMsg> for AppMsg {
+  fn into(self) -> BoxMsg {
+    BoxMsg::AppMsg(self)
+  }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -81,25 +108,36 @@ impl Component for HitokageBox {
     prepend_css_class_to_model!("box", model.r#box, root);
     set_initial_box_props!(model, root, props.base);
     let widgets = view_output!();
-    generate_box_widgets!(props.widgets, model.r#box, monitor, root, sender.output_sender());
+    generate_box_widgets!(props.widgets, model.r#box, monitor, root, sender.input_sender());
 
     root.show();
 
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
+  fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       BoxMsg::LuaHook(hook) => {
         generate_box_match_arms!(self, "box", root, BoxMsgHook, hook)
       }
+      BoxMsg::AppMsg(msg) => {
+        sender.output(msg).unwrap();
+      }
+      BoxMsg::ChildMsg(msg) => match msg {
+        ChildMsg::Remove(child) => {
+          root.remove(&child);
+          self.r#box.widgets.retain(|w| {
+            w.widget() != child
+          });
+        }
+      },
     };
   }
 }
 
 #[macro_export]
 macro_rules! generate_box_widgets {
-  ($widgets:expr, $model: expr, $monitor: expr, $root: expr, $output_sender: expr) => {
+  ($widgets:expr, $model: expr, $monitor: expr, $root: expr, $input_sender: expr) => {
     // let mut r#box = $model.r#box;
     for widget in $widgets.unwrap_or_default() {
       let monitor = $monitor.clone();
@@ -107,14 +145,14 @@ macro_rules! generate_box_widgets {
         WidgetProps::Battery(inner_props) => {
           let controller = crate::widgets::battery::Battery::builder()
             .launch(inner_props)
-            .forward($output_sender, |m| m.into());
+            .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Battery(controller));
         }
         WidgetProps::Box(inner_props) => {
           let controller = crate::widgets::r#box::HitokageBox::builder()
             .launch((monitor, inner_props))
-            .forward($output_sender, |m| m.into());
+            .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Box(controller));
         }
@@ -146,7 +184,7 @@ macro_rules! generate_box_widgets {
         WidgetProps::Weather(inner_props) => {
           let controller = crate::widgets::weather::Weather::builder()
             .launch(inner_props)
-            .forward($output_sender, |m| m.into());
+            .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
           $model.widgets.push(WidgetController::Weather(controller));
         }

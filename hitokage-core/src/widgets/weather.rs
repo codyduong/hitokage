@@ -1,6 +1,7 @@
 use super::app::AppMsg;
 use super::base::Base;
 use super::base::BaseProps;
+use super::r#box::BoxMsg;
 use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
@@ -218,6 +219,15 @@ impl From<WeatherMsgOut> for AppMsg {
     match value {
       WeatherMsgOut::RequestWeatherStation(a, b) => AppMsg::RequestWeatherStation(a, b),
       WeatherMsgOut::DropWeatherStation => AppMsg::DropWeatherStation,
+    }
+  }
+}
+
+impl From<WeatherMsgOut> for BoxMsg {
+  fn from(value: WeatherMsgOut) -> Self {
+    match value {
+      WeatherMsgOut::RequestWeatherStation(a, b) => BoxMsg::AppMsg( AppMsg::RequestWeatherStation(a, b)),
+      WeatherMsgOut::DropWeatherStation => BoxMsg::AppMsg(AppMsg::DropWeatherStation),
     }
   }
 }
