@@ -1,10 +1,10 @@
---- @meta hitokage.widgets.base
+--- @meta hitokage.components.base
 
 -------------------------------------------------------------------------------
---- Links to BaseProps in 'hitokage-core\src\widgets\base.rs'
+--- Links to BaseProps in 'hitokage-core\src\components\base.rs'
 --- @class BaseProps
 ---
---- Optional css class names. Built-in hitokage widgets will always contain
+--- Optional css class names. Built-in hitokage components will always contain
 --- their type as a class name.
 ---
 --- **Example**
@@ -34,7 +34,7 @@
 --- A unique identifier.
 ---
 --- This is not enforced or checked by hitokage, it is simply used in utility methods such
---- as [get_widget_by_id](lua://Bar.get_widget_by_id).
+--- as [get_child_by_id](lua://Bar.get_child_by_id).
 ---
 --- @field id string?
 ---
@@ -64,7 +64,7 @@
 --- @field width_request integer?
 
 -------------------------------------------------------------------------------
---- Links to BoxUserData hitokage-lua\src\widgets\box.rs
+--- Links to BoxUserData hitokage-lua\src\components\box.rs
 --- @class Base
 local base_instance = {}
 

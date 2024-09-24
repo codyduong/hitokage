@@ -29,15 +29,6 @@ for _, monitor in ipairs(monitors) do
 	-- 	goto continue
 	-- end
 
-	-- TODO better idiomatic syntax
-	-- monitor.create_bar({
-	--   widgets = {
-	--     {Workspace = {}},
-	--     {Clock = {format = "%Y-%m-%d %H:%M:%S"}},
-	--     {Box = {}},
-	--   }
-	-- })
-
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
 	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}")
 	local reactive_img = hitokage.unstable.reactive.create("./smiley.png")
@@ -63,12 +54,12 @@ for _, monitor in ipairs(monitors) do
 	table.insert(
 		bars,
 		monitor:attach({
-			widgets = {
+			children = {
 				{
 					Box = {
 						hexpand = false,
 						homogeneous = true,
-						widgets = {
+						children = {
 							{
 								Box = {
 									class = "red",
@@ -88,7 +79,7 @@ for _, monitor in ipairs(monitors) do
 								Box = {
 									class = { "red", "green blue" },
 									homogeneous = false,
-									widgets = {
+									children = {
 										{
 											Label = {
 												label = reactive_label,
@@ -109,7 +100,7 @@ for _, monitor in ipairs(monitors) do
 				},
 				{ Workspace = { halign = "Center", item_height = 22, item_width = 22, format = "{{add index 1}}" } },
 				-- { Box = {
-				-- 	widgets = {
+				-- 	children = {
 				-- 		{ Cpu = { format = 'C0: {{pad "right" (round (mult core0_usage 100) 1) 5}}', halign = "End" } },
 				-- 		{ Cpu = { format = 'C1: {{pad "right" (round (mult core1_usage 100) 1) 5}}', halign = "End" } },
 				-- 		{ Cpu = { format = 'C2: {{pad "right" (round (mult core2_usage 100) 1) 5}}', halign = "End" } },
@@ -127,14 +118,14 @@ for _, monitor in ipairs(monitors) do
 						homogeneous = false,
 						halign = "End",
 						class = "right_bar",
-						widgets = {
+						children = {
 							{ Label = { label = "\u{E0B2}", class = "data_start" } },
 							{
 								Box = {
 									homogeneous = false,
 									halign = "Fill",
 									class = "data_wrapper",
-									widgets = {
+									children = {
 										{
 											Battery = {
 												class = "icon",
@@ -163,7 +154,7 @@ for _, monitor in ipairs(monitors) do
 									hexpand = false,
 									homogeneous = false,
 									class = "clock_wrapper",
-									widgets = {
+									children = {
 										{ Label = { label = "\u{F00ED}", class = "icon clock" } },
 										{ Clock = { format = "%a %b %e", halign = "End" } },
 										{ Label = { label = reactive_clock_icon, class = "icon clock" } },
@@ -204,20 +195,20 @@ for i, bar in ipairs(bars) do
 		hitokage.debug("waiting for bar to instantiate", i)
 		coroutine.yield() -- yield to other processes to occur
 	end
-	for _, widget in ipairs(bar:get_widgets()) do
-		hitokage.debug(widget)
-		if widget.type == "Clock" then
-			table.insert(clocks, widget)
+	for _, child in ipairs(bar:get_children()) do
+		hitokage.debug(child)
+		if child.type == "Clock" then
+			table.insert(clocks, child)
 		end
-		if widget.type == "Workspace" then
-			table.insert(workspaces, widget)
+		if child.type == "Workspace" then
+			table.insert(workspaces, child)
 		end
-		if widget.type == "Box" then
-			table.insert(boxes, widget)
+		if child.type == "Box" then
+			table.insert(boxes, child)
 		end
 	end
 
-	local label = bar:get_widget_by_id("test1", true)
+	local label = bar:get_child_by_id("test1", true)
 	--- @cast label Label
 	local routine = hitokage.timeout(1000, function()
 		local current_label = label:get_label()
@@ -261,14 +252,14 @@ end
 -- end)
 
 local css_boxes_test = hitokage.timeout(1000, function()
-	local widgets = boxes[1]:get_widgets()
+	local children = boxes[1]:get_children()
 
-	local first = widgets[1]:get_class()
-	for index, bar in ipairs(widgets) do
-		if next(widgets, index) == nil then
+	local first = children[1]:get_class()
+	for index, bar in ipairs(children) do
+		if next(children, index) == nil then
 			bar:set_class(first)
 		else
-			bar:set_class(widgets[index + 1]:get_class())
+			bar:set_class(children[index + 1]:get_class())
 		end
 	end
 end)

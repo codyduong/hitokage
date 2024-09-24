@@ -1,9 +1,9 @@
---- @meta hitokage.widgets.common
+--- @meta hitokage.components.common
 
 -------------------------------------------------------------------------------
---- Links to WidgetProps in 'hitokage-core\src\widgets\mod.rs'
+--- Links to Child in 'hitokage-core\src\components\mod.rs'
 ---
---- @source hitokage-core\src\widgets\mod.rs
+--- @source hitokage-core\src\components\mod.rs
 ---
 --- @class WidgetBatteryProps
 --- @field Battery BatteryProps

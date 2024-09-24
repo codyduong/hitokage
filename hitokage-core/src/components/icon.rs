@@ -1,5 +1,6 @@
 use super::base::Base;
 use super::base::BaseProps;
+use crate::components::base::BaseMsgHook;
 use crate::generate_base_match_arms;
 use crate::get_hitokage_asset;
 use crate::prepend_css_class_to_model;
@@ -7,7 +8,6 @@ use crate::set_initial_base_props;
 use crate::structs::reactive::create_react_sender;
 use crate::structs::reactive::Reactive;
 use crate::structs::reactive::ReactiveString;
-use crate::widgets::base::BaseMsgHook;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;

@@ -1,33 +1,33 @@
---- @meta hitokage.widgets.cpu
+--- @meta hitokage.components.clock
 
 -------------------------------------------------------------------------------
---- Links to CpuProps in 'hitokage-core\src\widgets\cpu.rs'
---- @class CpuProps : BaseProps
+--- Links to ClockProps in 'hitokage-core\src\components\clock.rs'
+--- @class ClockProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
 --- @field format string | ReactiveString?
 
 -------------------------------------------------------------------------------
---- Links to CpuUserData hitokage-lua\src\widgets\cpu.rs
---- @class Cpu : Base
+--- Links to ClockUserData hitokage-lua\src\components\clock.rs
+--- @class Clock : Base
 ---
---- @field type 'Cpu'
-local cpu_instance = {}
+--- @field type 'Clock'
+local clock_instance = {}
 
 --- Get the type of widget
---- @return 'Cpu'
-function cpu_instance:get_type() end
+--- @return 'Clock'
+function clock_instance:get_type() end
 
 --- Get the format string
 --- @return string
-function cpu_instance:get_format() end
+function clock_instance:get_format() end
 
 --- Get the reactive format string
 --- @return ReactiveString
 --- @nodiscard
-function cpu_instance:get_format_reactive() end
+function clock_instance:get_format_reactive() end
 
 --- Set the format string
 --- @param string string
 --- @return nil
-function cpu_instance:set_format(string) end
+function clock_instance:set_format(string) end

@@ -1,9 +1,9 @@
 use crate::{impl_getter_fn, impl_setter_fn};
+use hitokage_core::components::clock::ClockMsg;
+use hitokage_core::components::clock::ClockMsgHook::BaseHook;
+use hitokage_core::components::clock::ClockMsgHook::{GetFormat, GetFormatReactive, SetFormat};
 use hitokage_core::structs::reactive::Reactive;
 use hitokage_core::structs::Align;
-use hitokage_core::widgets::clock::ClockMsg;
-use hitokage_core::widgets::clock::ClockMsgHook::BaseHook;
-use hitokage_core::widgets::clock::ClockMsgHook::{GetFormat, GetFormatReactive, SetFormat};
 use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 

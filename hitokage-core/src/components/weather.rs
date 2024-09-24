@@ -2,6 +2,7 @@ use super::app::AppMsg;
 use super::base::Base;
 use super::base::BaseProps;
 use super::r#box::BoxMsg;
+use crate::components::base::BaseMsgHook;
 use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
@@ -9,7 +10,6 @@ use crate::set_initial_base_props;
 use crate::structs::reactive::create_react_sender;
 use crate::structs::reactive::Reactive;
 use crate::structs::reactive::ReactiveString;
-use crate::widgets::base::BaseMsgHook;
 use gtk4::prelude::*;
 use handlebars::Handlebars;
 use relm4::loading_widgets::LoadingWidgets;
@@ -226,7 +226,7 @@ impl From<WeatherMsgOut> for AppMsg {
 impl From<WeatherMsgOut> for BoxMsg {
   fn from(value: WeatherMsgOut) -> Self {
     match value {
-      WeatherMsgOut::RequestWeatherStation(a, b) => BoxMsg::AppMsg( AppMsg::RequestWeatherStation(a, b)),
+      WeatherMsgOut::RequestWeatherStation(a, b) => BoxMsg::AppMsg(AppMsg::RequestWeatherStation(a, b)),
       WeatherMsgOut::DropWeatherStation => BoxMsg::AppMsg(AppMsg::DropWeatherStation),
     }
   }

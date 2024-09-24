@@ -1,7 +1,7 @@
---- @meta hitokage.widgets.weather
+--- @meta hitokage.components.weather
 
 -------------------------------------------------------------------------------
---- Links to WeatherProps in 'hitokage-core\src\widgets\weather.rs'
+--- Links to WeatherProps in 'hitokage-core\src\components\weather.rs'
 --- @class WeatherProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
@@ -14,7 +14,7 @@
 --- @field icons table<string, string>?
 
 -------------------------------------------------------------------------------
---- Links to WeatherUserData hitokage-lua\src\widgets\weather.rs
+--- Links to WeatherUserData hitokage-lua\src\components\weather.rs
 --- @class Weather : Base
 ---
 --- @field type 'Weather'

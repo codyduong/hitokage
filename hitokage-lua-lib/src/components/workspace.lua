@@ -1,7 +1,7 @@
---- @meta hitokage.widgets.workspace
+--- @meta hitokage.components.workspace
 
 -------------------------------------------------------------------------------
---- Links to WorkspaceProps in 'hitokage-core\src\widgets\workspace.rs'
+--- Links to WorkspaceProps in 'hitokage-core\src\components\workspace.rs'
 --- @class WorkspaceProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
@@ -10,7 +10,7 @@
 --- @field format string?
 
 -------------------------------------------------------------------------------
---- Links to hitokage-lua\src\widgets\workspace.rs
+--- Links to hitokage-lua\src\components\workspace.rs
 --- @class Workspace
 ---
 --- @field type 'Workspace'

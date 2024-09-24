@@ -1,18 +1,17 @@
 use super::app::AppMsg;
 use super::base::Base;
 use super::base::BaseProps;
-use super::WidgetUserData;
+use super::ChildUserData;
+use crate::components::base::BaseMsgHook;
+use crate::components::deserialize_empty_or_seq;
+use crate::components::ChildController;
 use crate::generate_base_match_arms;
+use crate::generate_box_children;
 use crate::generate_box_match_arms;
-use crate::generate_box_widgets;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
 use crate::set_initial_box_props;
 use crate::structs::Monitor;
-use crate::widgets::base::BaseMsgHook;
-use crate::widgets::deserialize_empty_or_seq;
-use crate::widgets::WidgetController;
-use crate::widgets::WidgetProps;
 use gtk4::prelude::*;
 use gtk4::Widget;
 use relm4::prelude::*;
@@ -26,7 +25,7 @@ pub enum BoxMsgHook {
   BaseHook(BaseMsgHook),
   GetHomogeneous(Sender<bool>),
   SetHomogeneous(bool),
-  GetWidgets(Sender<Vec<WidgetUserData>>),
+  GetChildren(Sender<Vec<ChildUserData>>),
 }
 
 #[derive(Debug, Clone)]
@@ -66,14 +65,24 @@ pub struct BoxProps {
   pub base: BaseProps,
   pub homogeneous: Option<bool>,
 
-  #[serde(default, deserialize_with = "deserialize_empty_or_seq")]
-  pub widgets: Option<Vec<WidgetProps>>,
+  #[serde(default, deserialize_with = "deserialize_empty_or_seq", alias = "widgets")]
+  pub children: Option<Vec<super::Child>>,
+}
+
+impl Default for BoxProps {
+  fn default() -> Self {
+    Self {
+      base: BaseProps::default(),
+      homogeneous: None,
+      children: Some(Vec::new()),
+    }
+  }
 }
 
 pub struct BoxInner {
   pub base: Base,
   pub homogeneous: Option<bool>,
-  pub widgets: Vec<WidgetController>,
+  pub children: Vec<ChildController>,
 }
 
 pub struct HitokageBox {
@@ -99,7 +108,7 @@ impl Component for HitokageBox {
 
     let mut model = HitokageBox {
       r#box: BoxInner {
-        widgets: Vec::new(),
+        children: Vec::new(),
         base: props.base.clone().into(),
         homogeneous: props.homogeneous,
       },
@@ -108,7 +117,7 @@ impl Component for HitokageBox {
     prepend_css_class_to_model!("box", model.r#box, root);
     set_initial_box_props!(model, root, props.base);
     let widgets = view_output!();
-    generate_box_widgets!(props.widgets, model.r#box, monitor, root, sender.input_sender());
+    generate_box_children!(props.children, model.r#box, monitor, root, sender.input_sender());
 
     root.show();
 
@@ -126,9 +135,7 @@ impl Component for HitokageBox {
       BoxMsg::ChildMsg(msg) => match msg {
         ChildMsg::Remove(child) => {
           root.remove(&child);
-          self.r#box.widgets.retain(|w| {
-            w.widget() != child
-          });
+          self.r#box.children.retain(|w| w.widget() != child);
         }
       },
     };
@@ -136,67 +143,70 @@ impl Component for HitokageBox {
 }
 
 #[macro_export]
-macro_rules! generate_box_widgets {
-  ($widgets:expr, $model: expr, $monitor: expr, $root: expr, $input_sender: expr) => {
-    // let mut r#box = $model.r#box;
-    for widget in $widgets.unwrap_or_default() {
+macro_rules! generate_box_children {
+  ($children:expr, $model: expr, $monitor: expr, $root: expr, $input_sender: expr) => {
+    for child in $children.unwrap_or_default() {
+      use crate::components::Child;
+      use crate::components::ChildController;
       let monitor = $monitor.clone();
-      match widget {
-        WidgetProps::Battery(inner_props) => {
-          let controller = crate::widgets::battery::Battery::builder()
+      match child {
+        Child::Battery(inner_props) => {
+          let controller = crate::components::battery::Battery::builder()
             .launch(inner_props)
             .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Battery(controller));
+          $model.children.push(ChildController::Battery(controller));
         }
-        WidgetProps::Box(inner_props) => {
-          let controller = crate::widgets::r#box::HitokageBox::builder()
+        Child::Box(inner_props) => {
+          let controller = crate::components::r#box::HitokageBox::builder()
             .launch((monitor, inner_props))
             .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Box(controller));
+          $model.children.push(ChildController::Box(controller));
         }
-        WidgetProps::Clock(inner_props) => {
-          let controller = crate::widgets::clock::Clock::builder().launch(inner_props).detach();
+        Child::Clock(inner_props) => {
+          let controller = crate::components::clock::Clock::builder().launch(inner_props).detach();
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Clock(controller));
+          $model.children.push(ChildController::Clock(controller));
         }
-        WidgetProps::Cpu(inner_props) => {
-          let controller = crate::widgets::cpu::Cpu::builder().launch(inner_props).detach();
+        Child::Cpu(inner_props) => {
+          let controller = crate::components::cpu::Cpu::builder().launch(inner_props).detach();
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Cpu(controller));
+          $model.children.push(ChildController::Cpu(controller));
         }
-        WidgetProps::Icon(inner_props) => {
-          let controller = crate::widgets::icon::Icon::builder().launch(inner_props).detach();
+        Child::Icon(inner_props) => {
+          let controller = crate::components::icon::Icon::builder().launch(inner_props).detach();
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Icon(controller));
+          $model.children.push(ChildController::Icon(controller));
         }
-        WidgetProps::Label(inner_props) => {
-          let controller = crate::widgets::label::Label::builder().launch(inner_props).detach();
+        Child::Label(inner_props) => {
+          let controller = crate::components::label::Label::builder().launch(inner_props).detach();
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Label(controller));
+          $model.children.push(ChildController::Label(controller));
         }
-        WidgetProps::Memory(inner_props) => {
-          let controller = crate::widgets::memory::Memory::builder().launch(inner_props).detach();
+        Child::Memory(inner_props) => {
+          let controller = crate::components::memory::Memory::builder()
+            .launch(inner_props)
+            .detach();
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Memory(controller));
+          $model.children.push(ChildController::Memory(controller));
         }
-        WidgetProps::Weather(inner_props) => {
-          let controller = crate::widgets::weather::Weather::builder()
+        Child::Weather(inner_props) => {
+          let controller = crate::components::weather::Weather::builder()
             .launch(inner_props)
             .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Weather(controller));
+          $model.children.push(ChildController::Weather(controller));
         }
-        WidgetProps::Workspace(inner_props) => {
-          use crate::widgets::workspace::Workspace;
+        Child::Workspace(inner_props) => {
+          use crate::components::workspace::Workspace;
           let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
           $root.append(controller.widget());
-          $model.widgets.push(WidgetController::Workspace(controller));
+          $model.children.push(ChildController::Workspace(controller));
         }
       };
     }
-    $model.widgets.shrink_to_fit();
+    $model.children.shrink_to_fit();
   };
 }
 
@@ -219,8 +229,8 @@ macro_rules! generate_box_match_arms {
         $self.r#box.homogeneous = Some(homogeneous);
         $root.set_homogeneous(homogeneous);
       }
-      BoxMsgHook::GetWidgets(tx) => {
-        tx.send($self.r#box.widgets.iter().map(WidgetUserData::from).collect())
+      BoxMsgHook::GetChildren(tx) => {
+        tx.send($self.r#box.children.iter().map(ChildUserData::from).collect())
           .unwrap();
       }
     }

@@ -1,12 +1,11 @@
 use super::app::AppMsg;
 use super::base::BaseMsgHook;
 use super::r#box::{BoxInner, BoxMsgHook, BoxProps};
-use super::WidgetUserData;
-use super::{WidgetController, WidgetProps};
+use super::ChildUserData;
 use crate::structs::{Monitor, MonitorGeometry, MonitorScaleFactor};
 use crate::win_utils::get_windows_version;
 use crate::{
-  generate_base_match_arms, generate_box_match_arms, generate_box_widgets, prepend_css_class,
+  generate_base_match_arms, generate_box_children, generate_box_match_arms, prepend_css_class,
   prepend_css_class_to_model, set_initial_base_props, set_initial_box_props,
 };
 use gtk4::prelude::*;
@@ -185,7 +184,7 @@ impl Component for Bar {
       offset_y,
       r#box: BoxInner {
         homogeneous: props.r#box.homogeneous,
-        widgets: Vec::new(),
+        children: Vec::new(),
         base: props.r#box.base.clone().into(),
       },
     };
@@ -194,8 +193,8 @@ impl Component for Bar {
     prepend_css_class_to_model!("bar", model.r#box, root);
     let widgets = view_output!();
     set_initial_box_props!(model, widgets.main_box, props.r#box.base);
-    generate_box_widgets!(
-      props.r#box.widgets,
+    generate_box_children!(
+      props.r#box.children,
       model.r#box,
       monitor,
       widgets.main_box,

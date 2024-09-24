@@ -1,14 +1,14 @@
---- @meta hitokage.widgets.memory
+--- @meta hitokage.components.memory
 
 -------------------------------------------------------------------------------
---- Links to MemoryProps in 'hitokage-core\src\widgets\memory.rs'
+--- Links to MemoryProps in 'hitokage-core\src\components\memory.rs'
 --- @class MemoryProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
 --- @field format string | ReactiveString?
 
 -------------------------------------------------------------------------------
---- Links to MemoryUserData hitokage-lua\src\widgets\memory.rs
+--- Links to MemoryUserData hitokage-lua\src\components\memory.rs
 --- @class Memory : Base
 ---
 --- @field type 'Memory'

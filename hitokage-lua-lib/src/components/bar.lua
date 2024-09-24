@@ -1,4 +1,4 @@
---- @meta hitokage.widgets.bar
+--- @meta hitokage.components.bar
 
 --- @class BarOffset
 --- @field x integer?
@@ -11,7 +11,7 @@
 --- @field offset BarOffset?
 
 -------------------------------------------------------------------------------
---- Links to BarUserData in 'hitokage-lua\src\widgets\bar.rs'
+--- Links to BarUserData in 'hitokage-lua\src\components\bar.rs'
 --- @class Bar : Base, Box
 ---
 --- Wrapper around bar:is_ready()

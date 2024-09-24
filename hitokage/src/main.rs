@@ -1,12 +1,12 @@
 use config::reload_css_provider;
 use gtk4::prelude::*;
+use hitokage_core::components;
+use hitokage_core::components::app::{AppMsg, LuaHookType};
+use hitokage_core::components::bar;
+use hitokage_core::components::weather::WeatherStation;
 use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT, STATE};
 use hitokage_core::get_hitokage_asset;
 use hitokage_core::structs::system::SystemWrapper;
-use hitokage_core::widgets;
-use hitokage_core::widgets::app::{AppMsg, LuaHookType};
-use hitokage_core::widgets::bar;
-use hitokage_core::widgets::weather::WeatherStation;
 use log::LevelFilter;
 use notify::Watcher;
 use notify_debouncer_full::new_debouncer;
@@ -35,7 +35,7 @@ enum LuaCoroutineMessage {
 }
 
 struct App {
-  bars: Vec<Controller<widgets::bar::Bar>>,
+  bars: Vec<Controller<components::bar::Bar>>,
   file_last_checked_at: Arc<Mutex<Instant>>,
   // so we only keep one weather station to request forecasts (todo @codyduong support multiple weather stations)
   weather_station: Arc<Mutex<Option<WeatherStation>>>,

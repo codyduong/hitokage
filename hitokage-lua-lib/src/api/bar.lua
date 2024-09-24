@@ -6,7 +6,7 @@
 local bar = {}
 
 --- **Deprecated**. Recommended you use [`monitor:attach`](lua://monitorlib.attach) instead
---- 
+---
 --- Creates a new bar on a specified monitor.
 ---
 --- **Example**
@@ -15,7 +15,7 @@ local bar = {}
 ---
 --- for _, monitor in ipairs(monitors) do
 ---   hitokage.bar.create(monitor, {
----     widgets = {
+---     children = {
 ---       { Box = {} },
 ---       { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
 ---       { Clock = { format = "%a %b %u %r", halign = 'End' } },

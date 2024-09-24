@@ -53,7 +53,7 @@ local monitor_instance = {}
 ---
 --- for _, monitor in ipairs(monitors) do
 ---   monitor:attach({
----     widgets = {
+---     children = {
 ---       { Box = {} },
 ---       { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
 ---       { Clock = { format = "%a %b %u %r", halign = 'End' } },

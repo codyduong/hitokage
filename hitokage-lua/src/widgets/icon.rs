@@ -1,9 +1,9 @@
 use crate::{impl_getter_fn, impl_setter_fn};
+use hitokage_core::components::icon::IconMsg;
+use hitokage_core::components::icon::IconMsgHook::BaseHook;
+use hitokage_core::components::icon::IconMsgHook::{GetFile, GetFileReactive, SetFile};
 use hitokage_core::structs::reactive::Reactive;
 use hitokage_core::structs::Align;
-use hitokage_core::widgets::icon::IconMsg;
-use hitokage_core::widgets::icon::IconMsgHook::BaseHook;
-use hitokage_core::widgets::icon::IconMsgHook::{GetFile, GetFileReactive, SetFile};
 use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 

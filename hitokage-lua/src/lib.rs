@@ -1,9 +1,5 @@
 use api::{event, monitor, reactive};
-use hitokage_core::{
-  event::EventNotif,
-  structs::monitor::Monitor,
-  widgets::{app::AppMsg, bar::BarMsg},
-};
+use hitokage_core::components::app::AppMsg;
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
