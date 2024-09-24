@@ -18,8 +18,8 @@ pub enum AppMsg {
   ),
   DropWeatherStation,
   RequestSystem(relm4::tokio::sync::oneshot::Sender<SystemWrapper>),
-  NoOp // we use this for .into calls for our macro that don't necessarily need an app msg.
-       // todo @codyduong we need to remove this behavior somehow, since we are sending basically empty messages...
+  NoOp, // we use this for .into calls for our macro that don't necessarily need an app msg.
+        // todo @codyduong we need to remove this behavior somehow, since we are sending basically empty messages...
 }
 
 pub enum LuaHookType {

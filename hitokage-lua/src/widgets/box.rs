@@ -1,10 +1,10 @@
-use super::{WidgetUserData, WidgetUserDataVec};
-use crate::impl_lua_get_widget_by_id;
+use super::{ChildUserData, ChildUserDataVec, HoldsChildren};
+use crate::impl_lua_get_child_by_id;
 use crate::{impl_getter_fn, impl_setter_fn};
+use hitokage_core::components::r#box::BoxMsgHook::BaseHook;
+use hitokage_core::components::r#box::BoxMsgHook::{GetChildren, GetHomogeneous, SetHomogeneous};
+use hitokage_core::components::r#box::BoxMsgPortable;
 use hitokage_core::structs::Align;
-use hitokage_core::widgets::r#box::BoxMsgPortable;
-use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
-use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
 use hitokage_macros::impl_lua_base;
 use mlua::{LuaSerdeExt, UserData, UserDataMethods, Value};
 use std::collections::VecDeque;
@@ -25,9 +25,11 @@ impl BoxUserData {
   // BOX PROPERTIES START
   impl_getter_fn!(get_homogeneous, BoxMsgPortable::LuaHook, GetHomogeneous, bool);
   impl_setter_fn!(set_homogeneous, BoxMsgPortable::LuaHook, SetHomogeneous, bool);
-
-  impl_getter_fn!(get_widgets, BoxMsgPortable::LuaHook, GetWidgets, WidgetUserDataVec);
   // BOX PROPERTIES END
+}
+
+impl HoldsChildren for BoxUserData {
+  impl_getter_fn!(,get_children, BoxMsgPortable::LuaHook, GetChildren, ChildUserDataVec);
 }
 
 #[impl_lua_base]
@@ -43,10 +45,11 @@ impl UserData for BoxUserData {
       this.set_homogeneous(lua, value)
     });
 
-    methods.add_method("get_widgets", |lua, instance, ()| lua.pack(instance.get_widgets()?));
+    methods.add_method("get_children", |lua, instance, ()| lua.pack(instance.get_children()?));
+    methods.add_method("get_widgets", |lua, instance, ()| lua.pack(instance.get_children()?));
     // BOX PROPERTIES END
 
-    impl_lua_get_widget_by_id!(methods);
+    impl_lua_get_child_by_id!(methods);
 
     methods.add_meta_method(
       "__index",
@@ -54,7 +57,8 @@ impl UserData for BoxUserData {
         match value {
           Value::String(s) => match s.to_str()? {
             "type" => Ok(lua.to_value(&instance.r#type.clone())?),
-            "widgets" => Ok(lua.pack(instance.get_widgets()?)?),
+            "children" => Ok(lua.pack(instance.get_children()?)?),
+            "widgets" => Ok(lua.pack(instance.get_children()?)?),
             _ => Ok(Value::Nil),
           },
           _ => Ok(Value::Nil),
@@ -64,53 +68,60 @@ impl UserData for BoxUserData {
   }
 }
 
+pub(crate) fn get_child_by_id<'lua, T>(
+  lua: &'lua mlua::Lua,
+  instance: &T,
+  args: mlua::Variadic<mlua::Value>,
+) -> mlua::Result<mlua::Value<'lua>>
+where
+  T: HoldsChildren,
+{
+  if args.len() < 1 || args.len() > 2 {
+    return Err(mlua::Error::RuntimeError("Expected one or two arguments".to_string()));
+  }
+
+  let id: String = lua.from_value(args[0].clone()).map_err(|e| mlua::Error::BadArgument {
+    to: Some("get_child_by_id".to_string()),
+    pos: 0,
+    name: Some("id".to_string()),
+    cause: Arc::new(e),
+  })?;
+  let recursive: Option<bool> = lua.from_value(args[1].clone()).map_err(|e| mlua::Error::BadArgument {
+    to: Some("get_child_by_id".to_string()),
+    pos: 0,
+    name: Some("recursive".to_string()),
+    cause: Arc::new(e),
+  })?;
+
+  let mut queue = VecDeque::from(Vec::from(instance.get_children()?));
+
+  while let Some(widget) = queue.pop_front() {
+    let widget_id = widget.get_id();
+
+    if widget_id.filter(|w_id| *w_id == id).is_some() {
+      return lua.pack(widget);
+    }
+
+    if recursive.unwrap_or(false) {
+      match widget {
+        ChildUserData::Box(box_userdata) => {
+          let children = box_userdata.get_children()?;
+          for child in children {
+            queue.push_back(child);
+          }
+        }
+        _ => {}
+      }
+    }
+  }
+
+  Ok(mlua::Nil)
+}
+
 #[macro_export]
-macro_rules! impl_lua_get_widget_by_id {
+macro_rules! impl_lua_get_child_by_id {
   ($methods: expr) => {
-    $methods.add_method(
-      "get_widget_by_id",
-      |lua, instance, args: mlua::Variadic<mlua::Value>| {
-        if args.len() < 1 || args.len() > 2 {
-          return Err(mlua::Error::RuntimeError("Expected one or two arguments".to_string()));
-        }
-
-        let id: String = lua.from_value(args[0].clone()).map_err(|e| mlua::Error::BadArgument {
-          to: Some("get_widget_by_id".to_string()),
-          pos: 0,
-          name: Some("id".to_string()),
-          cause: Arc::new(e),
-        })?;
-        let recursive: Option<bool> = lua.from_value(args[1].clone()).map_err(|e| mlua::Error::BadArgument {
-          to: Some("get_widget_by_id".to_string()),
-          pos: 0,
-          name: Some("recursive".to_string()),
-          cause: Arc::new(e),
-        })?;
-
-        let mut queue = VecDeque::from(Vec::from(instance.get_widgets()?));
-
-        while let Some(widget) = queue.pop_front() {
-          let widget_id = widget.get_id();
-
-          if widget_id.filter(|w_id| *w_id == id).is_some() {
-            return lua.pack(widget);
-          }
-
-          if recursive.unwrap_or(false) {
-            match widget {
-              WidgetUserData::Box(box_userdata) => {
-                let children = box_userdata.get_widgets()?;
-                for child in children {
-                  queue.push_back(child);
-                }
-              }
-              _ => {}
-            }
-          }
-        }
-
-        Ok(mlua::Nil)
-      },
-    );
+    $methods.add_method("get_widget_by_id", crate::widgets::r#box::get_child_by_id);
+    $methods.add_method("get_child_by_id", crate::widgets::r#box::get_child_by_id);
   };
 }

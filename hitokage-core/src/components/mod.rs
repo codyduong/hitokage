@@ -13,7 +13,6 @@ pub mod workspace;
 
 use battery::Battery;
 use battery::BatteryMsg;
-use r#box::BoxMsgPortable;
 use clock::Clock;
 use clock::ClockMsg;
 use cpu::Cpu;
@@ -24,6 +23,7 @@ use label::Label;
 use label::LabelMsg;
 use memory::Memory;
 use memory::MemoryMsg;
+use r#box::BoxMsgPortable;
 use r#box::HitokageBox;
 use relm4::component::AsyncComponentController;
 use relm4::prelude::AsyncController;
@@ -37,7 +37,7 @@ use weather::WeatherMsg;
 use workspace::{Workspace, WorkspaceMsg};
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum WidgetProps {
+pub enum Child {
   Battery(battery::BatteryProps),
   Box(r#box::BoxProps),
   Clock(clock::ClockProps),
@@ -49,7 +49,7 @@ pub enum WidgetProps {
   Workspace(workspace::WorkspaceProps),
 }
 
-pub enum WidgetController {
+pub enum ChildController {
   Battery(AsyncController<Battery>),
   Box(Controller<HitokageBox>),
   Clock(Controller<Clock>),
@@ -61,23 +61,24 @@ pub enum WidgetController {
   Workspace(Controller<Workspace>),
 }
 
-impl WidgetController {
+impl ChildController {
   fn widget(&self) -> gtk4::Widget {
     match self {
-      WidgetController::Battery(c) => c.widget().clone().into(),
-      WidgetController::Box(c) => c.widget().clone().into(),
-      WidgetController::Clock(c) => c.widget().clone().into(),
-      WidgetController::Cpu(c) => c.widget().clone().into(),
-      WidgetController::Icon(c) => c.widget().clone().into(),
-      WidgetController::Label(c) => c.widget().clone().into(),
-      WidgetController::Memory(c) => c.widget().clone().into(),
-      WidgetController::Weather(c) => c.widget().clone().into(),
-      WidgetController::Workspace(c) => c.widget().clone().into(),    }
+      ChildController::Battery(c) => c.widget().clone().into(),
+      ChildController::Box(c) => c.widget().clone().into(),
+      ChildController::Clock(c) => c.widget().clone().into(),
+      ChildController::Cpu(c) => c.widget().clone().into(),
+      ChildController::Icon(c) => c.widget().clone().into(),
+      ChildController::Label(c) => c.widget().clone().into(),
+      ChildController::Memory(c) => c.widget().clone().into(),
+      ChildController::Weather(c) => c.widget().clone().into(),
+      ChildController::Workspace(c) => c.widget().clone().into(),
+    }
   }
 }
 
 #[derive(Debug, Clone)]
-pub enum WidgetUserData {
+pub enum ChildUserData {
   Battery(relm4::Sender<BatteryMsg>),
   Box(relm4::Sender<BoxMsgPortable>),
   Clock(relm4::Sender<ClockMsg>),
@@ -89,34 +90,34 @@ pub enum WidgetUserData {
   Workspace(relm4::Sender<WorkspaceMsg>),
 }
 
-impl<'a> From<&'a WidgetController> for WidgetUserData {
-  fn from(controller: &'a WidgetController) -> Self {
+impl<'a> From<&'a ChildController> for ChildUserData {
+  fn from(controller: &'a ChildController) -> Self {
     match controller {
-      WidgetController::Battery(item) => WidgetUserData::Battery(item.sender().clone()),
-      WidgetController::Box(item) => {
+      ChildController::Battery(item) => ChildUserData::Battery(item.sender().clone()),
+      ChildController::Box(item) => {
         let (sender, receiver) = relm4::channel::<BoxMsgPortable>();
         relm4::spawn_local(receiver.forward(item.sender().clone(), |m| m.into()));
-        WidgetUserData::Box(sender)
-      },
-      WidgetController::Clock(item) => WidgetUserData::Clock(item.sender().clone()),
-      WidgetController::Cpu(item) => WidgetUserData::Cpu(item.sender().clone()),
-      WidgetController::Icon(item) => WidgetUserData::Icon(item.sender().clone()),
-      WidgetController::Label(item) => WidgetUserData::Label(item.sender().clone()),
-      WidgetController::Memory(item) => WidgetUserData::Memory(item.sender().clone()),
-      WidgetController::Weather(item) => WidgetUserData::Weather(item.sender().clone()),
-      WidgetController::Workspace(item) => WidgetUserData::Workspace(item.sender().clone()),
+        ChildUserData::Box(sender)
+      }
+      ChildController::Clock(item) => ChildUserData::Clock(item.sender().clone()),
+      ChildController::Cpu(item) => ChildUserData::Cpu(item.sender().clone()),
+      ChildController::Icon(item) => ChildUserData::Icon(item.sender().clone()),
+      ChildController::Label(item) => ChildUserData::Label(item.sender().clone()),
+      ChildController::Memory(item) => ChildUserData::Memory(item.sender().clone()),
+      ChildController::Weather(item) => ChildUserData::Weather(item.sender().clone()),
+      ChildController::Workspace(item) => ChildUserData::Workspace(item.sender().clone()),
     }
   }
 }
 
-pub fn deserialize_empty_or_seq<'de, D>(deserializer: D) -> Result<Option<Vec<WidgetProps>>, D::Error>
+pub(crate) fn deserialize_empty_or_seq<'de, D>(deserializer: D) -> Result<Option<Vec<Child>>, D::Error>
 where
   D: serde::Deserializer<'de>,
 {
   struct SeqOrEmpty;
 
   impl<'de> serde::de::Visitor<'de> for SeqOrEmpty {
-    type Value = Option<Vec<WidgetProps>>;
+    type Value = Option<Vec<Child>>;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
       formatter.write_str("a sequence or an empty table")
@@ -126,7 +127,7 @@ where
     where
       A: de::SeqAccess<'de>,
     {
-      let vec: Vec<WidgetProps> = Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))?;
+      let vec: Vec<Child> = Deserialize::deserialize(de::value::SeqAccessDeserializer::new(seq))?;
       Ok(Some(vec))
     }
 

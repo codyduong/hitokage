@@ -1,6 +1,6 @@
 use anyhow::Result;
+use hitokage_core::components::app::AppMsg;
 use hitokage_core::event::EventNotif;
-use hitokage_core::widgets::app::AppMsg;
 use komorebi_client::send_message;
 use komorebi_client::SocketMessage;
 use std::io::BufReader;

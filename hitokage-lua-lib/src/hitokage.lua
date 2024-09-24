@@ -2,12 +2,12 @@
 ---
 --- @module 'hitokage.common'
 --- @module 'hitokage.types.komorebi'
---- @module 'hitokage.widgets.base'
---- @module 'hitokage.widgets.box'
---- @module 'hitokage.widgets.clock'
---- @module 'hitokage.widgets.common'
---- @module 'hitokage.widgets.weather'
---- @module 'hitokage.widgets.workspace'
+--- @module 'hitokage.components.base'
+--- @module 'hitokage.components.box'
+--- @module 'hitokage.components.clock'
+--- @module 'hitokage.components.common'
+--- @module 'hitokage.components.weather'
+--- @module 'hitokage.components.workspace'
 
 --- This is the global module for [hitokage](https://github.com/codyduong/hitokage)
 ---

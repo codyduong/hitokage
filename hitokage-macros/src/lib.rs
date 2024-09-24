@@ -32,7 +32,7 @@ pub fn impl_lua_base(args: TokenStream, input: TokenStream) -> TokenStream {
   let is_regular_impl = item_impl.trait_.is_none();
 
   let imports = quote! {
-    use hitokage_core::widgets::base::BaseMsgHook::{
+    use hitokage_core::components::base::BaseMsgHook::{
       GetClass, GetHalign, GetHeight, GetHeightRequest, GetHexpand, GetSizeRequest, GetValign, GetVexpand, GetWidth,
       GetWidthRequest, SetClass, SetHalign, SetHeightRequest, SetHexpand, GetId, SetSizeRequest, SetValign, SetVexpand,
       SetWidthRequest,

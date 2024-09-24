@@ -1,24 +1,24 @@
---- @meta hitokage.widgets.box
+--- @meta hitokage.components.box
 
 -------------------------------------------------------------------------------
---- Links to BoxProps in 'hitokage-core\src\widgets\box.rs'
+--- Links to BoxProps in 'hitokage-core\src\components\box.rs'
 --- @class BoxProps : BaseProps
 ---
---- An array of widgets.
+--- An array of components.
 ---
 --- **Example**
 --- ```lua
---- widgets = {
+--- children = {
 ---   { Box = {} },
 ---   { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
 ---   { Clock = { format = "%a %b %u %r", halign = 'End' } },
 --- },
 --- ```
 ---
---- @field widgets table<number, WidgetBatteryProps | WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
+--- @field children table<number, WidgetBatteryProps | WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
 
 -------------------------------------------------------------------------------
---- Links to BoxUserData hitokage-lua\src\widgets\box.rs
+--- Links to BoxUserData hitokage-lua\src\components\box.rs
 --- @class Box : Base
 ---
 --- @field type 'Box'
@@ -43,15 +43,35 @@ function box_instance:get_homogeneous() end
 --- @return nil
 function box_instance:set_homogeneous(homogeneous) end
 
---- Get the widgets on the box
+--- Get the children on the box.
 --- @return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
-function box_instance:get_widgets() end
+function box_instance:get_children() end
 
 --- Gets the first item in the widget tree that has the identifier.
 ---
 --- When `recursive` is set to `true` the search is performed breadth-first,
---- then in order of widgets on the tree.
+--- then in order of components on the tree.
 ---
+--- @param id string The identifier
+--- @param recursive boolean? Defaults to `false`
+--- @return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+function box_instance:get_child_by_id(id, recursive) end
+
+--- **Deprecated**. Recommended you use [`box:get_children`](lua://Box.get_children) instead.
+---
+--- Get the components on the box.
+--- @deprecated
+--- @return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+function box_instance:get_widgets() end
+
+--- **Deprecated**. Recommended you use [`box:get_child_by_id`](lua://Box.get_child_by_id) instead.
+---
+--- Gets the first item in the widget tree that has the identifier.
+---
+--- When `recursive` is set to `true` the search is performed breadth-first,
+--- then in order of components on the tree.
+---
+--- @deprecated
 --- @param id string The identifier
 --- @param recursive boolean? Defaults to `false`
 --- @return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>

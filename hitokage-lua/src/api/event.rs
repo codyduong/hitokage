@@ -1,5 +1,5 @@
+use hitokage_core::components::app::{LuaHook, LuaHookType};
 use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
-use hitokage_core::widgets::app::{LuaHook, LuaHookType};
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 

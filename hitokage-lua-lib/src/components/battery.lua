@@ -1,7 +1,7 @@
---- @meta hitokage.widgets.battery
+--- @meta hitokage.components.battery
 
 -------------------------------------------------------------------------------
---- Links to BatteryProps in 'hitokage-core\src\widgets\battery.rs'
+--- Links to BatteryProps in 'hitokage-core\src\components\battery.rs'
 --- @class BatteryProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
@@ -10,7 +10,7 @@
 --- @field icons table<string, string>?
 
 -------------------------------------------------------------------------------
---- Links to BatteryUserData hitokage-lua\src\widgets\battery.rs
+--- Links to BatteryUserData hitokage-lua\src\components\battery.rs
 --- @class Battery : Base
 ---
 --- @field type 'Battery'

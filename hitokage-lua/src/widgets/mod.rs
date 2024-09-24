@@ -1,7 +1,7 @@
 use battery::BatteryUserData;
 use clock::ClockUserData;
 use cpu::CpuUserData;
-use hitokage_core::widgets::WidgetUserData as CoreWidgetUserData;
+use hitokage_core::components::ChildUserData as CoreChildUserData;
 use icon::IconUserData;
 use label::LabelUserData;
 use memory::MemoryUserData;
@@ -22,7 +22,7 @@ pub mod memory;
 pub mod weather;
 pub mod workspace;
 
-pub(crate) enum WidgetUserData {
+pub(crate) enum ChildUserData {
   Battery(BatteryUserData),
   Box(BoxUserData),
   Clock(ClockUserData),
@@ -34,74 +34,74 @@ pub(crate) enum WidgetUserData {
   Workspace(WorkspaceUserData),
 }
 
-impl WidgetUserData {
+impl ChildUserData {
   fn get_id(&self) -> Option<String> {
     match self {
-      WidgetUserData::Battery(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Box(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Clock(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Cpu(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Icon(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Label(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Memory(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Weather(userdata) => userdata.get_id().unwrap(),
-      WidgetUserData::Workspace(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Battery(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Box(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Clock(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Cpu(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Icon(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Label(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Memory(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Weather(userdata) => userdata.get_id().unwrap(),
+      ChildUserData::Workspace(userdata) => userdata.get_id().unwrap(),
     }
   }
 }
 
-impl<'lua> IntoLua<'lua> for WidgetUserData {
+impl<'lua> IntoLua<'lua> for ChildUserData {
   fn into_lua(self, lua: &'lua Lua) -> mlua::Result<mlua::Value<'lua>> {
     match self {
-      WidgetUserData::Battery(userdata) => lua.pack(userdata),
-      WidgetUserData::Box(userdata) => lua.pack(userdata),
-      WidgetUserData::Clock(userdata) => lua.pack(userdata),
-      WidgetUserData::Cpu(userdata) => lua.pack(userdata),
-      WidgetUserData::Icon(userdata) => lua.pack(userdata),
-      WidgetUserData::Label(userdata) => lua.pack(userdata),
-      WidgetUserData::Memory(userdata) => lua.pack(userdata),
-      WidgetUserData::Weather(userdata) => lua.pack(userdata),
-      WidgetUserData::Workspace(userdata) => lua.pack(userdata),
+      ChildUserData::Battery(userdata) => lua.pack(userdata),
+      ChildUserData::Box(userdata) => lua.pack(userdata),
+      ChildUserData::Clock(userdata) => lua.pack(userdata),
+      ChildUserData::Cpu(userdata) => lua.pack(userdata),
+      ChildUserData::Icon(userdata) => lua.pack(userdata),
+      ChildUserData::Label(userdata) => lua.pack(userdata),
+      ChildUserData::Memory(userdata) => lua.pack(userdata),
+      ChildUserData::Weather(userdata) => lua.pack(userdata),
+      ChildUserData::Workspace(userdata) => lua.pack(userdata),
     }
   }
 }
 
-impl From<CoreWidgetUserData> for WidgetUserData {
-  fn from(sender: CoreWidgetUserData) -> Self {
+impl From<CoreChildUserData> for ChildUserData {
+  fn from(sender: CoreChildUserData) -> Self {
     match sender {
-      CoreWidgetUserData::Battery(sender) => WidgetUserData::Battery(BatteryUserData {
+      CoreChildUserData::Battery(sender) => ChildUserData::Battery(BatteryUserData {
         r#type: "Battery".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Box(sender) => WidgetUserData::Box(BoxUserData {
+      CoreChildUserData::Box(sender) => ChildUserData::Box(BoxUserData {
         r#type: "Box".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Clock(sender) => WidgetUserData::Clock(ClockUserData {
+      CoreChildUserData::Clock(sender) => ChildUserData::Clock(ClockUserData {
         r#type: "Clock".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Cpu(sender) => WidgetUserData::Cpu(CpuUserData {
+      CoreChildUserData::Cpu(sender) => ChildUserData::Cpu(CpuUserData {
         r#type: "Cpu".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Icon(sender) => WidgetUserData::Icon(IconUserData {
+      CoreChildUserData::Icon(sender) => ChildUserData::Icon(IconUserData {
         r#type: "Icon".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Label(sender) => WidgetUserData::Label(LabelUserData {
+      CoreChildUserData::Label(sender) => ChildUserData::Label(LabelUserData {
         r#type: "Label".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Memory(sender) => WidgetUserData::Memory(MemoryUserData {
+      CoreChildUserData::Memory(sender) => ChildUserData::Memory(MemoryUserData {
         r#type: "Memory".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Weather(sender) => WidgetUserData::Weather(WeatherUserData {
+      CoreChildUserData::Weather(sender) => ChildUserData::Weather(WeatherUserData {
         r#type: "Weather".to_string(),
         sender,
       }),
-      CoreWidgetUserData::Workspace(sender) => WidgetUserData::Workspace(WorkspaceUserData {
+      CoreChildUserData::Workspace(sender) => ChildUserData::Workspace(WorkspaceUserData {
         r#type: "Workspace".to_string(),
         sender,
       }),
@@ -109,39 +109,43 @@ impl From<CoreWidgetUserData> for WidgetUserData {
   }
 }
 
-pub(crate) struct WidgetUserDataVec(Vec<WidgetUserData>);
+pub(crate) struct ChildUserDataVec(Vec<ChildUserData>);
 
-impl From<Vec<CoreWidgetUserData>> for WidgetUserDataVec {
-  fn from(value: Vec<CoreWidgetUserData>) -> Self {
+impl From<Vec<CoreChildUserData>> for ChildUserDataVec {
+  fn from(value: Vec<CoreChildUserData>) -> Self {
     value.into_iter().map(|o| o.into()).collect()
   }
 }
 
-impl FromIterator<WidgetUserData> for WidgetUserDataVec {
-  fn from_iter<I: IntoIterator<Item = WidgetUserData>>(iter: I) -> Self {
-    WidgetUserDataVec(iter.into_iter().collect())
+impl FromIterator<ChildUserData> for ChildUserDataVec {
+  fn from_iter<I: IntoIterator<Item = ChildUserData>>(iter: I) -> Self {
+    ChildUserDataVec(iter.into_iter().collect())
   }
 }
 
-impl IntoIterator for WidgetUserDataVec {
-  type Item = WidgetUserData;
-  type IntoIter = std::vec::IntoIter<WidgetUserData>;
+impl IntoIterator for ChildUserDataVec {
+  type Item = ChildUserData;
+  type IntoIter = std::vec::IntoIter<ChildUserData>;
 
   fn into_iter(self) -> Self::IntoIter {
     self.0.into_iter()
   }
 }
 
-impl From<WidgetUserDataVec> for Vec<WidgetUserData> {
-  fn from(value: WidgetUserDataVec) -> Self {
+impl From<ChildUserDataVec> for Vec<ChildUserData> {
+  fn from(value: ChildUserDataVec) -> Self {
     value.0
   }
 }
 
-impl<'lua> IntoLua<'lua> for WidgetUserDataVec {
+impl<'lua> IntoLua<'lua> for ChildUserDataVec {
   fn into_lua(self, lua: &'lua Lua) -> Result<mlua::Value<'lua>, mlua::Error> {
     lua.pack(self.0)
   }
+}
+
+pub(crate) trait HoldsChildren {
+  fn get_children(&self) -> Result<ChildUserDataVec, crate::HitokageError>;
 }
 
 #[macro_export]
@@ -159,8 +163,34 @@ macro_rules! impl_getter_fn {
       Ok(ret_val)
     }
   };
+  ($vis:vis, $fn_name:ident, $msg_enum:path, $request_enum:path, $ret:ty) => {
+    $vis fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
+      use std::sync::mpsc;
+
+      let sender = self.sender()?;
+
+      let (tx, rx) = mpsc::channel::<_>();
+      sender.send($msg_enum($request_enum(tx))).unwrap();
+      let ret_val: $ret = rx.recv().unwrap().into();
+
+      Ok(ret_val)
+    }
+  };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $ret:ty) => {
     pub(crate) fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
+      use std::sync::mpsc;
+
+      let sender = self.sender()?;
+
+      let (tx, rx) = mpsc::channel::<_>();
+      sender.send($msg_enum1($msg_enum2($request_enum(tx)))).unwrap();
+      let ret_val: $ret = rx.recv().unwrap().into();
+
+      Ok(ret_val)
+    }
+  };
+  ($vis:vis, $fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, $ret:ty) => {
+    $vis fn $fn_name(&self) -> Result<$ret, $crate::HitokageError> {
       use std::sync::mpsc;
 
       let sender = self.sender()?;

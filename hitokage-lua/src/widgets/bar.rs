@@ -1,13 +1,13 @@
-use super::{WidgetUserData, WidgetUserDataVec};
-use crate::{impl_getter_fn, impl_lua_get_widget_by_id, impl_setter_fn};
+use super::{ChildUserDataVec, HoldsChildren};
+use crate::{impl_getter_fn, impl_lua_get_child_by_id, impl_setter_fn};
+use hitokage_core::components::app::{LuaHook, LuaHookType};
+use hitokage_core::components::bar::BarLuaHook::BoxHook;
+use hitokage_core::components::bar::BarLuaHook::GetGeometry;
+use hitokage_core::components::bar::{BarMsg, BarProps};
+use hitokage_core::components::r#box::BoxMsgHook::BaseHook;
+use hitokage_core::components::r#box::BoxMsgHook::{GetChildren, GetHomogeneous, SetHomogeneous};
 use hitokage_core::deserializer::LuaDeserializer;
 use hitokage_core::structs::{Align, Monitor, MonitorGeometry};
-use hitokage_core::widgets::app::{LuaHook, LuaHookType};
-use hitokage_core::widgets::bar::BarLuaHook::BoxHook;
-use hitokage_core::widgets::bar::BarLuaHook::GetGeometry;
-use hitokage_core::widgets::bar::{BarMsg, BarProps};
-use hitokage_core::widgets::r#box::BoxMsgHook::BaseHook;
-use hitokage_core::widgets::r#box::BoxMsgHook::{GetHomogeneous, GetWidgets, SetHomogeneous};
 use hitokage_macros::impl_lua_base;
 use mlua::{FromLuaMulti, Table};
 use mlua::{
@@ -16,10 +16,9 @@ use mlua::{
 };
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
-use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
-struct BarUserData {
+pub(crate) struct BarUserData {
   sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>>,
 }
 
@@ -86,11 +85,13 @@ impl BarUserData {
   // BOX PROPERTIES START
   impl_getter_fn!(get_homogeneous, BarMsg::LuaHook, BoxHook, GetHomogeneous, bool);
   impl_setter_fn!(set_homogeneous, BarMsg::LuaHook, BoxHook, SetHomogeneous, bool);
-
-  impl_getter_fn!(get_widgets, BarMsg::LuaHook, BoxHook, GetWidgets, WidgetUserDataVec);
   // BOX PROPERTIES END
 
   impl_getter_fn!(get_geometry, BarMsg::LuaHook, GetGeometry, MonitorGeometry);
+}
+
+impl HoldsChildren for BarUserData {
+  impl_getter_fn!(,get_children, BarMsg::LuaHook, BoxHook, GetChildren, ChildUserDataVec);
 }
 
 #[impl_lua_base]
@@ -108,14 +109,15 @@ impl UserData for BarUserData {
       this.set_homogeneous(lua, value)
     });
 
-    methods.add_method("get_widgets", |lua, instance, ()| lua.pack(instance.get_widgets()?));
+    methods.add_method("get_children", |lua, instance, ()| lua.pack(instance.get_children()?));
+    methods.add_method("get_widgets", |lua, instance, ()| lua.pack(instance.get_children()?));
     // BOX PROPERTIES END
 
     methods.add_method("get_geometry", |lua, instance, ()| {
       lua.to_value(&instance.get_geometry()?)
     });
 
-    impl_lua_get_widget_by_id!(methods);
+    impl_lua_get_child_by_id!(methods);
 
     methods.add_meta_method(
       "__index",
@@ -123,7 +125,8 @@ impl UserData for BarUserData {
         match value {
           Value::String(s) => match s.to_str()? {
             "ready" => Ok(lua.to_value(&instance.is_ready())?),
-            "widgets" => Ok(lua.pack(instance.get_widgets()?)?),
+            "children" => Ok(lua.pack(instance.get_children()?)?),
+            "widgets" => Ok(lua.pack(instance.get_children()?)?),
             "geometry" => Ok(lua.to_value(&instance.get_geometry()?)?),
             _ => Ok(Value::Nil),
           },
