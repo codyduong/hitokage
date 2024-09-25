@@ -1,5 +1,7 @@
 --- @meta hitokage.components.box
 
+--- @alias ComponentProps table<number, WidgetBatteryProps | WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
+
 -------------------------------------------------------------------------------
 --- Links to BoxProps in 'hitokage-core\src\components\box.rs'
 --- @class BoxProps : BaseProps
@@ -15,7 +17,21 @@
 --- },
 --- ```
 ---
---- @field children table<number, WidgetBatteryProps | WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
+--- @field children ComponentProps
+---
+--- **Deprecated**. Use [`children`](lua://BoxProps.children) instead
+---
+--- **Example**
+--- ```lua
+--- widgets = {
+---   { Box = {} },
+---   { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
+---   { Clock = { format = "%a %b %u %r", halign = 'End' } },
+--- },
+--- ``
+--- 
+--- @deprecated
+--- @field widgets ComponentProps
 
 -------------------------------------------------------------------------------
 --- Links to BoxUserData hitokage-lua\src\components\box.rs
@@ -57,14 +73,14 @@ function box_instance:get_children() end
 --- @return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_child_by_id(id, recursive) end
 
---- **Deprecated**. Recommended you use [`box:get_children`](lua://Box.get_children) instead.
+--- **Deprecated**. Use [`box:get_children`](lua://Box.get_children) instead.
 ---
 --- Get the components on the box.
 --- @deprecated
 --- @return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_widgets() end
 
---- **Deprecated**. Recommended you use [`box:get_child_by_id`](lua://Box.get_child_by_id) instead.
+--- **Deprecated**. Use [`box:get_child_by_id`](lua://Box.get_child_by_id) instead.
 ---
 --- Gets the first item in the widget tree that has the identifier.
 ---

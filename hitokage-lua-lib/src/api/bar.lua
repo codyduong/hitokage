@@ -5,7 +5,7 @@
 --- @class barlib
 local bar = {}
 
---- **Deprecated**. Recommended you use [`monitor:attach`](lua://monitorlib.attach) instead
+--- **Deprecated**. Use [`monitor:attach`](lua://monitorlib.attach) instead.
 ---
 --- Creates a new bar on a specified monitor.
 ---
