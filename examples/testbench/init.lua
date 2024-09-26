@@ -298,10 +298,6 @@ local update_clock_icon = hitokage.timeout(1000, function()
 	end
 end)
 
--- hitokage.subscribe("komorebi", function (notification)
--- 	hitokage.debug("checking " .. notification.event.type);
--- end)
-
 -- hitokage.dispatch(format_reactor)
 -- hitokage.dispatch(label_reactor)
 -- hitokage.dispatch(img_reactor)

@@ -121,7 +121,7 @@ where
 #[macro_export]
 macro_rules! impl_lua_get_child_by_id {
   ($methods: expr) => {
-    $methods.add_method("get_widget_by_id", crate::widgets::r#box::get_child_by_id);
-    $methods.add_method("get_child_by_id", crate::widgets::r#box::get_child_by_id);
+    $methods.add_method("get_widget_by_id", crate::components::r#box::get_child_by_id);
+    $methods.add_method("get_child_by_id", crate::components::r#box::get_child_by_id);
   };
 }

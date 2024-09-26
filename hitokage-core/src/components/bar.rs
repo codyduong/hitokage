@@ -82,7 +82,7 @@ pub struct BarOffset {
   pub y: Option<i32>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct BarProps {
   pub position: Option<BarPosition>,
   pub width: Option<i32>,

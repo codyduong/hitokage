@@ -33,7 +33,7 @@ pub fn load_content(path: Option<PathBuf>) -> String {
   prepend.to_owned() + "\n" + &contents + "\n" + append
 }
 
-pub fn create_lua_handle(
+pub fn create_lua_handle<'lua>(
   sender: ComponentSender<App>,
   file_path: PathBuf,
   lua_thread_id: Arc<AtomicU32>,
@@ -175,6 +175,12 @@ pub fn create_lua_handle(
           break Err(err);
         }
       }
+      // let lua = unsafe {
+      //   let ptr = &coroutine as *const mlua::Thread<'_> as *const u8;
+      //   let lua_ptr_ptr = ptr as *const &mlua::Lua;
+      //   *lua_ptr_ptr
+      // };
+      // lua_tx.send(Some(lua)); 
       if time.elapsed() <= Duration::from_millis(100) {
         std::thread::sleep(Duration::from_millis(100) - time.elapsed())
       }

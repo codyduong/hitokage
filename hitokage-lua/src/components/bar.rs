@@ -9,13 +9,13 @@ use hitokage_core::components::r#box::BoxMsgHook::{GetChildren, GetHomogeneous, 
 use hitokage_core::deserializer::LuaDeserializer;
 use hitokage_core::structs::{Align, Monitor, MonitorGeometry};
 use hitokage_macros::impl_lua_base;
-use mlua::{FromLuaMulti, Table};
+use mlua::Table;
 use mlua::{
   Lua, LuaSerdeExt, UserData, UserDataMethods,
   Value::{self},
 };
 use relm4::{Component, ComponentSender};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::{Arc, Mutex};
 
 pub(crate) struct BarUserData {
@@ -137,51 +137,6 @@ impl UserData for BarUserData {
   }
 }
 
-#[derive(Serialize, Deserialize)]
-struct BarPropsExtended {
-  monitor: Monitor,
-  props: BarProps,
-}
-
-impl<'lua> FromLuaMulti<'lua> for BarPropsExtended {
-  fn from_lua_multi(values: mlua::MultiValue<'lua>, lua: &'lua Lua) -> mlua::Result<Self> {
-    let mut iter = values.into_iter();
-
-    let monitor: Monitor = match iter.next() {
-      Some(value) => lua.from_value(value)?,
-      None => {
-        return Err(mlua::Error::BadArgument {
-          to: Some("create".to_string()),
-          pos: 0,
-          name: Some("monitor".to_string()),
-          cause: Arc::new(mlua::Error::FromLuaConversionError {
-            from: "Value",
-            to: "Monitor",
-            message: Some("Expected a Value of type Monitor for the first argument, received Nil".to_string()),
-          }),
-        })
-      }
-    };
-    let props: BarProps = match iter.next() {
-      Some(value) => lua.from_value(value)?,
-      None => {
-        return Err(mlua::Error::BadArgument {
-          to: Some("create".to_string()),
-          pos: 1,
-          name: Some("bar_props".to_string()),
-          cause: Arc::new(mlua::Error::FromLuaConversionError {
-            from: "Value",
-            to: "Monitor",
-            message: Some("Expected a Value of type BarProps for the second argument, received Nil".to_string()),
-          }),
-        })
-      }
-    };
-
-    Ok(BarPropsExtended { monitor, props })
-  }
-}
-
 pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table<'lua>>
 where
   C: Component<Input = crate::AppMsg>,
@@ -194,11 +149,11 @@ where
       "create",
       lua.create_function({
         let sender = sender.clone();
-        move |_, value: (mlua::AnyUserData, Table)| {
+        move |lua, value: (mlua::AnyUserData, Table)| {
           let opts = mlua::serde::de::Options::new().deny_unsupported_types(false);
 
           let monitor = value.0.borrow::<Monitor>()?;
-          let props = BarProps::deserialize(LuaDeserializer::new(mlua::Value::Table(value.1), opts))?;
+          let props = BarProps::deserialize(LuaDeserializer::new(lua, mlua::Value::Table(value.1), opts))?;
 
           let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 

@@ -9,9 +9,7 @@ use crate::structs::reactive::Reactive;
 use crate::structs::reactive::ReactiveString;
 use gtk4::prelude::*;
 use relm4::prelude::*;
-use relm4::ComponentParts;
-use relm4::ComponentSender;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
@@ -26,9 +24,10 @@ pub enum LabelMsgHook {
 pub enum LabelMsg {
   LuaHook(LabelMsgHook),
   React,
+  SetCallback(bool)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct LabelProps {
   #[serde(flatten)]
   base: BaseProps,
@@ -44,8 +43,8 @@ pub struct Label {
   react: bool,
 }
 
-#[relm4::component(pub)]
-impl Component for Label {
+#[relm4::component(async, pub)]
+impl AsyncComponent for Label {
   type Input = LabelMsg;
   type Output = ();
   type Init = LabelProps;
@@ -59,7 +58,13 @@ impl Component for Label {
     }
   }
 
-  fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
+  async fn init(input: Self::Init, root: Self::Root, sender: AsyncComponentSender<Self>) -> AsyncComponentParts<Self> {
+    let props = input;
+    // let f = props.label_callback;
+    // if let Some(f) = f {
+    //   log::debug!("{:?}", f);
+    // }
+
     let mut model = Label {
       base: props.base.clone().into(),
       label: props
@@ -76,10 +81,10 @@ impl Component for Label {
 
     root.show();
 
-    ComponentParts { model, widgets }
+    AsyncComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
+  async fn update(&mut self, msg: Self::Input, _sender: AsyncComponentSender<Self>, root: &Self::Root) {
     match msg {
       LabelMsg::LuaHook(hook) => match hook {
         LabelMsgHook::BaseHook(base) => {
@@ -100,6 +105,9 @@ impl Component for Label {
       },
       LabelMsg::React => {
         self.set_react(!self.react);
+      }
+      LabelMsg::SetCallback(f) => {
+
       }
     }
   }

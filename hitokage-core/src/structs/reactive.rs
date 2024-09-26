@@ -60,24 +60,6 @@ where
   }
 }
 
-// @codyduong this code is definetly wrong, but we can bypass it with our LuaSerializer, so idk maybe impl one day LOL!
-// impl<'de, T> Deserialize<'de> for Reactive<T>
-// where
-//   T: Serialize + Clone + for<'de2> Deserialize<'de2> + Send + 'static,
-// {
-//   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//   where
-//     D: Deserializer<'de>,
-//   {
-//     let lua = Lua::new();
-//     log::error!("visited sex god");
-//     let lua_data: String = Deserialize::deserialize(deserializer)?;
-//     let lua_value: Value = lua.load(&lua_data).eval().map_err(serde::de::Error::custom)?;
-//     let unpacked: Self = lua.from_value(lua_value).map_err(serde::de::Error::custom)?;
-//     Ok(unpacked)
-//   }
-// }
-
 impl<'lua, T> FromLua<'lua> for Reactive<T>
 where
   T: Clone
@@ -205,11 +187,15 @@ impl<'de> serde::de::Visitor<'de> for ReactiveStringVisitor {
   {
     assert_eq!(
       value.len(),
-      std::mem::size_of::<usize>() * 2,
+      std::mem::size_of::<u8>() + std::mem::size_of::<usize>() * 2,
       "Byte slice length is incorrect"
     );
 
-    let (bytes1, bytes2) = value.split_at(std::mem::size_of::<usize>());
+    let identifier = value[0];
+    assert_eq!(identifier, 0x00, "Identifier byte does not match expected value");
+
+    let (_, pointer_bytes) = value.split_at(1);
+    let (bytes1, bytes2) = pointer_bytes.split_at(std::mem::size_of::<usize>());
 
     let ptr1_value = usize::from_ne_bytes(bytes1.try_into().unwrap());
     let ptr2_value = usize::from_ne_bytes(bytes2.try_into().unwrap());

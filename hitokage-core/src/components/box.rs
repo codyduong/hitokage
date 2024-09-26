@@ -17,7 +17,7 @@ use gtk4::Widget;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
@@ -59,7 +59,7 @@ impl Into<BoxMsg> for AppMsg {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct BoxProps {
   #[serde(flatten)]
   pub base: BaseProps,

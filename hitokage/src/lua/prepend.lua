@@ -41,9 +41,9 @@ local komorebic_coroutine = coroutine.create(function()
 	end
 
 	while true do
-		local new = hitokage.event.has_unread()
+		local new = hitokage._internals.event.has_unread()
 		if new then
-			local unread_states = hitokage.event.get_unread()
+			local unread_states = hitokage._internals.event.get_unread()
 			for id, callback in pairs(subscriptions) do
 				for _, state in pairs(unread_states) do
 					local status, res = pcall(callback, state)
@@ -59,7 +59,7 @@ end)
 
 local file_watcher = coroutine.create(function()
 	while true do
-		local new = hitokage.event.configuration.changed()
+		local new = hitokage._internals.event.configuration.changed()
 		if new then
 			coroutine.yield("Reload")
 			-- stop running lua, then it will be passed to rust to reload this lua

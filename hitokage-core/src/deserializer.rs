@@ -1,7 +1,12 @@
-// we need a custom deserializer for mlua UserData
+// we need a custom deserializer for mlua Functions and UserData
+
+lazy_static::lazy_static! {
+  pub(crate) static ref FUNCTION_REGISTRY: std::sync::Mutex<std::collections::HashMap<usize, RegistryKey>> =
+      std::sync::Mutex::new(std::collections::HashMap::new());
+}
 
 use crate::structs::reactive::Reactive;
-use mlua::{AnyUserData, Error as LuaError, Table, TablePairs, TableSequence, Value};
+use mlua::{AnyUserData, Error as LuaError, RegistryKey, Table, TablePairs, TableSequence, Value};
 use rustc_hash::FxHashSet;
 use serde::{
   de::{self, Visitor},
@@ -44,19 +49,22 @@ pub struct LuaDeserializer<'lua> {
   options: mlua::DeserializeOptions,
   visited: Rc<RefCell<FxHashSet<*const c_void>>>,
   inner: mlua::serde::de::Deserializer<'lua>,
+  lua: &'lua mlua::Lua,
 }
 
 impl<'lua> LuaDeserializer<'lua> {
-  pub fn new(value: Value<'lua>, options: mlua::DeserializeOptions) -> Self {
+  pub fn new(lua: &'lua mlua::Lua, value: Value<'lua>, options: mlua::DeserializeOptions) -> Self {
     Self {
       value: value.clone(),
       options,
       visited: Rc::new(RefCell::new(FxHashSet::default())),
       inner: mlua::serde::de::Deserializer::new_with_options(value, options),
+      lua
     }
   }
 
   fn from_parts(
+    lua: &'lua mlua::Lua,
     value: Value<'lua>,
     options: mlua::DeserializeOptions,
     visited: Rc<RefCell<FxHashSet<*const c_void>>>,
@@ -66,6 +74,7 @@ impl<'lua> LuaDeserializer<'lua> {
       options,
       visited,
       inner: mlua::serde::de::Deserializer::new_with_options(value, options),
+      lua
     }
   }
 }
@@ -92,6 +101,36 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
       Value::Table(ref t) if t.raw_len() > 0 /* || t.is_array() */ => self.deserialize_seq(visitor),
       Value::Table(_) => self.deserialize_map(visitor),
       Value::LightUserData(ud) if ud.0.is_null() => visitor.visit_none(),
+      Value::Function(f ) => {
+        let id = f.to_pointer() as usize;
+        let k = self.lua.create_registry_value(f.clone()).unwrap();
+
+        FUNCTION_REGISTRY.lock().unwrap().insert(id, k);
+
+        // let visitor_ptr = &mut visitor as *mut V;
+        // unsafe {
+        //   let lua_visitor: *mut LuaFnVisitor = visitor_ptr as *mut LuaFnVisitor;
+
+        //   let lua = {
+        //     let f_ptr = &f as *const mlua::Function<'lua> as *const u8;
+        //     let ptr = f_ptr.add(0) as *const &mlua::Lua;
+        //     let lua: &mlua::Lua = std::ptr::read(ptr);
+
+        //     lua
+        // };
+        //   // wat da fuck am i doing
+        //   let owned = mlua::Function::from_lua(f.into_lua(lua)?, lua).map(|s| s.into_owned())?;
+  
+        //   if !lua_visitor.is_null() && (*lua_visitor).f.is_none() {
+        //     (*lua_visitor).f = Some(owned);
+        //   }
+        // }
+
+        let mut bytes = Vec::with_capacity(std::mem::size_of::<u8>() + std::mem::size_of::<usize>());
+        bytes.push(0x01);
+        bytes.extend_from_slice(&id.to_ne_bytes());
+        visitor.visit_byte_buf(bytes)
+      },
       Value::UserData(ref ud) => {
         // Handle UserData specifically
         if let Ok(ud) = ud.borrow::<Reactive<String>>() {
@@ -102,7 +141,8 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
           let ptr1_value = ptr1 as usize;
           let ptr2_value = ptr2 as usize;
 
-          let mut bytes = Vec::with_capacity(std::mem::size_of::<usize>() * 2);
+          let mut bytes = Vec::with_capacity(std::mem::size_of::<u8>() + std::mem::size_of::<usize>() * 2);
+          bytes.push(0x00);
           bytes.extend_from_slice(&ptr1_value.to_ne_bytes());
           bytes.extend_from_slice(&ptr2_value.to_ne_bytes());
 
@@ -135,7 +175,6 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
   where
     V: de::Visitor<'de>,
   {
-    log::error!("here2: {:?}", self.value);
     self.inner.deserialize_enum(name, variants, visitor)
   }
 
@@ -153,6 +192,7 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
                     seq: t.sequence_values(),
                     options: self.options,
                     visited: self.visited,
+                    lua: self.lua,
                 };
                 let seq = visitor.visit_seq(&mut deserializer)?;
                 if deserializer.seq.count() == 0 {
@@ -205,6 +245,7 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
           options: self.options,
           visited: self.visited,
           processed: 0,
+          lua: self.lua,
         };
         let map = visitor.visit_map(&mut deserializer)?;
         let count = deserializer.pairs.count();
@@ -286,6 +327,7 @@ struct SeqDeserializer<'lua> {
   seq: TableSequence<'lua, Value<'lua>>,
   options: mlua::DeserializeOptions,
   visited: Rc<RefCell<FxHashSet<*const c_void>>>,
+  lua: &'lua mlua::Lua,
 }
 
 impl<'lua, 'de> de::SeqAccess<'de> for SeqDeserializer<'lua> {
@@ -305,7 +347,7 @@ impl<'lua, 'de> de::SeqAccess<'de> for SeqDeserializer<'lua> {
             continue;
           }
           let visited = Rc::clone(&self.visited);
-          let deserializer = LuaDeserializer::from_parts(value, self.options, visited);
+          let deserializer = LuaDeserializer::from_parts(self.lua, value, self.options, visited);
           return seed.deserialize(deserializer).map(Some);
         }
         None => return Ok(None),
@@ -374,6 +416,7 @@ struct MapDeserializer<'lua> {
   options: mlua::DeserializeOptions,
   visited: Rc<RefCell<FxHashSet<*const c_void>>>,
   processed: usize,
+  lua: &'lua mlua::Lua,
 }
 
 impl<'lua, 'de> de::MapAccess<'de> for MapDeserializer<'lua> {
@@ -397,7 +440,7 @@ impl<'lua, 'de> de::MapAccess<'de> for MapDeserializer<'lua> {
           self.processed += 1;
           self.value = Some(value);
           let visited = Rc::clone(&self.visited);
-          let key_de = LuaDeserializer::from_parts(key, self.options, visited);
+          let key_de = LuaDeserializer::from_parts(self.lua, key, self.options, visited);
           return seed.deserialize(key_de).map(Some);
         }
         None => return Ok(None),
@@ -412,7 +455,7 @@ impl<'lua, 'de> de::MapAccess<'de> for MapDeserializer<'lua> {
     match self.value.take() {
       Some(value) => {
         let visited = Rc::clone(&self.visited);
-        seed.deserialize(LuaDeserializer::from_parts(value, self.options, visited))
+        seed.deserialize(LuaDeserializer::from_parts(self.lua, value, self.options, visited))
       }
       None => Err(de::Error::custom("value is missing")),
     }
@@ -450,7 +493,7 @@ pub(crate) fn check_value_for_skip(
     // {
     //   return Ok(true); // skip
     // }
-    Value::Function(_) | Value::Thread(_) | Value::LightUserData(_) | Value::Error(_)
+    Value::Thread(_) | Value::LightUserData(_) | Value::Error(_)
       if !options.deny_unsupported_types =>
     {
       return Ok(true); // skip
