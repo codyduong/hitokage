@@ -26,11 +26,11 @@ where
     }
   }
 
-  pub fn get(self) -> T {
+  pub fn get(&self) -> T {
     self.value.lock().unwrap().clone()
   }
 
-  pub fn set(self, value: impl Into<T>) {
+  pub fn set(&self, value: impl Into<T>) {
     let v_set = value.into();
     let diff = v_set != *self.value.lock().unwrap();
 
@@ -109,14 +109,13 @@ where
 {
   fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
     methods.add_method("get", |lua, this, _: ()| {
-      let value = this.clone().get();
-      let lua_value: Value = lua.to_value(&value)?;
+      let lua_value: Value = lua.to_value(&this.get())?;
       Ok(lua_value)
     });
 
     methods.add_method_mut("set", |lua, this, new_value: Value| {
       let deserialized_value: T = lua.from_value(new_value.clone())?;
-      this.clone().set(deserialized_value);
+      this.set(deserialized_value);
       Ok(())
     });
 

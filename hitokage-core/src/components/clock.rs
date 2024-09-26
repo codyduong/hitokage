@@ -83,13 +83,13 @@ impl Component for Clock {
 
   fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
-      ClockMsg::Tick => self.current_time = format_time(&self.format.clone().get()),
+      ClockMsg::Tick => self.current_time = format_time(&self.format.get()),
       ClockMsg::LuaHook(hook) => match hook {
         ClockMsgHook::BaseHook(base) => {
           generate_base_match_arms!(self, "clock", root, base)
         }
         ClockMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone().get()).unwrap();
+          tx.send(self.format.get()).unwrap();
         }
         ClockMsgHook::GetFormatReactive(tx) => {
           tx.send(self.format.clone()).unwrap();

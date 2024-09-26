@@ -56,7 +56,7 @@ impl Component for Icon {
   view! {
     gtk::Image {
       #[track = "model.changed(Icon::react())"]
-      set_file: Some(get_relative_path(model.file.clone().get()).as_str()),
+      set_file: Some(get_relative_path(model.file.get()).as_str()),
     }
   }
 
@@ -87,7 +87,7 @@ impl Component for Icon {
           generate_base_match_arms!(self, "icon", root, base)
         }
         IconMsgHook::GetFile(tx) => {
-          tx.send(self.file.clone().get()).unwrap();
+          tx.send(self.file.get()).unwrap();
         }
         IconMsgHook::GetFileReactive(tx) => {
           tx.send(self.file.clone()).unwrap();

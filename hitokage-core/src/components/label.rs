@@ -55,7 +55,7 @@ impl Component for Label {
   view! {
     gtk::Label {
       #[track = "model.changed(Label::react())"]
-      set_label: &model.label.clone().get(),
+      set_label: &model.label.get(),
     }
   }
 
@@ -86,7 +86,7 @@ impl Component for Label {
           generate_base_match_arms!(self, "label", root, base)
         }
         LabelMsgHook::GetLabel(tx) => {
-          tx.send(self.label.clone().get()).unwrap();
+          tx.send(self.label.get()).unwrap();
         }
         LabelMsgHook::GetLabelReactive(tx) => {
           tx.send(self.label.clone()).unwrap();

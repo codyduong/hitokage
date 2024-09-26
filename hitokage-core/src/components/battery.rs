@@ -95,7 +95,7 @@ impl AsyncComponent for Battery {
       #[name="battery"]
       gtk::Label {
         #[track = "model.changed(Battery::react() | Battery::battery())"]
-        set_label: &model.battery.clone().format_with(&model.icons, &model.format.clone().get()),
+        set_label: &model.battery.clone().format_with(&model.icons, &model.format.get()),
       }
     }
   }
@@ -158,7 +158,7 @@ impl AsyncComponent for Battery {
           generate_base_match_arms!(self, "format", root, base)
         }
         BatteryMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone().get()).unwrap();
+          tx.send(self.format.get()).unwrap();
         }
         BatteryMsgHook::GetFormatReactive(tx) => {
           tx.send(self.format.clone()).unwrap();
