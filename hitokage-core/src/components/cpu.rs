@@ -69,7 +69,7 @@ impl Component for Cpu {
   view! {
     gtk::Label {
       #[track = "model.changed(Cpu::react() | Cpu::cpu())"]
-      set_label: format_cpu(&model.format.clone().get(), &model.cpu.clone().into()).as_str(),
+      set_label: format_cpu(&model.format.get(), &model.cpu.clone().into()).as_str(),
     }
   }
 
@@ -111,7 +111,7 @@ impl Component for Cpu {
           generate_base_match_arms!(self, "format", root, base)
         }
         CpuMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone().get()).unwrap();
+          tx.send(self.format.get()).unwrap();
         }
         CpuMsgHook::GetFormatReactive(tx) => {
           tx.send(self.format.clone()).unwrap();

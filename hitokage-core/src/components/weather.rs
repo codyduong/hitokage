@@ -272,7 +272,7 @@ impl AsyncComponent for Weather {
       #[name="weather"]
       gtk::Label {
         #[track = "model.changed(Weather::react() | Weather::forecast())"]
-        set_label: &format_temperature(&model.forecast, &model.map, &model.format.clone().get()),
+        set_label: &format_temperature(&model.forecast, &model.map, &model.format.get()),
       }
     }
   }
@@ -339,7 +339,7 @@ impl AsyncComponent for Weather {
           generate_base_match_arms!(self, "format", root, base)
         }
         WeatherMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone().get()).unwrap();
+          tx.send(self.format.get()).unwrap();
         }
         WeatherMsgHook::GetFormatReactive(tx) => {
           tx.send(self.format.clone()).unwrap();

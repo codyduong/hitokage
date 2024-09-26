@@ -66,7 +66,7 @@ impl Component for Memory {
   view! {
     gtk::Label {
       #[track = "model.changed(Memory::react() | Memory::mem_and_swap())"]
-      set_label: &handle_optional_sys_and_mem(&model.format.clone().get(), &model.mem_and_swap)
+      set_label: &handle_optional_sys_and_mem(&model.format.get(), &model.mem_and_swap)
     }
   }
 
@@ -110,7 +110,7 @@ impl Component for Memory {
           generate_base_match_arms!(self, "format", root, base)
         }
         MemoryMsgHook::GetFormat(tx) => {
-          tx.send(self.format.clone().get()).unwrap();
+          tx.send(self.format.get()).unwrap();
         }
         MemoryMsgHook::GetFormatReactive(tx) => {
           tx.send(self.format.clone()).unwrap();
