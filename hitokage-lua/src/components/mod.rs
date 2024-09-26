@@ -280,7 +280,7 @@ where
 macro_rules! impl_setter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, Vec<$from:ty>) => {
     pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
-      use crate::widgets::convert_variadic_to_vec;
+      use crate::components::convert_variadic_to_vec;
 
       let sender = self.sender()?;
       let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;
@@ -302,7 +302,7 @@ macro_rules! impl_setter_fn {
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, Vec<$from:ty>) => {
     pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
-      use crate::widgets::convert_variadic_to_vec;
+      use crate::components::convert_variadic_to_vec;
 
       let sender = self.sender()?;
       let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;
@@ -324,7 +324,7 @@ macro_rules! impl_setter_fn {
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $msg_enum3:path, $request_enum:path, Vec<$from:ty>) => {
     pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
-      use crate::widgets::convert_variadic_to_vec;
+      use crate::components::convert_variadic_to_vec;
 
       let sender = self.sender()?;
       let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;

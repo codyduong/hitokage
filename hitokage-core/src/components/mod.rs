@@ -7,6 +7,7 @@ pub mod clock;
 pub mod cpu;
 pub mod icon;
 pub mod label;
+pub mod media;
 pub mod memory;
 pub mod weather;
 pub mod workspace;
@@ -30,13 +31,13 @@ use relm4::prelude::AsyncController;
 use relm4::ComponentController;
 use relm4::Controller;
 use serde::de;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::fmt;
 use weather::Weather;
 use weather::WeatherMsg;
 use workspace::{Workspace, WorkspaceMsg};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub enum Child {
   Battery(battery::BatteryProps),
   Box(r#box::BoxProps),
@@ -55,7 +56,7 @@ pub enum ChildController {
   Clock(Controller<Clock>),
   Cpu(Controller<Cpu>),
   Icon(Controller<Icon>),
-  Label(Controller<Label>),
+  Label(AsyncController<Label>),
   Memory(Controller<Memory>),
   Weather(AsyncController<Weather>),
   Workspace(Controller<Workspace>),

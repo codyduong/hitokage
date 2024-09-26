@@ -170,7 +170,7 @@ fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
   Ok(res)
 }
 
-// @todo @codyduong
+// todo @codyduong
 #[allow(dead_code)]
 fn current() {}
 

@@ -4,10 +4,10 @@ use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
 use std::fmt;
-use widgets::bar;
+use components::bar;
 
 pub mod api;
-pub mod widgets;
+pub mod components;
 
 // Thanks @wez https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/config/src/lua.rs#L211
 
@@ -101,10 +101,13 @@ where
     let unstable: Table = lua.create_table()?;
     unstable.set("reactive", reactive)?;
 
+    let internals: Table = lua.create_table()?;
+    internals.set("event", event)?;
+
     hitokage_mod.set("monitor", monitor)?;
     hitokage_mod.set("bar", bar)?;
-    hitokage_mod.set("event", event)?;
     hitokage_mod.set("unstable", unstable)?;
+    hitokage_mod.set("_internals", internals)?;
 
     hitokage_mod.set(
       // https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/lua-api-crates/logging/src/lib.rs#L17
@@ -152,6 +155,8 @@ where
   Ok(lua)
 }
 
+// todo @codyduong
+#[allow(dead_code)]
 trait FromLuaValue<'lua>: Sized {
   fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self>;
 }
