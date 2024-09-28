@@ -7,7 +7,7 @@ pub mod clock;
 pub mod cpu;
 pub mod icon;
 pub mod label;
-pub mod media;
+// pub mod media;
 pub mod memory;
 pub mod weather;
 pub mod workspace;
