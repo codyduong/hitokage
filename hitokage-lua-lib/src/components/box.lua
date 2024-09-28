@@ -29,7 +29,7 @@
 ---   { Clock = { format = "%a %b %u %r", halign = 'End' } },
 --- },
 --- ``
---- 
+---
 --- @deprecated
 --- @field widgets ComponentProps
 
