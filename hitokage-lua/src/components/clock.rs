@@ -31,7 +31,7 @@ impl ClockUserData {
 
 #[impl_lua_base]
 impl UserData for ClockUserData {
-  fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+  fn add_methods<'lua, M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
 
     methods.add_method("get_format", |_, this, _: ()| Ok(this.get_format()?));
@@ -44,8 +44,8 @@ impl UserData for ClockUserData {
 
     methods.add_meta_method::<_, mlua::String, _>(
       "__index",
-      |lua, instance, key| -> Result<mlua::Value<'lua>, mlua::Error> {
-        match key.to_str().unwrap() {
+      |lua, instance, key| -> Result<mlua::Value, mlua::Error> {
+        match key.to_str()?.as_ref() {
           "type" => Ok(lua.to_value(&instance.r#type.clone())?),
           _ => Ok(Value::Nil),
         }

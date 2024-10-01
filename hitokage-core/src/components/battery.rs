@@ -8,14 +8,15 @@ use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
 use crate::structs::reactive::create_react_sender;
+use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive::ReactiveString;
+use crate::structs::reactive_string::ReactiveString;
 use crate::structs::system::BatteryIcons;
 use crate::structs::system::BatteryWrapper;
 use crate::structs::system::SystemWrapper;
 use gtk4::prelude::*;
 use relm4::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
@@ -57,7 +58,7 @@ impl From<BatteryMsgOut> for BoxMsg {
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct BatteryProps {
   #[serde(flatten)]
   base: BaseProps,
@@ -133,7 +134,7 @@ impl AsyncComponent for Battery {
       source_id: Some(source_id),
       format: props
         .format
-        .as_reactive_string(create_react_sender(sender.input_sender(), BatteryMsg::React)),
+        .as_reactive(create_react_sender(sender.input_sender(), BatteryMsg::React)),
       react: false,
       tracker: 0,
       battery,

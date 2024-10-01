@@ -9,6 +9,7 @@ members = [
   "hitokage-core",
   "hitokage-lua",
   "hitokage-macros",
+  "luahelper",
 ]
 
 [workspace.dependencies]
@@ -33,23 +34,18 @@ win32-display-data = { git = "https://github.com/LGUG2Z/win32-display-data", rev
 version = "0.56.0"
 
 [workspace.dependencies.mlua]
-version = "0.9.8"
+version = "0.10.0-beta.2"
 features = [
   "lua54",
   "serialize",
   "vendored",
   "async",
-  "unstable",
   "send",
   "macros"
 ]
 
 [workspace.dependencies.lua-src]
 version = "546.0.2"
-
-[workspace.dependencies.luahelper]
-git = "https://github.com/wez/wezterm/"
-rev = "b8f94c474ce48ac195b51c1aeacf41ae049b774e"
 
 [profile.release]
 debug = true

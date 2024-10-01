@@ -5,7 +5,7 @@
 --- @class WeatherProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
---- @field format string | ReactiveString?
+--- @field format string | ReactiveString | fun(forecast: WeatherForecast): string
 ---
 --- @field latitude number?
 ---
@@ -14,7 +14,7 @@
 --- @field icons table<string, string>?
 
 -------------------------------------------------------------------------------
---- Links to WeatherUserData hitokage-lua\src\components\weather.rs
+--- Links to WeatherUserData in 'hitokage-lua\src\components\weather.rs'
 --- @class Weather : Base
 ---
 --- @field type 'Weather'
@@ -37,3 +37,13 @@ function weather_instance:get_format_reactive() end
 --- @param string string
 --- @return nil
 function weather_instance:set_format(string) end
+
+-------------------------------------------------------------------------------
+--- Links to WeatherForecast in 'hitokage-lua\src\components\weather.rs'
+--- @class WeatherForecast
+--- 
+--- @field temperature number
+--- @field wind_speed number
+--- @field wind_direction number
+--- @field weather_code number
+--- @field is_day boolean

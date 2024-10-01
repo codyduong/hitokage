@@ -2,6 +2,7 @@
 name = "hitokage-macros"
 version = "0.1.0"
 edition = "2021"
+authors = ["Cody Duong <cody.qd@gmail.com>"]
 
 [dependencies]
 proc-macro2 = "1.0.86"

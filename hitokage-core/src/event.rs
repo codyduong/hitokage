@@ -1,7 +1,7 @@
-use std::collections::VecDeque;
-
+use crate::structs::lua_action::LuaActionRequest;
 use relm4::SharedState;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct EventNotif {
@@ -14,3 +14,4 @@ pub static STATE: SharedState<serde_json::Value> = SharedState::new(); // this o
 pub static EVENT: SharedState<VecDeque<EventNotif>> = SharedState::new();
 pub static NEW_EVENT: SharedState<bool> = SharedState::new(); // if the state has changed since we last read the state
 pub static CONFIG_UPDATE: SharedState<bool> = SharedState::new(); // if we updated init.lua
+pub static LUA_ACTION_REQUESTS: SharedState<VecDeque<LuaActionRequest>> = SharedState::new();

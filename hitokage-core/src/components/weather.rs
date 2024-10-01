@@ -7,11 +7,14 @@ use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::lua_fn::LuaFn;
 use crate::structs::reactive::create_react_sender;
+use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive::ReactiveString;
+use crate::structs::reactive_string_fn::ReactiveStringFn;
 use gtk4::prelude::*;
 use handlebars::Handlebars;
+use mlua::LuaSerdeExt;
 use relm4::loading_widgets::LoadingWidgets;
 use relm4::prelude::AsyncComponentParts;
 use relm4::prelude::AsyncComponentSender;
@@ -201,6 +204,7 @@ pub enum WeatherMsgHook {
 #[derive(Debug, Clone)]
 pub enum WeatherMsg {
   LuaHook(WeatherMsgHook),
+  Callback(std::sync::mpsc::Sender<mlua::Value>),
   React,
   RequestForecast,
 }
@@ -211,6 +215,11 @@ pub enum WeatherMsgOut {
     relm4::tokio::sync::oneshot::Sender<WeatherStation>,
     Option<WeatherStationConfig>,
   ),
+  RequestLuaAction(
+    Arc<mlua::RegistryKey>,
+    serde_json::Value,
+    std::sync::mpsc::Sender<mlua::Value>,
+  ),
   DropWeatherStation,
 }
 
@@ -218,6 +227,7 @@ impl From<WeatherMsgOut> for AppMsg {
   fn from(value: WeatherMsgOut) -> Self {
     match value {
       WeatherMsgOut::RequestWeatherStation(a, b) => AppMsg::RequestWeatherStation(a, b),
+      WeatherMsgOut::RequestLuaAction(a, b, c) => AppMsg::RequestLuaAction(a, b, c),
       WeatherMsgOut::DropWeatherStation => AppMsg::DropWeatherStation,
     }
   }
@@ -227,12 +237,13 @@ impl From<WeatherMsgOut> for BoxMsg {
   fn from(value: WeatherMsgOut) -> Self {
     match value {
       WeatherMsgOut::RequestWeatherStation(a, b) => BoxMsg::AppMsg(AppMsg::RequestWeatherStation(a, b)),
+      WeatherMsgOut::RequestLuaAction(a, b, c) => BoxMsg::AppMsg(AppMsg::RequestLuaAction(a, b, c)),
       WeatherMsgOut::DropWeatherStation => BoxMsg::AppMsg(AppMsg::DropWeatherStation),
     }
   }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct WeatherProps {
   #[serde(flatten)]
   pub base: BaseProps,
@@ -240,7 +251,7 @@ pub struct WeatherProps {
   pub config: Option<WeatherStationConfig>,
   #[serde(flatten, default)]
   pub weather_options: WeatherOptions,
-  format: ReactiveString,
+  format: ReactiveStringFn,
 }
 
 #[derive(Debug)]
@@ -249,7 +260,7 @@ pub struct Weather {
   #[tracker::do_not_track]
   base: Base,
   #[tracker::do_not_track]
-  source_id: Option<glib::SourceId>,
+  source_ids: Vec<glib::SourceId>,
   react: bool,
   #[tracker::do_not_track]
   weather_station: WeatherStation,
@@ -257,6 +268,8 @@ pub struct Weather {
   format: Reactive<String>,
   #[tracker::do_not_track]
   map: WeatherIcons,
+  #[tracker::do_not_track]
+  callback: Option<LuaFn>,
 }
 
 #[relm4::component(async, pub)]
@@ -303,18 +316,58 @@ impl AsyncComponent for Weather {
       }
     };
 
+    let mut source_ids = Vec::new();
+
+    let callback = props.format.as_fn();
+    let reactive = props
+      .format
+      .as_reactive(create_react_sender(sender.input_sender(), WeatherMsg::React));
+
     let sender_clone = sender.clone();
-    let source_id = glib::timeout_add_local(std::time::Duration::from_secs(60), move || {
+    source_ids.push(glib::timeout_add_local(std::time::Duration::from_secs(55), move || {
       sender_clone.input(WeatherMsg::RequestForecast);
       glib::ControlFlow::Continue
-    });
+    }));
+
+    if callback.is_some() {
+      let sender = sender.clone();
+      let reactive = reactive.clone();
+      let (tx, rx) = std::sync::mpsc::channel::<_>();
+      {
+        let sender = sender.clone();
+        let tx = tx.clone();
+        source_ids.push(glib::idle_add_local_once(move || {
+          sender.input(WeatherMsg::Callback(tx.clone()));
+        }));
+      }
+      glib::timeout_add_local(std::time::Duration::from_secs(55), move || {
+        sender.input(WeatherMsg::Callback(tx.clone()));
+        glib::ControlFlow::Continue
+      });
+      glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
+        match rx.try_recv() {
+          Ok(v) => match v {
+            mlua::Value::String(s) => {
+              reactive.set(s.to_string_lossy());
+            }
+            _ => {
+              log::error!("Expected string for weather callbacked, received: {:?}", v);
+            }
+          },
+          Err(std::sync::mpsc::TryRecvError::Empty) => {}
+          Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+            log::error!("Weather callback dropped");
+          }
+        }
+        glib::ControlFlow::Continue
+      });
+    }
 
     let mut model = Weather {
       base: props.base.clone().into(),
-      source_id: Some(source_id),
-      format: props
-        .format
-        .as_reactive_string(create_react_sender(sender.input_sender(), WeatherMsg::React)),
+      source_ids,
+      format: reactive.clone(),
+      callback,
       react: false,
       tracker: 0,
       forecast: request_forecast_from_station(&weather_station).await,
@@ -332,7 +385,7 @@ impl AsyncComponent for Weather {
     AsyncComponentParts { model, widgets }
   }
 
-  async fn update(&mut self, msg: Self::Input, _sender: AsyncComponentSender<Self>, root: &Self::Root) {
+  async fn update(&mut self, msg: Self::Input, sender: AsyncComponentSender<Self>, root: &Self::Root) {
     match msg {
       WeatherMsg::LuaHook(hook) => match hook {
         WeatherMsgHook::BaseHook(base) => {
@@ -357,12 +410,23 @@ impl AsyncComponent for Weather {
       WeatherMsg::RequestForecast => {
         self.set_forecast(request_forecast_from_station(&self.weather_station).await);
       }
+      WeatherMsg::Callback(tx) => {
+        if let Some(callback) = &self.callback {
+          let _ = sender.output(WeatherMsgOut::RequestLuaAction(
+            callback.r.clone(),
+            serde_json::to_value(&self.forecast).unwrap(),
+            tx.clone(),
+          ));
+        }
+      }
     }
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, sender: relm4::Sender<Self::Output>) {
     sender.send(WeatherMsgOut::DropWeatherStation).unwrap();
-    self.source_id.take().map(glib::SourceId::remove);
+    for source_id in self.source_ids.drain(..) {
+      source_id.remove()
+    }
   }
 }
 
@@ -391,7 +455,7 @@ struct OpenMeteoWeather {
   pub is_day: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct WeatherForecast {
   temperature: f32,
   wind_speed: f32,
@@ -401,6 +465,11 @@ pub struct WeatherForecast {
 }
 
 impl WeatherForecast {
+  pub fn as_lua(&self) -> mlua::Value {
+    let lua = mlua::Lua::new();
+    lua.to_value(self).unwrap()
+  }
+
   pub fn temperature_fahrenheit(&self) -> f32 {
     let fahrenheit = (self.temperature * 9.) / 5. + 32.;
     (fahrenheit * 10.0).round() / 10.0
@@ -539,6 +608,10 @@ impl WeatherStation {
 
 fn format_temperature(forecast: &WeatherForecast, map: &WeatherIcons, format: &String) -> String {
   let reg = register_hitokage_helpers(Handlebars::new());
+
+  if format == "" {
+    return map.unknown.clone();
+  }
 
   let mut args = HashMap::new();
 
