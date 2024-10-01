@@ -41,7 +41,7 @@ function weather_instance:set_format(string) end
 -------------------------------------------------------------------------------
 --- Links to WeatherForecast in 'hitokage-lua\src\components\weather.rs'
 --- @class WeatherForecast
---- 
+---
 --- @field temperature number
 --- @field wind_speed number
 --- @field wind_direction number
