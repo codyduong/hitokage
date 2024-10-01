@@ -5,7 +5,7 @@
 --- @class CpuProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
---- @field format string | ReactiveString?
+--- @field format string | ReactiveString
 
 -------------------------------------------------------------------------------
 --- Links to CpuUserData hitokage-lua\src\components\cpu.rs

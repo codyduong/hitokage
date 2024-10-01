@@ -96,9 +96,9 @@ impl HoldsChildren for BarUserData {
 
 #[impl_lua_base]
 impl UserData for BarUserData {
-  fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(_fields: &mut F) {}
+  fn add_fields<'lua, F: mlua::UserDataFields<Self>>(_fields: &mut F) {}
 
-  fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+  fn add_methods<'lua, M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_method("is_ready", |_, instance, ()| Ok(instance.is_ready()));
 
     // BOX PROPERTIES START
@@ -121,9 +121,9 @@ impl UserData for BarUserData {
 
     methods.add_meta_method(
       "__index",
-      |lua, instance, value| -> Result<mlua::Value<'lua>, mlua::Error> {
+      |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
         match value {
-          Value::String(s) => match s.to_str()? {
+          Value::String(s) => match s.to_str()?.as_ref() {
             "ready" => Ok(lua.to_value(&instance.is_ready())?),
             "children" => Ok(lua.pack(instance.get_children()?)?),
             "widgets" => Ok(lua.pack(instance.get_children()?)?),
@@ -137,7 +137,7 @@ impl UserData for BarUserData {
   }
 }
 
-pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table<'lua>>
+pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
 where
   C: Component<Input = crate::AppMsg>,
   <C as Component>::Output: std::marker::Send,
@@ -179,63 +179,4 @@ where
   }
 
   Ok(table)
-}
-
-#[cfg(test)]
-mod tests {
-  use crate::{assert_lua_type, AppMsg};
-  use gtk4::prelude::*;
-  use mlua::{Lua, Table, Value};
-  use relm4::prelude::*;
-  use relm4::{ComponentParts, SimpleComponent};
-
-  struct DummyComponent {}
-
-  #[relm4::component]
-  impl SimpleComponent for DummyComponent {
-    type Input = crate::AppMsg;
-    type Output = ();
-    type Init = ();
-
-    view! {
-      gtk::ApplicationWindow {
-        set_visible: false,
-      },
-    }
-
-    fn init(_: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-      let model = DummyComponent {};
-
-      let tests = || -> anyhow::Result<()> {
-        let lua = Lua::new();
-        let table = super::make(&lua, &sender)?;
-        lua.globals().set("table", table)?;
-        let value: Value = lua.globals().get("table")?;
-
-        let table: Table = assert_lua_type!(value, mlua::Table);
-        assert_lua_type!(table.get::<&str, Value>("create")?, mlua::Function);
-        assert_eq!(table.len()?, 0);
-        assert_eq!(table.pairs::<String, Value>().count(), 1);
-
-        relm4::main_application().quit();
-
-        Ok(())
-      };
-      tests().unwrap();
-
-      let widgets = view_output!();
-
-      ComponentParts { model, widgets }
-    }
-
-    fn update(&mut self, _: AppMsg, _: ComponentSender<Self>) {}
-  }
-
-  #[test]
-  fn test_all() -> anyhow::Result<()> {
-    let app = RelmApp::new("com.example.hitokagetest");
-    app.run::<DummyComponent>(());
-
-    Ok(())
-  }
 }

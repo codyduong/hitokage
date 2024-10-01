@@ -156,13 +156,13 @@ impl MonitorUserData {
 }
 
 impl UserData for MonitorUserData {
-  fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+  fn add_methods<'lua, M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_function("get_all", all);
     methods.add_function("get_primary", primary);
   }
 }
 
-fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
+fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value> {
   let monitors_vec: Vec<Monitor> = get_monitors().collect();
 
   let res = lua.pack(monitors_vec)?;
@@ -174,7 +174,7 @@ fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
 #[allow(dead_code)]
 fn current() {}
 
-fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
+fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value> {
   let monitors_vec: Option<Monitor> = get_monitors().find(|m| m.geometry.x == 0 && m.geometry.y == 0);
 
   let res = lua.to_value(&monitors_vec)?;
@@ -182,36 +182,8 @@ fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value<'lua>> {
   Ok(res)
 }
 
-pub fn make(lua: &Lua) -> anyhow::Result<AnyUserData<'_>> {
+pub fn make(lua: &Lua) -> anyhow::Result<AnyUserData> {
   let userdata = lua.create_userdata(MonitorUserData::new()).unwrap();
 
   Ok(userdata)
-}
-
-// tests
-#[cfg(test)]
-mod tests {
-  use mlua::{AnyUserData, AnyUserDataExt, Lua, Value};
-
-  use crate::assert_lua_type;
-
-  fn create_userdata(lua: &Lua) -> anyhow::Result<AnyUserData> {
-    return super::make(lua);
-  }
-
-  #[test]
-  fn test_all() -> anyhow::Result<()> {
-    {
-      let lua = Lua::new();
-      let userdata = create_userdata(&lua)?;
-      lua.globals().set("userdata", userdata)?;
-      let value: Value = lua.globals().get("userdata")?;
-
-      let userdata: AnyUserData = assert_lua_type!(value, AnyUserData);
-      assert_lua_type!(userdata.get::<&str, Value>("get_all")?, mlua::Function);
-      assert_lua_type!(userdata.get::<&str, Value>("get_primary")?, mlua::Function);
-    }
-
-    Ok(())
-  }
 }

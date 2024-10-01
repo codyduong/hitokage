@@ -140,7 +140,10 @@ for _, monitor in ipairs(monitors) do
 												format = "{{icon}}",
 											},
 										},
-										{ Weather = { format = "{{temp_fahrenheit}} °F" } },
+										{ Weather = { format = function (r)
+											hitokage.debug("fuck yea", r)
+											return "{{temp_fahrenheit}} °F hell yeah"
+										end } },
 										{ Label = { label = "\u{EFC5}", class = "icon memory" } },
 										{ Memory = { format = mem_str, halign = "End" } },
 										{ Label = { label = "\u{F4BC}", class = "icon cpu", id = "test1" } },

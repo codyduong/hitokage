@@ -6,13 +6,14 @@ use crate::get_hitokage_asset;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
 use crate::structs::reactive::create_react_sender;
+use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive::ReactiveString;
+use crate::structs::reactive_string::ReactiveString;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
@@ -29,7 +30,7 @@ pub enum IconMsg {
   React,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct IconProps {
   #[serde(flatten)]
   base: BaseProps,
@@ -65,7 +66,7 @@ impl Component for Icon {
       base: props.base.clone().into(),
       file: props
         .file
-        .as_reactive_string(create_react_sender(sender.input_sender(), IconMsg::React)),
+        .as_reactive(create_react_sender(sender.input_sender(), IconMsg::React)),
       react: false,
       tracker: 0,
     };

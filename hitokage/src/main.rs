@@ -4,8 +4,9 @@ use hitokage_core::components;
 use hitokage_core::components::app::{AppMsg, LuaHookType};
 use hitokage_core::components::bar;
 use hitokage_core::components::weather::WeatherStation;
-use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT, STATE};
+use hitokage_core::event::{CONFIG_UPDATE, EVENT, LUA_ACTION_REQUESTS, NEW_EVENT, STATE};
 use hitokage_core::get_hitokage_asset;
+use hitokage_core::structs::lua_action::LuaActionRequest;
 use hitokage_core::structs::system::SystemWrapper;
 use log::LevelFilter;
 use notify::Watcher;
@@ -35,6 +36,7 @@ enum LuaCoroutineMessage {
 }
 
 struct App {
+  // lua: mlua::Lua, // TODO @codyduong, reevaluate after mlua0.10.0 is stable
   bars: Vec<Controller<components::bar::Bar>>,
   file_last_checked_at: Arc<Mutex<Instant>>,
   // so we only keep one weather station to request forecasts (todo @codyduong support multiple weather stations)
@@ -100,9 +102,12 @@ impl Component for App {
     // these names suck, these are for sending to create a new luahandle for forceful termination
     let (tx_lua, rx_lua) = channel::<bool>();
 
+    let lua = mlua::Lua::new();
+
     // if we need this for some reason, uhh good luck managing the arc mutex,
     // plus untangle all the other ones then...
     let _ = config::create_lua_handle(
+      lua.clone(),
       sender.clone(),
       lua_file_path.clone(),
       lua_thread_id.clone(),
@@ -123,6 +128,7 @@ impl Component for App {
       .unwrap();
 
     {
+      let lua = lua.clone();
       let sender = sender.clone();
       let lua_file_path = lua_file_path.clone();
       let lua_thread_id = lua_thread_id.clone();
@@ -152,6 +158,7 @@ impl Component for App {
                   Ok(false) => {
                     log::info!("Lua thread coroutine deadlocked, starting new lua thread");
                     let _ = config::create_lua_handle(
+                      lua.clone(),
                       sender.clone(),
                       lua_file_path.clone(),
                       lua_thread_id.clone(),
@@ -171,6 +178,7 @@ impl Component for App {
                 log::info!("Lua thread finished executing, starting new lua thread");
                 // otherwise we have finished execution, so dispatch a new thread
                 let _ = config::create_lua_handle(
+                  lua.clone(),
                   sender.clone(),
                   lua_file_path.clone(),
                   lua_thread_id.clone(),
@@ -246,6 +254,7 @@ impl Component for App {
     socket::start(sender_clone);
 
     let model = App {
+      // lua,
       bars: Vec::new(),
       file_last_checked_at,
       weather_station: Arc::new(Mutex::new(None)),
@@ -259,6 +268,7 @@ impl Component for App {
     let widgets = view_output!();
 
     *EVENT.write() = VecDeque::with_capacity(50);
+    *LUA_ACTION_REQUESTS.write() = VecDeque::with_capacity(50);
 
     ComponentParts { model, widgets }
   }
@@ -341,6 +351,14 @@ impl Component for App {
       AppMsg::RequestSystem(tx) => {
         log::debug!("Requesting system");
         tx.send(self.system.clone()).unwrap();
+      }
+      AppMsg::RequestLuaAction(id, args, f) => {
+        log::debug!("Requested lua in component");
+        let mut deque = LUA_ACTION_REQUESTS.write();
+        if deque.len() == deque.capacity() {
+          panic!("Our requests filled!")
+        }
+        deque.push_back(LuaActionRequest { id, args, f: Some(f) });
       }
       AppMsg::DestroyActual => {
         for bar in self.bars.drain(..) {

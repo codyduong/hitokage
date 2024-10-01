@@ -1294,7 +1294,7 @@ dependencies = [
  "hitokage-lua",
  "komorebi-client",
  "log",
- "lua-src",
+ "lua-src 546.0.2",
  "mlua",
  "notify",
  "notify-debouncer-full 0.3.1",
@@ -1322,7 +1322,7 @@ dependencies = [
  "komorebi-client",
  "lazy_static",
  "log",
- "lua-src",
+ "lua-src 546.0.2",
  "mlua",
  "relm4",
  "relm4-macros",
@@ -1350,7 +1350,7 @@ dependencies = [
  "hitokage-core",
  "hitokage-macros",
  "log",
- "lua-src",
+ "lua-src 546.0.2",
  "luahelper",
  "mlua",
  "relm4",
@@ -1595,6 +1595,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1754,9 +1763,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lua-src"
+version = "547.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1edaf29e3517b49b8b746701e5648ccb5785cde1c119062cbabbc5d5cd115e42"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "luahelper"
 version = "0.1.0"
-source = "git+https://github.com/wez/wezterm/?rev=b8f94c474ce48ac195b51c1aeacf41ae049b774e#b8f94c474ce48ac195b51c1aeacf41ae049b774e"
 dependencies = [
  "bstr",
  "log",
@@ -1842,9 +1859,9 @@ dependencies = [
 
 [[package]]
 name = "mlua"
-version = "0.9.9"
+version = "0.10.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d111deb18a9c9bd33e1541309f4742523bfab01d276bfa9a27519f6de9c11dc7"
+checksum = "200dd4c8e5f81416d43a023b9921c3cbf01d828094b23a90b26826c3840ba4f3"
 dependencies = [
  "bstr",
  "erased-serde",
@@ -1852,7 +1869,7 @@ dependencies = [
  "mlua-sys",
  "mlua_derive",
  "num-traits",
- "once_cell",
+ "parking_lot",
  "rustc-hash",
  "serde",
  "serde-value",
@@ -1860,24 +1877,24 @@ dependencies = [
 
 [[package]]
 name = "mlua-sys"
-version = "0.6.1"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a088ed0723df7567f569ba018c5d48c23c501f3878b190b04144dfa5ebfa8abc"
+checksum = "ebe026d6bd1583a9cf9080e189030ddaea7e6f5f0deb366a8e26f8a26c4135b8"
 dependencies = [
  "cc",
  "cfg-if 1.0.0",
- "lua-src",
+ "lua-src 547.0.0",
  "luajit-src",
  "pkg-config",
 ]
 
 [[package]]
 name = "mlua_derive"
-version = "0.9.3"
+version = "0.10.0-beta.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09697a6cec88e7f58a02c7ab5c18c611c6907c8654613df9cc0192658a4fb859"
+checksum = "13e6f40fa1fd8426285688f4a37b56beac69284743d057ee6db352b543f4b621"
 dependencies = [
- "itertools",
+ "itertools 0.13.0",
  "once_cell",
  "proc-macro-error",
  "proc-macro2",
@@ -3624,7 +3641,7 @@ dependencies = [
 [[package]]
 name = "wezterm-dynamic"
 version = "0.2.0"
-source = "git+https://github.com/wez/wezterm/?rev=b8f94c474ce48ac195b51c1aeacf41ae049b774e#b8f94c474ce48ac195b51c1aeacf41ae049b774e"
+source = "git+https://github.com/wez/wezterm?rev=2b76c63bb618d26609434c06282c8755229c4099#2b76c63bb618d26609434c06282c8755229c4099"
 dependencies = [
  "log",
  "ordered-float 4.2.0",
@@ -3636,7 +3653,7 @@ dependencies = [
 [[package]]
 name = "wezterm-dynamic-derive"
 version = "0.1.0"
-source = "git+https://github.com/wez/wezterm/?rev=b8f94c474ce48ac195b51c1aeacf41ae049b774e#b8f94c474ce48ac195b51c1aeacf41ae049b774e"
+source = "git+https://github.com/wez/wezterm?rev=2b76c63bb618d26609434c06282c8755229c4099#2b76c63bb618d26609434c06282c8755229c4099"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3666,7 +3683,7 @@ name = "win32-display-data"
 version = "0.1.0"
 source = "git+https://github.com/LGUG2Z/win32-display-data?rev=2a0f7166da154880a1750b91829b1186d9c6a00c#2a0f7166da154880a1750b91829b1186d9c6a00c"
 dependencies = [
- "itertools",
+ "itertools 0.12.1",
  "thiserror",
  "windows 0.54.0",
 ]
@@ -3676,7 +3693,7 @@ name = "win32-display-data"
 version = "0.1.0"
 source = "git+https://github.com/LGUG2Z/win32-display-data?rev=32a45cebf132c3d651ee22c0c40033a6b7edc945#32a45cebf132c3d651ee22c0c40033a6b7edc945"
 dependencies = [
- "itertools",
+ "itertools 0.12.1",
  "thiserror",
  "windows 0.54.0",
 ]

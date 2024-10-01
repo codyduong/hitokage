@@ -2,16 +2,17 @@
 name = "hitokage-lua"
 version = "0.1.0"
 edition = "2021"
+authors = ["Cody Duong <cody.qd@gmail.com>"]
 
 [dependencies]
 hitokage-core = { path = "../hitokage-core/" }
 hitokage-macros = { path = "../hitokage-macros/" }
+luahelper = { path = "../luahelper/" }
 anyhow = { workspace = true }
 log = { workspace = true }
 simple_logger = { workspace = true }
 mlua = { workspace = true }
 lua-src = { workspace = true }
-luahelper = { workspace = true }
 relm4 = { workspace = true }
 serde = { workspace = true }
 smol = "2.0.0"

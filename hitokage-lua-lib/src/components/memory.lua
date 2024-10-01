@@ -5,7 +5,7 @@
 --- @class MemoryProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
---- @field format string | ReactiveString?
+--- @field format string | ReactiveString
 
 -------------------------------------------------------------------------------
 --- Links to MemoryUserData hitokage-lua\src\components\memory.rs

@@ -5,15 +5,16 @@ use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
-use crate::structs::reactive::create_react_sender;
+use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive::ReactiveString;
+use crate::structs::reactive::create_react_sender;
+use crate::structs::reactive_string::ReactiveString;
 use gtk4::prelude::*;
 use handlebars::Handlebars;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
 use systemstat::Platform;
@@ -34,7 +35,7 @@ pub enum MemoryMsg {
   Tick,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct MemoryProps {
   #[serde(flatten)]
   base: BaseProps,
@@ -87,7 +88,7 @@ impl Component for Memory {
       source_id: Some(source_id),
       format: props
         .format
-        .as_reactive_string(create_react_sender(sender.input_sender(), MemoryMsg::React)),
+        .as_reactive(create_react_sender(sender.input_sender(), MemoryMsg::React)),
       react: false,
       tracker: 0,
       sys,

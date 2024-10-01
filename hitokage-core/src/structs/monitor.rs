@@ -80,7 +80,7 @@ pub struct Monitor {
 }
 
 impl mlua::UserData for Monitor {
-  fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+  fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
     fields.add_field_method_get("field", |_, this| Ok(this.connector.clone()));
     fields.add_field_method_get("description", |_, this| Ok(this.description.clone()));
     fields.add_field_method_get("geometry", |lua, this| lua.to_value(&this.geometry));
@@ -96,17 +96,17 @@ impl mlua::UserData for Monitor {
     fields.add_field_method_get("index", |_, this| Ok(this.index.clone()));
   }
 
-  fn add_methods<'lua, M: mlua::UserDataMethods<'lua, Self>>(methods: &mut M) {
+  fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {
     methods.add_method("attach", |lua, this, props: mlua::Value| {
       let bar = lua
         .globals()
-        .get::<&str, mlua::Table>("hitokage")?
-        .get::<&str, mlua::Table>("bar")?
-        .get::<&str, mlua::Function>("create")?;
+        .get::<mlua::Table>("hitokage")?
+        .get::<mlua::Table>("bar")?
+        .get::<mlua::Function>("create")?;
 
-      let args = MultiValue::from_vec(vec![lua.pack(this.clone())?, props]);
+      let args = MultiValue::from_iter(vec![lua.pack(this.clone())?, props]);
 
-      bar.call::<MultiValue<'_>, mlua::Value>(args)
+      bar.call::<mlua::Value>(args)
     });
   }
 }

@@ -33,7 +33,8 @@ pub fn load_content(path: Option<PathBuf>) -> String {
   prepend.to_owned() + "\n" + &contents + "\n" + append
 }
 
-pub fn create_lua_handle<'lua>(
+pub fn create_lua_handle(
+  lua: mlua::Lua,
   sender: ComponentSender<App>,
   file_path: PathBuf,
   lua_thread_id: Arc<AtomicU32>,
@@ -43,7 +44,7 @@ pub fn create_lua_handle<'lua>(
   tx: Sender<bool>,
 ) -> std::thread::JoinHandle<Result<(), mlua::Error>> {
   return thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
-    let lua = hitokage_lua::make(sender).unwrap();
+    let lua = hitokage_lua::make(lua, sender.clone()).unwrap();
 
     lua_thread_id.store(win_utils::get_current_thread_id(), Ordering::SeqCst);
 
@@ -83,7 +84,8 @@ pub fn create_lua_handle<'lua>(
       move |lua, _| {
         let valid_status = match lua.current_thread().status() {
           mlua::ThreadStatus::Resumable => true,
-          mlua::ThreadStatus::Unresumable => false,
+          mlua::ThreadStatus::Finished => false,
+          mlua::ThreadStatus::Running => false,
           mlua::ThreadStatus::Error => false,
         };
         let mut guard = file_last_checked_at.lock().unwrap();
@@ -121,7 +123,7 @@ pub fn create_lua_handle<'lua>(
 
     loop {
       let time = Instant::now();
-      match coroutine.resume::<_, mlua::Value>(()) {
+      match coroutine.resume::<mlua::Value>(()) {
         Ok(value) => match value {
           mlua::Value::Nil => (),
           mlua::Value::Boolean(_) => (),
@@ -165,7 +167,7 @@ pub fn create_lua_handle<'lua>(
             }
           }
         },
-        Err(mlua::Error::CoroutineInactive) => {
+        Err(mlua::Error::CoroutineUnresumable) => {
           is_stopped.store(true, Ordering::SeqCst);
           break Ok(());
         }
@@ -175,12 +177,6 @@ pub fn create_lua_handle<'lua>(
           break Err(err);
         }
       }
-      // let lua = unsafe {
-      //   let ptr = &coroutine as *const mlua::Thread<'_> as *const u8;
-      //   let lua_ptr_ptr = ptr as *const &mlua::Lua;
-      //   *lua_ptr_ptr
-      // };
-      // lua_tx.send(Some(lua)); 
       if time.elapsed() <= Duration::from_millis(100) {
         std::thread::sleep(Duration::from_millis(100) - time.elapsed())
       }
