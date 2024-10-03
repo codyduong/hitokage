@@ -351,7 +351,7 @@ impl AsyncComponent for Weather {
               reactive.set(s.to_string_lossy());
             }
             _ => {
-              log::error!("Expected string for weather callbacked, received: {:?}", v);
+              log::error!("Expected string for weather callback, received: {:?}", v);
             }
           },
           Err(std::sync::mpsc::TryRecvError::Empty) => {}
