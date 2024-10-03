@@ -5,7 +5,7 @@
 --- @class CpuProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
---- @field format string | ReactiveString
+--- @field format string | ReactiveString | fun(cpu_info: CpuLoadInfo): string
 
 -------------------------------------------------------------------------------
 --- Links to CpuUserData hitokage-lua\src\components\cpu.rs
@@ -31,3 +31,24 @@ function cpu_instance:get_format_reactive() end
 --- @param string string
 --- @return nil
 function cpu_instance:set_format(string) end
+
+-------------------------------------------------------------------------------
+--- Links to CpuLoadInfo hitokage-core\src\components\cpu.rs
+--- @class CpuLoadInfo
+---
+--- @field cores table<number, CpuLoadCoreInfo>
+--- @field user number
+--- @field nice number
+--- @field system number
+--- @field interrupt number
+--- @field idle number
+--- @field usage number
+
+--- Links to CpuLoadCoreInfo hitokage-core\src\components\cpu.rs
+--- @class CpuLoadCoreInfo
+--- @field user number
+--- @field nice number
+--- @field system number
+--- @field interrupt number
+--- @field idle number
+--- @field usage number
