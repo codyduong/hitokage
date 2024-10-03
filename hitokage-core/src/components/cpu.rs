@@ -1,23 +1,28 @@
+use super::app::AppMsg;
 use super::base::Base;
 use super::base::BaseProps;
+use super::r#box::BoxMsg;
 use crate::components::base::BaseMsgHook;
 use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::lua_fn::LuaFn;
 use crate::structs::reactive::create_react_sender;
 use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive_string::ReactiveString;
+use crate::structs::reactive_string_fn::ReactiveStringFn;
 use gtk4::prelude::*;
 use handlebars::Handlebars;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::Deserialize;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
+use std::sync::Arc;
 use systemstat::CPULoad;
 use systemstat::DelayedMeasurement;
 use systemstat::Platform;
@@ -36,13 +41,41 @@ pub enum CpuMsg {
   LuaHook(CpuMsgHook),
   React,
   Tick,
+  Callback(std::sync::mpsc::Sender<mlua::Value>)
+}
+
+#[derive(Debug)]
+pub enum CpuMsgOut {
+  RequestLuaAction(
+    Arc<mlua::RegistryKey>,
+    serde_json::Value,
+    std::sync::mpsc::Sender<mlua::Value>,
+  ),
+}
+
+impl From<CpuMsgOut> for AppMsg {
+  fn from(value: CpuMsgOut) -> Self {
+    match value {
+      CpuMsgOut::RequestLuaAction(a, b, c) => AppMsg::RequestLuaAction(a, b, c),
+      #[allow(unreachable_patterns)]
+      _ => AppMsg::NoOp,
+    }
+  }
+}
+
+impl From<CpuMsgOut> for BoxMsg {
+  fn from(value: CpuMsgOut) -> Self {
+    match value {
+      CpuMsgOut::RequestLuaAction(a, b, c) => BoxMsg::AppMsg(AppMsg::RequestLuaAction(a, b, c)),
+    }
+  }
 }
 
 #[derive(Debug, Deserialize)]
 pub struct CpuProps {
   #[serde(flatten)]
   base: BaseProps,
-  format: ReactiveString,
+  format: ReactiveStringFn,
 }
 
 #[tracker::track]
@@ -57,12 +90,14 @@ pub struct Cpu {
   #[tracker::do_not_track]
   format: Reactive<String>,
   react: bool,
+  #[tracker::do_not_track]
+  callback: Option<LuaFn>,
 }
 
 #[relm4::component(pub)]
 impl Component for Cpu {
   type Input = CpuMsg;
-  type Output = ();
+  type Output = CpuMsgOut;
   type Init = CpuProps;
   type Widgets = CpuWidgets;
   type CommandOutput = ();
@@ -75,11 +110,44 @@ impl Component for Cpu {
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let sender_clone = sender.clone();
-    let source_id = glib::timeout_add_local(std::time::Duration::from_millis(1000), move || {
-      sender_clone.input(CpuMsg::Tick);
-      glib::ControlFlow::Continue
-    });
+    let callback = props.format.as_fn();
+    let reactive = props
+      .format
+      .as_reactive(create_react_sender(sender.input_sender(), CpuMsg::React));
+
+    let source_id = {
+      let sender = sender.clone();
+      let reactive = reactive.clone();
+
+      let res = match callback {
+        Some(_) => glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
+          sender.input(CpuMsg::Tick);
+          let (tx, rx) = std::sync::mpsc::channel::<_>();
+          sender.input(CpuMsg::Callback(tx.clone()));
+          match rx.try_recv() {
+            Ok(v) => match v {
+              mlua::Value::String(s) => {
+                reactive.set(s.to_string_lossy());
+              }
+              _ => {
+                log::error!("Expected string for battery callback, received: {:?}", v);
+              }
+            },
+            Err(std::sync::mpsc::TryRecvError::Empty) => {}
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+              log::error!("Battery callback dropped");
+            }
+          }
+          glib::ControlFlow::Continue
+        }),
+        None => glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
+          sender.input(CpuMsg::Tick);
+          glib::ControlFlow::Continue
+        }),
+      };
+
+      res
+    };
 
     let sys = System::new();
 
@@ -88,9 +156,8 @@ impl Component for Cpu {
       cpu: CPULoadWrapper::new(Vec::new()),
       cpu_inflight: sys.cpu_load(),
       source_id: Some(source_id),
-      format: props
-        .format
-        .as_reactive(create_react_sender(sender.input_sender(), CpuMsg::React)),
+      format: reactive,
+      callback,
       react: false,
       tracker: 0,
     };
@@ -105,7 +172,7 @@ impl Component for Cpu {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
+  fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       CpuMsg::LuaHook(hook) => match hook {
         CpuMsgHook::BaseHook(base) => {
@@ -148,6 +215,15 @@ impl Component for Cpu {
           }
         };
       }
+      CpuMsg::Callback(tx) => {
+        if let Some(callback) = &self.callback {
+          let _ = sender.output(CpuMsgOut::RequestLuaAction(
+            callback.r.clone(),
+            serde_json::to_value(&self.cpu.as_lua_args()).unwrap(),
+            tx.clone(),
+          ));
+        }
+      }
     }
   }
 
@@ -165,6 +241,49 @@ impl CPULoadWrapper {
   fn new(value: impl Into<Vec<CPULoad>>) -> Self {
     CPULoadWrapper {
       cpu_loads: value.into(),
+    }
+  }
+
+  fn as_lua_args(&self) -> CpuLoadInfo {
+    let mut total_user = 0.0;
+    let mut total_nice = 0.0;
+    let mut total_system = 0.0;
+    let mut total_interrupt = 0.0;
+    let mut total_idle = 0.0;
+    let mut overall_usage = 0.0;
+    let core_count = self.cpu_loads.len();
+    let mut cores: Vec<CpuLoadCoreInfo> = Vec::new();
+
+    for cpu in &self.cpu_loads {
+      total_user += cpu.user;
+      total_nice += cpu.nice;
+      total_system += cpu.system;
+      total_interrupt += cpu.interrupt;
+      total_idle += cpu.idle;
+  
+      let total_usage = 1.0 - cpu.idle;
+      overall_usage += total_usage;
+  
+      cores.push(CpuLoadCoreInfo {
+        user: cpu.user,
+        nice: cpu.nice,
+        system: cpu.system,
+        interrupt: cpu.interrupt,
+        idle: cpu.idle,
+        usage: total_usage,
+      });
+    }
+
+    let total_usage = overall_usage / core_count as f32;
+
+    CpuLoadInfo {
+      cores,
+      user: total_user,
+      nice: total_nice,
+      system: total_system,
+      interrupt: total_interrupt,
+      idle: total_idle,
+      usage: total_usage,
     }
   }
 }
@@ -200,6 +319,27 @@ impl Into<Vec<CPULoad>> for CPULoadWrapper {
   fn into(self) -> Vec<CPULoad> {
     self.cpu_loads
   }
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct CpuLoadCoreInfo {
+  user: f32,
+  nice: f32,
+  system: f32,
+  interrupt: f32,
+  idle: f32,
+  usage: f32,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct CpuLoadInfo {
+  cores: Vec<CpuLoadCoreInfo>,
+  user: f32,
+  nice: f32,
+  system: f32,
+  interrupt: f32,
+  idle: f32,
+  usage: f32,
 }
 
 fn format_cpu(format: &String, cpu_loads: &Vec<CPULoad>) -> String {
