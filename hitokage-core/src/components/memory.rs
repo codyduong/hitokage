@@ -1,24 +1,31 @@
+use super::app::AppMsg;
 use super::base::Base;
 use super::base::BaseProps;
+use super::r#box::BoxMsg;
 use crate::components::base::BaseMsgHook;
 use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::lua_fn::LuaFn;
+use crate::structs::reactive::create_react_sender;
 use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive::create_react_sender;
-use crate::structs::reactive_string::ReactiveString;
+use crate::structs::reactive_string_fn::ReactiveStringFn;
 use gtk4::prelude::*;
 use handlebars::Handlebars;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::Deserialize;
+use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
+use std::sync::Arc;
 use systemstat::Platform;
 use systemstat::System;
+
+const BYTES_TO_MB: f64 = 1_048_576.0;
 
 #[derive(Debug, Clone)]
 pub enum MemoryMsgHook {
@@ -33,13 +40,41 @@ pub enum MemoryMsg {
   LuaHook(MemoryMsgHook),
   React,
   Tick,
+  Callback(std::sync::mpsc::Sender<mlua::Value>),
+}
+
+#[derive(Debug)]
+pub enum MemoryMsgOut {
+  RequestLuaAction(
+    Arc<mlua::RegistryKey>,
+    serde_json::Value,
+    std::sync::mpsc::Sender<mlua::Value>,
+  ),
+}
+
+impl From<MemoryMsgOut> for AppMsg {
+  fn from(value: MemoryMsgOut) -> Self {
+    match value {
+      MemoryMsgOut::RequestLuaAction(a, b, c) => AppMsg::RequestLuaAction(a, b, c),
+      #[allow(unreachable_patterns)]
+      _ => AppMsg::NoOp,
+    }
+  }
+}
+
+impl From<MemoryMsgOut> for BoxMsg {
+  fn from(value: MemoryMsgOut) -> Self {
+    match value {
+      MemoryMsgOut::RequestLuaAction(a, b, c) => BoxMsg::AppMsg(AppMsg::RequestLuaAction(a, b, c)),
+    }
+  }
 }
 
 #[derive(Debug, Deserialize)]
 pub struct MemoryProps {
   #[serde(flatten)]
   base: BaseProps,
-  format: ReactiveString,
+  format: ReactiveStringFn,
 }
 
 #[tracker::track]
@@ -54,12 +89,14 @@ pub struct Memory {
   #[tracker::do_not_track]
   sys: System,
   react: bool,
+  #[tracker::do_not_track]
+  callback: Option<LuaFn>,
 }
 
 #[relm4::component(pub)]
 impl Component for Memory {
   type Input = MemoryMsg;
-  type Output = ();
+  type Output = MemoryMsgOut;
   type Init = MemoryProps;
   type Widgets = MemoryWidgets;
   type CommandOutput = ();
@@ -72,11 +109,44 @@ impl Component for Memory {
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let sender_clone = sender.clone();
-    let source_id = glib::timeout_add_local(std::time::Duration::from_millis(1000), move || {
-      sender_clone.input(MemoryMsg::Tick);
-      glib::ControlFlow::Continue
-    });
+    let callback = props.format.as_fn();
+    let reactive = props
+      .format
+      .as_reactive(create_react_sender(sender.input_sender(), MemoryMsg::React));
+
+    let source_id = {
+      let sender = sender.clone();
+      let reactive = reactive.clone();
+
+      let res = match callback {
+        Some(_) => glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
+          sender.input(MemoryMsg::Tick);
+          let (tx, rx) = std::sync::mpsc::channel::<_>();
+          sender.input(MemoryMsg::Callback(tx.clone()));
+          match rx.try_recv() {
+            Ok(v) => match v {
+              mlua::Value::String(s) => {
+                reactive.set(s.to_string_lossy());
+              }
+              _ => {
+                log::error!("Expected string for memory callback, received: {:?}", v);
+              }
+            },
+            Err(std::sync::mpsc::TryRecvError::Empty) => {}
+            Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+              log::error!("Memory callback dropped");
+            }
+          }
+          glib::ControlFlow::Continue
+        }),
+        None => glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
+          sender.input(MemoryMsg::Tick);
+          glib::ControlFlow::Continue
+        }),
+      };
+
+      res
+    };
 
     let sys = System::new();
 
@@ -86,9 +156,8 @@ impl Component for Memory {
       base: props.base.clone().into(),
       mem_and_swap,
       source_id: Some(source_id),
-      format: props
-        .format
-        .as_reactive(create_react_sender(sender.input_sender(), MemoryMsg::React)),
+      format: reactive,
+      callback,
       react: false,
       tracker: 0,
       sys,
@@ -104,7 +173,7 @@ impl Component for Memory {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
+  fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       MemoryMsg::LuaHook(hook) => match hook {
         MemoryMsgHook::BaseHook(base) => {
@@ -130,6 +199,15 @@ impl Component for Memory {
         self.mem_and_swap = self.sys.memory_and_swap().into();
         self.set_react(!self.react);
       }
+      MemoryMsg::Callback(tx) => {
+        if let Some(callback) = &self.callback {
+          let _ = sender.output(MemoryMsgOut::RequestLuaAction(
+            callback.r.clone(),
+            serde_json::to_value(&self.mem_and_swap.as_lua_args()).unwrap(),
+            tx.clone(),
+          ));
+        }
+      }
     }
   }
 
@@ -142,6 +220,27 @@ impl Component for Memory {
 struct MemoryAndSwapWrapper {
   memory: Option<systemstat::Memory>,
   swap: Option<systemstat::Swap>,
+}
+
+impl MemoryAndSwapWrapper {
+  fn as_lua_args(&self) -> MemoryInfo {
+    let free_mb = self.memory.clone().unwrap().free.as_u64() as f64 / BYTES_TO_MB;
+    let total_mb = self.memory.clone().unwrap().total.as_u64() as f64 / BYTES_TO_MB;
+    let used_mb = total_mb - free_mb;
+
+    let swap_free_mb = self.swap.clone().unwrap().free.as_u64() as f64 / BYTES_TO_MB;
+    let swap_total_mb = self.swap.clone().unwrap().total.as_u64() as f64 / BYTES_TO_MB;
+    let swap_used_mb = swap_total_mb - swap_free_mb;
+
+    MemoryInfo {
+      free: free_mb,
+      total: total_mb,
+      used: used_mb,
+      swap_free: swap_free_mb,
+      swap_total: swap_total_mb,
+      swap_used: swap_used_mb,
+    }
+  }
 }
 
 impl PartialEq for MemoryAndSwapWrapper {
@@ -179,6 +278,16 @@ impl From<std::io::Result<(systemstat::Memory, systemstat::Swap)>> for MemoryAnd
       }
     }
   }
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct MemoryInfo {
+  free: f64,
+  total: f64,
+  used: f64,
+  swap_free: f64,
+  swap_total: f64,
+  swap_used: f64,
 }
 
 fn handle_optional_sys_and_mem(format: &String, mem_and_swap: &MemoryAndSwapWrapper) -> String {
