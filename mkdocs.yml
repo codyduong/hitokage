@@ -1,0 +1,45 @@
+copyright: Copyright &copy; 2024-Present Cody Duong
+use_directory_urls: false
+site_name: hitokage
+site_description: Configurable status bar for windows
+repo_url: https://github.com/codyduong/hitokage
+repo_name: codyduong/hitokage
+site_url: https://mydomain.org/mysite
+nav:
+  - About:
+      - index.md
+      - Features: features.md
+  - Download: download.md
+  - Documentation:
+      - documentation.md
+      - Lua: lua/
+
+theme:
+  name: material
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - content.tabs.link
+    - navigation.instant
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+
+markdown_extensions:
+  - toc:
+      permalink: true
+
+plugins:
+  - literate-nav
+  - gen-files:
+      scripts:
+        - docs/gen_pages.py
