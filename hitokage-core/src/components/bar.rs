@@ -8,6 +8,7 @@ use crate::{
   generate_base_match_arms, generate_box_children, generate_box_match_arms, prepend_css_class,
   prepend_css_class_to_model, set_initial_base_props, set_initial_box_props,
 };
+use gdk4_win32::windows::Win32::UI::WindowsAndMessaging::SIZE_MINIMIZED;
 use gtk4::prelude::*;
 use gtk4::Box as GtkBox;
 use gtk4::Window;
@@ -15,8 +16,63 @@ use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::{Component, ComponentSender};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::hash::Hash;
+use std::hash::Hasher;
 use std::sync::mpsc::Sender;
-use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, HWND_TOP, SWP_NOSIZE};
+use std::sync::{Arc, Mutex};
+use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+use windows::Win32::UI::WindowsAndMessaging::{
+  CallWindowProcW, DefWindowProcW, GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, ShowWindow, GWLP_WNDPROC,
+  GWL_EXSTYLE, HWND_NOTOPMOST, HWND_TOP, HWND_TOPMOST, SWP_NOSENDCHANGING, SWP_NOSIZE, SW_RESTORE, WINDOWPOS, WM_SIZE,
+  WM_SYSCOMMAND, WS_EX_NOACTIVATE,
+};
+
+#[derive(Copy, Clone)]
+struct HwndWrapper(HWND);
+
+impl PartialEq for HwndWrapper {
+  fn eq(&self, other: &Self) -> bool {
+    self.0 .0 == other.0 .0
+  }
+}
+
+impl Eq for HwndWrapper {}
+
+impl Hash for HwndWrapper {
+  fn hash<H: Hasher>(&self, state: &mut H) {
+    self.0 .0.hash(state);
+  }
+}
+
+impl From<HWND> for HwndWrapper {
+  fn from(value: HWND) -> Self {
+    Self(value)
+  }
+}
+
+type WndProcMap = Arc<Mutex<HashMap<HwndWrapper, unsafe extern "system" fn(HWND, u32, WPARAM, LPARAM) -> LRESULT>>>;
+
+lazy_static::lazy_static! {
+  static ref WND_PROC_MAP: WndProcMap = Arc::new(Mutex::new(HashMap::new()));
+}
+
+unsafe extern "system" fn new_wnd_proc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+  let wnd_proc_map = WND_PROC_MAP.clone();
+
+  if msg == WM_SIZE && wparam.0 as u32 == SIZE_MINIMIZED {
+    log::error!("Hitokage was minimized! Restoring hitokage");
+    let _ = ShowWindow(hwnd, SW_RESTORE);
+    return LRESULT(0);
+  }
+
+  let original_wnd_proc = wnd_proc_map.lock().unwrap().get(&hwnd.into()).copied();
+  if let Some(proc) = original_wnd_proc {
+    CallWindowProcW(Some(proc), hwnd, msg, wparam, lparam)
+  } else {
+    DefWindowProcW(hwnd, msg, wparam, lparam)
+  }
+}
 
 fn setup_window_size(
   window: Window,
@@ -46,14 +102,24 @@ fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::R
     .downcast::<gdk4_win32::Win32Surface>()
     .expect("Failed to get Win32Surface")
     .handle();
-  let win_handle = windows::Win32::Foundation::HWND(handle.0);
+  let hwnd = windows::Win32::Foundation::HWND(handle.0);
 
   unsafe {
     SetWindowPos(
-      win_handle, // TODO @codyduong, set this up for user configuration
-      HWND_TOP, geometry.x, geometry.y, 0, 0, SWP_NOSIZE,
+      hwnd, // TODO @codyduong, set this up for user configuration
+      HWND_NOTOPMOST,
+      geometry.x,
+      geometry.y,
+      0,
+      0,
+      SWP_NOSIZE | SWP_NOSENDCHANGING,
     )
     .ok();
+    SetWindowLongPtrW(hwnd, GWL_EXSTYLE, WS_EX_NOACTIVATE.0 as _);
+    // TODO @codyduong setup preventing movement via live-caption or other movements
+    // let original_wnd_proc = std::mem::transmute(GetWindowLongPtrW(hwnd, GWLP_WNDPROC));
+    // WND_PROC_MAP.lock().unwrap().insert(hwnd.into(), original_wnd_proc);
+    // SetWindowLongPtrW(hwnd, GWLP_WNDPROC, new_wnd_proc as isize);
   }
 
   Ok(())
