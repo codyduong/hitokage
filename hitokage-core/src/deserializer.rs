@@ -1,5 +1,8 @@
 // we need a custom deserializer for mlua Functions and UserData
 
+// TODO @codyduong
+// https://github.com/mlua-rs/mlua/pull/436
+
 lazy_static::lazy_static! {
   pub(crate) static ref FUNCTION_REGISTRY: std::sync::Mutex<std::collections::HashMap<usize, RegistryKey>> =
       std::sync::Mutex::new(std::collections::HashMap::new());
@@ -19,7 +22,7 @@ use std::{
 };
 
 /* ************************************************************* */
-/* https://docs.rs/mlua/latest/src/mlua/serde/de.rs.html#663-682 */
+/* https://docs.rs/mlua/0.9.8/src/mlua/serde/de.rs.html#663-682 */
 pub(crate) struct RecursionGuard {
   ptr: *const c_void,
   visited: Rc<RefCell<FxHashSet<*const c_void>>>,
@@ -42,18 +45,18 @@ impl Drop for RecursionGuard {
 }
 
 /* ******************************************************** */
-/* https://docs.rs/mlua/latest/src/mlua/serde/de.rs.html#96 */
+/* https://docs.rs/mlua/0.9.8/src/mlua/serde/de.rs.html#96 */
 
 pub struct LuaDeserializer<'lua> {
-  value: Value<'lua>,
+  value: Value,
   options: mlua::DeserializeOptions,
   visited: Rc<RefCell<FxHashSet<*const c_void>>>,
-  inner: mlua::serde::de::Deserializer<'lua>,
+  inner: mlua::serde::de::Deserializer,
   lua: &'lua mlua::Lua,
 }
 
 impl<'lua> LuaDeserializer<'lua> {
-  pub fn new(lua: &'lua mlua::Lua, value: Value<'lua>, options: mlua::DeserializeOptions) -> Self {
+  pub fn new(lua: &'lua mlua::Lua, value: Value, options: mlua::DeserializeOptions) -> Self {
     Self {
       value: value.clone(),
       options,
@@ -65,7 +68,7 @@ impl<'lua> LuaDeserializer<'lua> {
 
   fn from_parts(
     lua: &'lua mlua::Lua,
-    value: Value<'lua>,
+    value: Value,
     options: mlua::DeserializeOptions,
     visited: Rc<RefCell<FxHashSet<*const c_void>>>,
   ) -> Self {
@@ -95,8 +98,8 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
       Value::Integer(i) => visitor.visit_i64(i.into()),
       Value::Number(n) => visitor.visit_f64(n.into()),
       Value::String(s) => match s.to_str() {
-        Ok(s) => visitor.visit_str(s),
-        Err(_) => visitor.visit_bytes(s.as_bytes()),
+        Ok(s) => visitor.visit_str(&s),
+        Err(_) => visitor.visit_bytes(&s.as_bytes()),
     },
       Value::Table(ref t) if t.raw_len() > 0 /* || t.is_array() */ => self.deserialize_seq(visitor),
       Value::Table(_) => self.deserialize_map(visitor),
@@ -130,6 +133,17 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
         bytes.push(0x01);
         bytes.extend_from_slice(&id.to_ne_bytes());
         visitor.visit_byte_buf(bytes)
+
+        // let fptr = &f as *const mlua::Function as *const u8;
+        // let b = unsafe {
+        //   slice::from_raw_parts(fptr, std::mem::size_of::<mlua::Function>())
+        // };
+
+        // let mut bytes = Vec::with_capacity(std::mem::size_of::<u8>() + std::mem::size_of::<mlua::Function>());
+        // bytes.push(0x01);
+        // bytes.extend_from_slice(&id.to_ne_bytes());
+        // bytes.extend_from_slice(b);
+        // visitor.visit_byte_buf(bytes)
       },
       Value::UserData(ref ud) => {
         // Handle UserData specifically
@@ -240,7 +254,7 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
         let _guard = RecursionGuard::new(&t, &self.visited);
 
         let mut deserializer = MapDeserializer {
-          pairs: MapPairs::new(t)?,
+          pairs: MapPairs::new(&t)?,
           value: None,
           options: self.options,
           visited: self.visited,
@@ -321,10 +335,10 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
 }
 
 /* ************************************************************* */
-/* https://docs.rs/mlua/latest/src/mlua/serde/de.rs.html#397-434 */
+/* https://docs.rs/mlua/0.9.8/src/mlua/serde/de.rs.html#397-434 */
 
 struct SeqDeserializer<'lua> {
-  seq: TableSequence<'lua, Value<'lua>>,
+  seq: TableSequence<'lua, Value>,
   options: mlua::DeserializeOptions,
   visited: Rc<RefCell<FxHashSet<*const c_void>>>,
   lua: &'lua mlua::Lua,
@@ -364,16 +378,16 @@ impl<'lua, 'de> de::SeqAccess<'de> for SeqDeserializer<'lua> {
 }
 
 /* ************************************************************* */
-/* https://docs.rs/mlua/latest/src/mlua/serde/de.rs.html#469-567 */
+/* https://docs.rs/mlua/0.9.8/src/mlua/serde/de.rs.html#469-567 */
 
 pub(crate) enum MapPairs<'lua> {
-  Iter(TablePairs<'lua, Value<'lua>, Value<'lua>>),
+  Iter(TablePairs<'lua, Value, Value>),
   #[allow(dead_code)]
-  Vec(Vec<(Value<'lua>, Value<'lua>)>),
+  Vec(Vec<(Value, Value)>),
 }
 
 impl<'lua> MapPairs<'lua> {
-  pub(crate) fn new(t: Table<'lua> /* , sort_keys: bool */) -> mlua::Result<Self> {
+  pub(crate) fn new(t: &'lua Table /* , sort_keys: bool */) -> mlua::Result<Self> {
     // if sort_keys {
     //     let mut pairs = t.pairs::<Value, Value>().collect::<Result<Vec<_>>>()?;
     //     pairs.sort_by(|(a, _), (b, _)| b.cmp(a)); // reverse order as we pop values from the end
@@ -382,7 +396,7 @@ impl<'lua> MapPairs<'lua> {
     //     Ok(MapPairs::Iter(t.pairs::<Value, Value>()))
     // }
     Ok(MapPairs::Iter(t.pairs::<Value, Value>()))
-  }
+}
 
   pub(crate) fn count(self) -> usize {
     match self {
@@ -400,7 +414,7 @@ impl<'lua> MapPairs<'lua> {
 }
 
 impl<'lua> Iterator for MapPairs<'lua> {
-  type Item = mlua::Result<(Value<'lua>, Value<'lua>)>;
+  type Item = mlua::Result<(Value, Value)>;
 
   fn next(&mut self) -> Option<Self::Item> {
     match self {
@@ -412,7 +426,7 @@ impl<'lua> Iterator for MapPairs<'lua> {
 
 struct MapDeserializer<'lua> {
   pairs: MapPairs<'lua>,
-  value: Option<Value<'lua>>,
+  value: Option<Value>,
   options: mlua::DeserializeOptions,
   visited: Rc<RefCell<FxHashSet<*const c_void>>>,
   processed: usize,
@@ -470,7 +484,7 @@ impl<'lua, 'de> de::MapAccess<'de> for MapDeserializer<'lua> {
 }
 
 /* ****************************************************************/
-/*  https://docs.rs/mlua/latest/src/mlua/serde/de.rs.html#684-721 */
+/*  https://docs.rs/mlua/0.9.8/src/mlua/serde/de.rs.html#684-721 */
 
 // Checks `options` and decides should we emit an error or skip next element
 pub(crate) fn check_value_for_skip(

@@ -3,7 +3,7 @@ use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 
-pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table<'lua>>
+pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
 where
   C: Component<Input = crate::AppMsg>,
   <C as Component>::Output: std::marker::Send,
@@ -25,7 +25,7 @@ where
           let lua_args = lua_inner.to_value(std::ops::Deref::deref(&args));
 
           match f {
-            Value::Function(func) => func.call::<_, ()>(lua_args.clone())?,
+            Value::Function(func) => func.call::<()>(lua_args.clone())?,
             Value::Nil => (),
             _ => {
               return Err(mlua::Error::FromLuaConversionError {
@@ -56,7 +56,7 @@ where
 
           match f {
             Value::Function(func) => {
-              func.call::<_, ()>(lua_args.clone())?;
+              func.call::<()>(lua_args.clone())?;
             }
             Value::Nil => (),
             _ => {

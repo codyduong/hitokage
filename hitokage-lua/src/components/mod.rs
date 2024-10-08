@@ -50,8 +50,8 @@ impl ChildUserData {
   }
 }
 
-impl<'lua> IntoLua<'lua> for ChildUserData {
-  fn into_lua(self, lua: &'lua Lua) -> mlua::Result<mlua::Value<'lua>> {
+impl IntoLua for ChildUserData {
+  fn into_lua(self, lua: &Lua) -> mlua::Result<mlua::Value> {
     match self {
       ChildUserData::Battery(userdata) => lua.pack(userdata),
       ChildUserData::Box(userdata) => lua.pack(userdata),
@@ -138,8 +138,8 @@ impl From<ChildUserDataVec> for Vec<ChildUserData> {
   }
 }
 
-impl<'lua> IntoLua<'lua> for ChildUserDataVec {
-  fn into_lua(self, lua: &'lua Lua) -> Result<mlua::Value<'lua>, mlua::Error> {
+impl IntoLua for ChildUserDataVec {
+  fn into_lua(self, lua: &Lua) -> Result<mlua::Value, mlua::Error> {
     lua.pack(self.0)
   }
 }
@@ -223,12 +223,12 @@ macro_rules! impl_getter_fn {
 
 pub(crate) fn convert_variadic_to_vec<'lua, T>(
   lua: &'lua mlua::Lua,
-  args: mlua::Variadic<mlua::Value<'lua>>,
+  args: mlua::Variadic<mlua::Value>,
   name: &str,
   t: &str,
 ) -> mlua::Result<Vec<T>>
 where
-  T: mlua::FromLua<'lua>,
+  T: mlua::FromLua,
 {
   let mut vec = Vec::with_capacity(args.len());
 

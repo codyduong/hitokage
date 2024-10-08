@@ -31,7 +31,7 @@ impl LabelUserData {
 
 #[impl_lua_base]
 impl UserData for LabelUserData {
-  fn add_methods<'lua, M: UserDataMethods<'lua, Self>>(methods: &mut M) {
+  fn add_methods<'lua, M: UserDataMethods<Self>>(methods: &mut M) {
     methods.add_method("get_type", |_, this, _: ()| Ok(this.r#type.clone()));
 
     methods.add_method("get_label", |_, this, _: ()| Ok(this.get_label()?));
@@ -40,9 +40,9 @@ impl UserData for LabelUserData {
 
     methods.add_meta_method(
       "__index",
-      |lua, instance, value| -> Result<mlua::Value<'lua>, mlua::Error> {
+      |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
         match value {
-          Value::String(s) => match s.to_str()? {
+          Value::String(s) => match s.to_str()?.as_ref() {
             "type" => Ok(lua.to_value(&instance.r#type.clone())?),
             _ => Ok(Value::Nil),
           },

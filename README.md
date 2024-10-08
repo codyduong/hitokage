@@ -10,14 +10,14 @@ Documentation and guides at: ~~nowhere LOL!~~ (🚧 TODO USER FACING DOCS 🚧)
 ## Demos
 
 [`examples/minimal`](/examples/minimal/):
-![Demonstration of a minimal hitokage status bar](media/minimal.png)
+![Demonstration of a minimal hitokage status bar](/docs/media/minimal.png)
 <br/>
 
 [`examples/testbench`](/examples/testbench/):
-![Demonstration of the testbench hitokage status bar](media/testbench.gif)
+![Demonstration of the testbench hitokage status bar](/docs/media/testbench.gif)
 
 [`codyduong`](https://github.com/codyduong/dotfiles/tree/ba4eb2b9044646ab1b33797dd9b11f2bc1a6ea4d/windows/.files/%25USERPROFILE%25/.config/hitokage):
-![Demonstration of codyduong's hitokage status bar](media/codyduong.png)
+![Demonstration of codyduong's hitokage status bar](/docs/media/codyduong.png)
 
 ## Configuration
 

@@ -5,6 +5,7 @@ use super::weather::WeatherStationConfig;
 use crate::event::EventNotif;
 use crate::structs::system::SystemWrapper;
 use crate::structs::Monitor;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub enum AppMsg {
@@ -18,10 +19,19 @@ pub enum AppMsg {
   ),
   DropWeatherStation,
   RequestSystem(relm4::tokio::sync::oneshot::Sender<SystemWrapper>),
+  RequestLuaAction(Arc<mlua::RegistryKey>, serde_json::Value, std::sync::mpsc::Sender<mlua::Value>),
   NoOp, // we use this for .into calls for our macro that don't necessarily need an app msg.
         // todo @codyduong we need to remove this behavior somehow, since we are sending basically empty messages...
 }
 
+impl From<LuaHook> for AppMsg {
+  fn from(value: LuaHook) -> Self {
+    Self::LuaHook(value)
+  }
+}
+
+// TODO @codyduong clean these up, since a lot of these access 'static, we don't need special senders...
+// it may be confusing though to mix logic everywhere? whatever...
 pub enum LuaHookType {
   SubscribeState, // subscribe to a value in global state
   WriteState,     //

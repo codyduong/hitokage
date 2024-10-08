@@ -5,7 +5,7 @@
 --- @class MemoryProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
---- @field format string | ReactiveString?
+--- @field format string | ReactiveString
 
 -------------------------------------------------------------------------------
 --- Links to MemoryUserData hitokage-lua\src\components\memory.rs
@@ -31,3 +31,14 @@ function memory_instance:get_format_reactive() end
 --- @param string string
 --- @return nil
 function memory_instance:set_format(string) end
+
+-------------------------------------------------------------------------------
+--- Links to MemoryInfo hitokage-core\src\components\memory.rs
+--- @class MemoryInfo
+---
+--- @field free number
+--- @field total number
+--- @field used number
+--- @field swap_free number
+--- @field swap_total number
+--- @field swap_used number

@@ -109,6 +109,16 @@ impl BatteryWrapper {
 
     "".to_owned()
   }
+
+  pub(crate) fn as_lua_args(&self) -> BatteryInfo {
+    match &self.battery {
+      Some(battery) => BatteryInfo {
+        capacity: battery.remaining_capacity,
+        seconds_left: battery.remaining_time.as_secs(),
+      },
+      None => BatteryInfo::default(),
+    }
+  }
 }
 
 impl PartialEq for BatteryWrapper {
@@ -138,6 +148,21 @@ impl From<anyhow::Result<systemstat::BatteryLife>> for BatteryWrapper {
 impl From<systemstat::BatteryLife> for BatteryWrapper {
   fn from(value: systemstat::BatteryLife) -> Self {
     BatteryWrapper { battery: Some(value) }
+  }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub(crate) struct BatteryInfo {
+  capacity: f32,
+  seconds_left: u64,
+}
+
+impl Default for BatteryInfo {
+  fn default() -> Self {
+    Self {
+      capacity: 0.0,
+      seconds_left: 0,
+    }
   }
 }
 

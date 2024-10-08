@@ -1,4 +1,4 @@
-use api::{event, monitor, reactive};
+use api::{actions, event, monitor, reactive};
 use hitokage_core::components::app::AppMsg;
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
@@ -11,7 +11,7 @@ pub mod components;
 
 // Thanks @wez https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/config/src/lua.rs#L211
 
-pub fn get_or_create_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<mlua::Table<'lua>> {
+pub fn get_or_create_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<mlua::Table> {
   let globals: Table = lua.globals();
   // let package: Table = globals.get("package")?;
   // let loaded: Table = package.get("loaded")?;
@@ -34,7 +34,7 @@ pub fn get_or_create_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<
   }
 }
 
-pub fn get_or_create_sub_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<mlua::Table<'lua>> {
+pub fn get_or_create_sub_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<mlua::Table> {
   let hitokage_mod = get_or_create_module(lua, "hitokage")?;
   let sub = hitokage_mod.get(name)?;
   match sub {
@@ -60,9 +60,10 @@ fn print_helper(args: Variadic<Value>) -> String {
 
     match item {
       Value::String(s) => match s.to_str() {
-        Ok(s) => output.push_str(s),
+        Ok(s) => output.push_str(&s),
         Err(_) => {
-          let item = String::from_utf8_lossy(s.as_bytes());
+          let s = s.as_bytes();
+          let item = String::from_utf8_lossy(&s);
           output.push_str(&item);
         }
       },
@@ -76,19 +77,17 @@ fn print_helper(args: Variadic<Value>) -> String {
 }
 
 // https://github.com/wez/wezterm/blob/e4b18c41e650718b031dcc8ef0f93f23a1013aaa/lua-api-crates/time-funcs/src/lib.rs#L193
-async fn sleep_ms<'lua>(_: &'lua Lua, milliseconds: u64) -> mlua::Result<()> {
+async fn sleep_ms(_: Lua, milliseconds: u64) -> mlua::Result<()> {
   let duration = std::time::Duration::from_millis(milliseconds);
   smol::Timer::after(duration).await;
   Ok(())
 }
 
-pub fn make<C>(sender: ComponentSender<C>) -> anyhow::Result<Lua>
+pub fn make<C>(lua: mlua::Lua, sender: ComponentSender<C>) -> anyhow::Result<mlua::Lua>
 where
   C: Component<Input = AppMsg>,
   <C as Component>::Output: std::marker::Send,
 {
-  let lua = Lua::new();
-
   {
     let globals = lua.globals();
     globals.set("loaded", lua.create_table()?)?;
@@ -97,12 +96,14 @@ where
     let bar: Table = bar::make(&lua, &sender)?;
     let event: Table = event::make(&lua, &sender)?;
     let reactive: Table = reactive::make(&lua)?;
+    let actions: Table = actions::make(&lua)?;
 
     let unstable: Table = lua.create_table()?;
     unstable.set("reactive", reactive)?;
 
     let internals: Table = lua.create_table()?;
     internals.set("event", event)?;
+    internals.set("actions", actions)?;
 
     hitokage_mod.set("monitor", monitor)?;
     hitokage_mod.set("bar", bar)?;
@@ -158,11 +159,11 @@ where
 // todo @codyduong
 #[allow(dead_code)]
 trait FromLuaValue<'lua>: Sized {
-  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self>;
+  fn from_lua_value(value: Value) -> mlua::Result<Self>;
 }
 
-impl<'lua> FromLuaValue<'lua> for Table<'lua> {
-  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self> {
+impl<'lua> FromLuaValue<'lua> for Table {
+  fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Table(table) => Ok(table),
       _ => Err(mlua::Error::FromLuaConversionError {
@@ -174,8 +175,8 @@ impl<'lua> FromLuaValue<'lua> for Table<'lua> {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for mlua::Function<'lua> {
-  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self> {
+impl<'lua> FromLuaValue<'lua> for mlua::Function {
+  fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Function(function) => Ok(function),
       _ => Err(mlua::Error::FromLuaConversionError {
@@ -187,8 +188,8 @@ impl<'lua> FromLuaValue<'lua> for mlua::Function<'lua> {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for mlua::String<'lua> {
-  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self> {
+impl<'lua> FromLuaValue<'lua> for mlua::String {
+  fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::String(string) => Ok(string),
       _ => Err(mlua::Error::FromLuaConversionError {
@@ -201,7 +202,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::String<'lua> {
 }
 
 impl<'lua> FromLuaValue<'lua> for mlua::Integer {
-  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self> {
+  fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Integer(integer) => Ok(integer),
       _ => Err(mlua::Error::FromLuaConversionError {
@@ -214,7 +215,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::Integer {
 }
 
 impl<'lua> FromLuaValue<'lua> for bool {
-  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self> {
+  fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Boolean(boolean) => Ok(boolean),
       _ => Err(mlua::Error::FromLuaConversionError {
@@ -226,8 +227,8 @@ impl<'lua> FromLuaValue<'lua> for bool {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for AnyUserData<'lua> {
-  fn from_lua_value(value: Value<'lua>) -> mlua::Result<Self> {
+impl<'lua> FromLuaValue<'lua> for AnyUserData {
+  fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::UserData(userdata) => Ok(userdata),
       _ => Err(mlua::Error::FromLuaConversionError {

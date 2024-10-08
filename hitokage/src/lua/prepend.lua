@@ -68,9 +68,23 @@ local file_watcher = coroutine.create(function()
 	end
 end)
 
+local callback_watcher = coroutine.create(function()
+	while true do
+		local actions = hitokage._internals.actions.get_unread()
+		if actions ~= nil then
+			for _, action in pairs(actions) do
+				hitokage.error("my fridge ran")
+				action:call()
+			end
+		end
+		coroutine.yield()
+	end
+end)
+
 _G["_threads"] = {
 	komorebic_coroutine,
 	file_watcher,
+	callback_watcher,
 }
 
 --- @param timeout number

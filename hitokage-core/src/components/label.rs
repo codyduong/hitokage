@@ -4,9 +4,10 @@ use crate::components::base::BaseMsgHook;
 use crate::generate_base_match_arms;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
-use crate::structs::reactive::create_react_sender;
+use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive::ReactiveString;
+use crate::structs::reactive::create_react_sender;
+use crate::structs::reactive_string::ReactiveString;
 use gtk4::prelude::*;
 use relm4::prelude::*;
 use serde::Deserialize;
@@ -24,7 +25,6 @@ pub enum LabelMsgHook {
 pub enum LabelMsg {
   LuaHook(LabelMsgHook),
   React,
-  SetCallback(bool)
 }
 
 #[derive(Debug, Deserialize)]
@@ -58,18 +58,12 @@ impl AsyncComponent for Label {
     }
   }
 
-  async fn init(input: Self::Init, root: Self::Root, sender: AsyncComponentSender<Self>) -> AsyncComponentParts<Self> {
-    let props = input;
-    // let f = props.label_callback;
-    // if let Some(f) = f {
-    //   log::debug!("{:?}", f);
-    // }
-
+  async fn init(props: Self::Init, root: Self::Root, sender: AsyncComponentSender<Self>) -> AsyncComponentParts<Self> {
     let mut model = Label {
       base: props.base.clone().into(),
       label: props
         .label
-        .as_reactive_string(create_react_sender(sender.input_sender(), LabelMsg::React)),
+        .as_reactive(create_react_sender(sender.input_sender(), LabelMsg::React)),
       react: false,
       tracker: 0,
     };
@@ -105,9 +99,6 @@ impl AsyncComponent for Label {
       },
       LabelMsg::React => {
         self.set_react(!self.react);
-      }
-      LabelMsg::SetCallback(f) => {
-
       }
     }
   }

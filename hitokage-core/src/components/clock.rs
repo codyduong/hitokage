@@ -5,14 +5,15 @@ use crate::generate_base_match_arms;
 use crate::handlebar::register_hitokage_helpers;
 use crate::prepend_css_class_to_model;
 use crate::set_initial_base_props;
+use crate::structs::reactive::AsReactive;
 use crate::structs::reactive::Reactive;
-use crate::structs::reactive::ReactiveString;
+use crate::structs::reactive_string::ReactiveString;
 use gtk4::prelude::*;
 use handlebars::Handlebars;
 use relm4::prelude::*;
 use relm4::ComponentParts;
 use relm4::ComponentSender;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::sync::mpsc::Sender;
 
 #[derive(Debug, Clone)]
@@ -29,7 +30,7 @@ pub enum ClockMsg {
   LuaHook(ClockMsgHook),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct ClockProps {
   format: ReactiveString,
   #[serde(flatten)]
@@ -68,7 +69,7 @@ impl Component for Clock {
 
     let mut model = Clock {
       current_time: format_time(&props.format.clone().into()),
-      format: props.format.as_reactive_string(None),
+      format: props.format.as_reactive(None),
       base: props.base.clone().into(),
       source_id: Some(source_id),
     };
