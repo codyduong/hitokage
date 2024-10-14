@@ -34,7 +34,7 @@
 --- A unique identifier.
 ---
 --- This is not enforced or checked by hitokage, it is simply used in utility methods such
---- as [get_child_by_id](lua://Bar.get_child_by_id).
+--- as [`get_child_by_id`](lua://Bar.get_child_by_id).
 ---
 --- @field id string?
 ---
@@ -215,7 +215,7 @@ function base_instance:get_width() end
 --- A value of `-1` stored in width indicates that it has not been set explicitly and the natural requisition of the widget will be used instead.
 --- To get the width a widget will actually request, call [`measure_width`](lua://Base.measure_width) instead of this function.
 ---
---- See also: [get_height_request](lua://Base.get_height_request), [get_size_request](lua://Base.get_size_request).
+--- See also: [`get_height_request`](lua://Base.get_height_request), [`get_size_request`](lua://Base.get_size_request).
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.get_size_request.html)
 ---
@@ -228,7 +228,7 @@ function base_instance:get_width_request() end
 ---
 --- If the width request in a given direction is `-1` (unset), then the “natural” width request of the widget will be used instead.
 ---
---- See also: [set_height_request](lua://Base.set_height_request), [set_size_request](lua://Base.set_size_request).
+--- See also: [`set_height_request`](lua://Base.set_height_request), [`set_size_request`](lua://Base.set_size_request).
 ---
 --- [View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.set_size_request.html)
 ---

@@ -4,14 +4,14 @@ site_name: hitokage
 site_description: Configurable status bar for windows
 repo_url: https://github.com/codyduong/hitokage
 repo_name: codyduong/hitokage
-site_url: https://mydomain.org/mysite
+site_url: https://codyduong.github.io/hitokage
 nav:
   - About:
       - index.md
       - Features: features.md
   - Download: download.md
-  - Documentation:
-      - documentation.md
+  - API:
+      - API.md
       - Lua: lua/
 
 theme:
@@ -37,8 +37,21 @@ theme:
 markdown_extensions:
   - toc:
       permalink: true
+  - admonition
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 
 plugins:
+  - search
   - literate-nav
   - gen-files:
       scripts:
