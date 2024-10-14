@@ -73,14 +73,14 @@ function box_instance:get_children() end
 --- @return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_child_by_id(id, recursive) end
 
---- **Deprecated**. Use [`box:get_children`](lua://Box.get_children) instead.
+--- **Deprecated**. Use [`get_children`](lua://Box.get_children) instead.
 ---
 --- Get the components on the box.
 --- @deprecated
 --- @return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_widgets() end
 
---- **Deprecated**. Use [`box:get_child_by_id`](lua://Box.get_child_by_id) instead.
+--- **Deprecated**. Use [`get_child_by_id`](lua://Box.get_child_by_id) instead.
 ---
 --- Gets the first item in the widget tree that has the identifier.
 ---

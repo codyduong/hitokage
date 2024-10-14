@@ -14,10 +14,10 @@
 --- Links to BarUserData in 'hitokage-lua\src\components\bar.rs'
 --- @class Bar : Base, Box
 ---
---- Wrapper around bar:is_ready()
+--- Wrapper around [`is_ready`](lua://Bar.is_ready)
 --- @field ready boolean
 ---
---- Wrapper around bar:get_geometry()
+--- Wrapper around [`get_geometry`](lua://Bar.get_children)
 --- @field geometry boolean
 local bar_instance = {}
 

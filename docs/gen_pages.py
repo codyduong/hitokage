@@ -1,17 +1,17 @@
-import mkdocs_gen_files
-import os
+from typing import TextIO, cast
+import mkdocs_gen_files  # type: ignore
 import re
 import urllib.parse
 
 
-def process_line(line):
+def process_line(line: str) -> str:
     # Regex pattern to find markdown links: [link_text](url)
     pattern = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
     # Function to process each found link
-    def replace_link(match):
-        link_text = match.group(1)
-        url = match.group(2)
+    def replace_link(match: re.Match[str]) -> str:
+        link_text: str = match.group(1)
+        url: str = match.group(2)
 
         if url.startswith("file://"):
             # Remove 'file://'
@@ -24,18 +24,20 @@ def process_line(line):
             file_path = file_path.lstrip("/")
 
             # Extract the base filename
-            base_filename = os.path.basename(file_path)
+            # base_filename = os.path.basename(file_path)
 
             # Remove the file extension
-            base_name, _ = os.path.splitext(base_filename)
+            # base_name, _ = os.path.splitext(base_filename)
 
             # Use the link text as the anchor
             anchor = link_text
 
-            # Construct the new URL
-            new_url = f"./{base_name}.html#{anchor}"
+            new_url = f"#{anchor}"
 
-            # Return the transformed link
+            if ":" in anchor:
+                path, anchor = anchor.split(":")
+                new_url = f"./{path}.html#{anchor}"
+
             return f"[{link_text}]({new_url})"
         else:
             # Return the original match if not a 'file://' link
@@ -46,35 +48,38 @@ def process_line(line):
     return new_line
 
 
-def split_md_file(input_file):
+def split_md_file(input_file: str):
     with open(input_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    current_file = None
+    current_file: None | TextIO = None
 
-    for line in lines:
-        if line.startswith("# "):  # Split by "# " headers
-            # Close previous file if it's open
+    try:
+        for line in lines:
+            if line.startswith("# "):  # Split by "# " headers
+                # Close previous file if it's open
+                if current_file:
+                    current_file.close()
+
+                # Create a new file for the section
+                header = line.strip().replace("# ", "")
+                invalid_chars = r'[<>:"/\\|?*]'
+                header = re.sub(invalid_chars, "", header).lower()
+                new_file_name = f"lua/{header}.md"
+
+                current_file = cast(
+                    TextIO,
+                    mkdocs_gen_files.open(new_file_name, "w", encoding="utf-8"),  # type: ignore
+                )
+                mkdocs_gen_files.set_edit_path(new_file_name, "gen_pages.py")  # type: ignore
+
             if current_file:
-                current_file.close()
-
-            # Create a new file for the section
-            header = line.strip().replace("# ", "")
-            invalid_chars = r'[<>:"/\\|?*]'
-            header = re.sub(invalid_chars, "", header)
-            new_file_name = f"lua/{header}.md"
-
-            current_file = mkdocs_gen_files.open(new_file_name, "w", encoding="utf-8")
-            mkdocs_gen_files.set_edit_path(new_file_name, "gen_pages.py")
-
+                # Process the line to replace links
+                processed_line = process_line(line)
+                current_file.write(processed_line)
+    finally:
         if current_file:
-            # Process the line to replace links
-            processed_line = process_line(line)
-            current_file.write(processed_line)
-
-    # Close the last file
-    if current_file:
-        current_file.close()
+            current_file.close()
 
 
 split_md_file("./docs/doc.md")
