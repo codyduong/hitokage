@@ -28,7 +28,7 @@
 ---   { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
 ---   { Clock = { format = "%a %b %u %r", halign = 'End' } },
 --- },
---- ``
+--- ```
 ---
 --- @deprecated
 --- @field widgets ComponentProps

@@ -1,0 +1,5 @@
+mkdocs
+mkdocs-material
+mkdocs-gen-files
+mkdocs-literate-nav
+pymdown-extensions
