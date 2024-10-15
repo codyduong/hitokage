@@ -1,6 +1,6 @@
---- @meta hitokage.append
+---@meta hitokage.append
 
--- --- @module 'hitokage.prepend'
+-- ---@module 'hitokage.prepend'
 
 local dispatcher = function(threads)
 	local min_time_ms = 100

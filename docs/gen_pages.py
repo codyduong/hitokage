@@ -34,7 +34,7 @@ def process_line(line: str) -> str:
 
             new_url = f"#{anchor}"
 
-            if ":" in anchor:
+            if anchor.count(':') == 1:
                 path, anchor = anchor.split(":")
                 new_url = f"./{path}.html#{anchor}"
 

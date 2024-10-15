@@ -1,6 +1,6 @@
 local monitors = hitokage.monitor.get_all()
 
---- @type BarArray
+---@type BarArray
 local bars = {}
 
 local reactive_labels = {}
@@ -21,7 +21,7 @@ local clock_icons = {
 	"\u{F1449}",
 }
 
---- @type table<number, ReactiveString>
+---@type table<number, ReactiveString>
 local reactive_clock_icons = {}
 
 for _, monitor in ipairs(monitors) do
@@ -185,16 +185,16 @@ for _, monitor in ipairs(monitors) do
 	::continue::
 end
 
---- @alias WorkspaceTable table<number, Workspace>
---- @type WorkspaceTable
+---@alias WorkspaceTable table<number, Workspace>
+---@type WorkspaceTable
 local workspaces = {}
 
---- @alias ClockTable table<number, Clock>
---- @type ClockTable
+---@alias ClockTable table<number, Clock>
+---@type ClockTable
 local clocks = {}
 
---- @alias BoxesTable table<number, Box>
---- @type BoxesTable
+---@alias BoxesTable table<number, Box>
+---@type BoxesTable
 local boxes = {}
 
 for i, bar in ipairs(bars) do
@@ -216,7 +216,7 @@ for i, bar in ipairs(bars) do
 	end
 
 	local label = bar:get_child_by_id("test1", true)
-	--- @cast label Label
+	---@cast label Label
 	local routine = hitokage.timeout(1000, function()
 		local current_label = label:get_label()
 		if current_label == "\u{F4BC}" then

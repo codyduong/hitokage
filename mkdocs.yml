@@ -10,8 +10,12 @@ nav:
       - index.md
       - Features: features.md
   - Download: download.md
+  - Configuration:
+      - configuration/index.md
+      # - Recipes: configuration/recipes/
+      # - Samples: configuration/samples/
   - API:
-      - API.md
+      - api/index.md
       - Lua: lua/
 
 theme:
@@ -38,6 +42,7 @@ markdown_extensions:
   - toc:
       permalink: true
   - admonition
+  - footnotes
   - pymdownx.betterem
   - pymdownx.caret
   - pymdownx.mark

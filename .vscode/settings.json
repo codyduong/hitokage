@@ -2,4 +2,5 @@
   "Lua.workspace.library": [
     "../hitokage-lua-lib/src/hitokage.lua"
   ],
+  "Lua.runtime.version": "Lua 5.4"
 }

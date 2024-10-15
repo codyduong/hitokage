@@ -1,18 +1,18 @@
---- @diagnostic disable: undefined-field
+---@diagnostic disable: undefined-field
 
---- @meta hitokage.append
+---@meta hitokage.append
 
--- --- @module 'hitokage'
+-- ---@module 'hitokage'
 
 _subscribers = { "komorebi" }
 _subscriptions = {
 	komorebi = {},
 }
 
---- @overload fun(name: 'komorebi', callback: fun(notification: KomorebiNotification)): nil
---- @param name 'komorebi'
---- @param callback fun(notification: KomorebiNotification)
---- @return nil
+---@overload fun(name: 'komorebi', callback: fun(notification: KomorebiNotification)): nil
+---@param name 'komorebi'
+---@param callback fun(notification: KomorebiNotification)
+---@return nil
 _G.hitokage.subscribe = function(name, callback)
 	local is_subscriber = false
 	for _, approvedName in ipairs(_subscribers) do
@@ -87,9 +87,9 @@ _G["_threads"] = {
 	callback_watcher,
 }
 
---- @param timeout number
---- @param action function
---- @return thread
+---@param timeout number
+---@param action function
+---@return thread
 _G.hitokage.timeout = function(timeout, action)
 	return coroutine.create(function()
 		local start_time = os.clock()
@@ -107,8 +107,8 @@ _G.hitokage.timeout = function(timeout, action)
 	end)
 end
 
---- @param thread_or_threads thread | table<number, thread>
---- @return nil
+---@param thread_or_threads thread | table<number, thread>
+---@return nil
 _G.hitokage.dispatch = function(thread_or_threads)
 	local function isCoroutine(thread)
 		return type(thread) == "thread" and coroutine.status(thread) ~= nil
