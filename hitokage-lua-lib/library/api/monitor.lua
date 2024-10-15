@@ -51,7 +51,7 @@ local monitor_instance = {}
 ---
 ---    ```lua
 ---    local monitors = hitokage.monitor.get_all()
----    
+---
 ---    for _, monitor in ipairs(monitors) do
 ---      monitor:attach({
 ---        children = {

@@ -15,7 +15,7 @@ local bar = {}
 ---
 ---    ```lua
 ---    local monitors = hitokage.monitor.get_all()
----    
+---
 ---    for _, monitor in ipairs(monitors) do
 ---      hitokage.bar.create(monitor, {
 ---        children = {

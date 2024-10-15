@@ -4,8 +4,8 @@
 ---Links to BaseProps in 'hitokage-core\src\components\base.rs'
 ---@class BaseProps
 ---
----Optional css class names. Either space-delimited classes, or an array of 
----class names. Built-in hitokage components will always contain their type as 
+---Optional css class names. Either space-delimited classes, or an array of
+---class names. Built-in hitokage components will always contain their type as
 ---a class name.
 ---
 ---!!! example
