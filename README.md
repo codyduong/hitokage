@@ -5,7 +5,7 @@
 It is primarily built for usage with [ `komorebi` ](https://github.com/LGUG2Z/komorebi), but is also usable as a 
 standalone drop-in replacement for the default Windows Taskbar.
 
-Documentation and guides at: codyduong.github.io/hitokage/
+Documentation and guides at: [codyduong.github.io/hitokage](https://codyduong.github.io/hitokage/)
 
 ## Demos
 
