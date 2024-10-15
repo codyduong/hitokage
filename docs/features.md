@@ -20,16 +20,16 @@ uses a subset of css. View [Gtk – 4.0: GTK CSS Properties](https://docs.gtk.or
 _hitokage_ ships with a number of built-in components that make setting up your status bar easier.
 Custom components can also be created.
 
-* [Workspace](./lua/Workspace.html)
+* [Workspace](./lua/workspace.html)
     - Used with [_komorebi_](https://github.com/LGUG2Z/komorebi) to indicate current workspace the user is in
-* [Clock](./lua/Clock.html)
-* [Battery](./lua/Battery.html)
-* [CPU](./lua/CPU.html)
-* [Memory](./lua/Memory.html)
-* [Weather](./lua/Weather.html)
+* [Clock](./lua/clock.html)
+* [Battery](./lua/battery.html)
+* [CPU](./lua/cpu.html)
+* [Memory](./lua/memory.html)
+* [Weather](./lua/weather.html)
 
 Primitive components
 
-* [Box](./lua/Box.html)
-* [Label](./lua/Label.html)
-* [Icon](./lua/Icon.html)
+* [Box](./lua/box.html)
+* [Label](./lua/label.html)
+* [Icon](./lua/icon.html)
