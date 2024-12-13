@@ -1,7 +1,91 @@
-from typing import TextIO, cast
 import mkdocs_gen_files  # type: ignore
 import re
 import urllib.parse
+
+
+IGNORE = (
+    "any", 
+    "arg", 
+    "assert",
+    "boolean",
+    "collectgarbage",
+    "coroutine",
+    "debug",
+    "debuglib",
+    "debuginfo",
+    "dofile",
+    "error",
+    "exitcode",
+    "false",
+    "file*",
+    "filetype",
+    "function",
+    "gcoptions",
+    "getfenv",
+    "getmetatable",
+    "hookmask",
+    "infowhat",
+    "integer",
+    "io",
+    "iolib",
+    "ipairs",
+    "lightuserdata",
+    "load",
+    "loadfile",
+    "loadmode",
+    "loadstring",
+    "localecategory",
+    "math",
+    "mathlib",
+    "metatable",
+    "module",
+    "newproxy",
+    "next",
+    "nil",
+    "number",
+    "openmode",
+    "os",
+    "osdate",
+    "osdateparam",
+    "os",
+    "oslib",
+    "package",
+    "packagelib",
+    "pairs",
+    "pcall",
+    "popenmode",
+    "print",
+    "rawequal",
+    "rawget",
+    "rawlen",
+    "rawset",
+    "readmode",
+    "require",
+    "seekwhence",
+    "select",
+    "setfenv",
+    "setmetatable",
+    "string",
+    "stringlib",
+    "table",
+    "tablelib",
+    "thread",
+    "tonumber",
+    "tostring",
+    "true",
+    "type",
+    "unknown",
+    "unpack",
+    "userdata",
+    "utf8",
+    "utf8lib",
+    "vbuf",
+    "warn",
+    "xpcall",
+    )
+
+
+header_to_content: dict[str, str] = {}
 
 
 def process_line(line: str) -> str:
@@ -52,34 +136,53 @@ def split_md_file(input_file: str):
     with open(input_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
 
-    current_file: None | TextIO = None
+    current_file_name: None | str = None
 
     try:
         for line in lines:
             if line.startswith("# "):  # Split by "# " headers
+                header = line.strip().replace("# ", "")
+
+                # ignore things in the IGNORE tuple or start with _
+                if header.startswith("_") or header in IGNORE:
+                    print(f"Skipping generation of: {header}")
+                    current_file_name = None
+                    continue
+
+                # we don't want to have foo.bar, this should be nested under foo > bar
+                if "." in header:
+                    skip = True
+                    # for ignore in IGNORE:
+                    #     if re.match(f"{ignore}\\..+", header):
+                    #         skip = True
+                    #         break
+                    if skip:
+                        print(f"Skipping generation of: {header}")
+                        current_file_name = None
+                        continue
+
                 # Close previous file if it's open
-                if current_file:
-                    current_file.close()
+                if current_file_name:
+                    current_file_name = None
 
                 # Create a new file for the section
-                header = line.strip().replace("# ", "")
                 invalid_chars = r'[<>:"/\\|?*]'
                 header = re.sub(invalid_chars, "", header).lower()
                 new_file_name = f"lua/{header}.md"
+                current_file_name = new_file_name
 
-                current_file = cast(
-                    TextIO,
-                    mkdocs_gen_files.open(new_file_name, "w", encoding="utf-8"),  # type: ignore
-                )
-                mkdocs_gen_files.set_edit_path(new_file_name, "gen_pages.py")  # type: ignore
-
-            if current_file:
+            if current_file_name:
                 # Process the line to replace links
                 processed_line = process_line(line)
-                current_file.write(processed_line)
+                if current_file_name in header_to_content:
+                    header_to_content[current_file_name] += f"{processed_line}"
+                else:
+                    header_to_content[current_file_name] = f"{processed_line}"
     finally:
-        if current_file:
-            current_file.close()
+        for name, content in header_to_content.items():
+            with mkdocs_gen_files.open(name, "w", encoding="utf-8") as f: # type: ignore
+                f.writelines(content) # type: ignore
+            mkdocs_gen_files.set_edit_path(name, "gen_pages.py")  # type: ignore
 
 
 split_md_file("./docs/doc.md")

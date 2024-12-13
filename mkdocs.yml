@@ -61,3 +61,6 @@ plugins:
   - gen-files:
       scripts:
         - docs/gen_pages.py
+
+exclude_docs: |
+  doc.md
