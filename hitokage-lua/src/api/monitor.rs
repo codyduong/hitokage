@@ -162,7 +162,7 @@ impl UserData for MonitorUserData {
   }
 }
 
-fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value> {
+fn all(lua: &Lua, _: Value) -> mlua::Result<Value> {
   let monitors_vec: Vec<Monitor> = get_monitors().collect();
 
   let res = lua.pack(monitors_vec)?;
@@ -174,7 +174,7 @@ fn all<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value> {
 #[allow(dead_code)]
 fn current() {}
 
-fn primary<'lua>(lua: &'lua Lua, _: Value) -> mlua::Result<Value> {
+fn primary(lua: &Lua, _: Value) -> mlua::Result<Value> {
   let monitors_vec: Option<Monitor> = get_monitors().find(|m| m.geometry.x == 0 && m.geometry.y == 0);
 
   let res = lua.to_value(&monitors_vec)?;

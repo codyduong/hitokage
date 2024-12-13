@@ -118,7 +118,7 @@ impl Component for Memory {
       let sender = sender.clone();
       let reactive = reactive.clone();
 
-      let res = match callback {
+      match callback {
         Some(_) => glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
           sender.input(MemoryMsg::Tick);
           let (tx, rx) = std::sync::mpsc::channel::<_>();
@@ -143,9 +143,7 @@ impl Component for Memory {
           sender.input(MemoryMsg::Tick);
           glib::ControlFlow::Continue
         }),
-      };
-
-      res
+      }
     };
 
     let sys = System::new();
@@ -203,7 +201,7 @@ impl Component for Memory {
         if let Some(callback) = &self.callback {
           let _ = sender.output(MemoryMsgOut::RequestLuaAction(
             callback.r.clone(),
-            serde_json::to_value(&self.mem_and_swap.as_lua_args()).unwrap(),
+            serde_json::to_value(self.mem_and_swap.as_lua_args()).unwrap(),
             tx.clone(),
           ));
         }
@@ -212,7 +210,9 @@ impl Component for Memory {
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-    self.source_id.take().map(glib::SourceId::remove);
+    if let Some(a) = self.source_id.take() {
+      glib::SourceId::remove(a)
+    }
   }
 }
 
@@ -290,7 +290,7 @@ struct MemoryInfo {
   swap_used: f64,
 }
 
-fn handle_optional_sys_and_mem(format: &String, mem_and_swap: &MemoryAndSwapWrapper) -> String {
+fn handle_optional_sys_and_mem(format: &str, mem_and_swap: &MemoryAndSwapWrapper) -> String {
   mem_and_swap
     .memory
     .clone()
@@ -298,7 +298,7 @@ fn handle_optional_sys_and_mem(format: &String, mem_and_swap: &MemoryAndSwapWrap
     .map_or(String::new(), |(mem, swap)| format_memory(format, &mem, &swap))
 }
 
-fn format_memory(format: &String, memory: &systemstat::Memory, swap: &systemstat::Swap) -> String {
+fn format_memory(format: &str, memory: &systemstat::Memory, swap: &systemstat::Swap) -> String {
   let reg = register_hitokage_helpers(Handlebars::new());
 
   let mut args = HashMap::new();

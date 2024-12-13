@@ -43,7 +43,7 @@ impl SystemWrapper {
     if let Some(last_battery) = self.last_battery.lock().unwrap().as_ref() {
       if now.duration_since(last_battery.0) < Duration::from_millis(500) {
         log::debug!("Using cached battery");
-        return Ok(last_battery.1.clone().into());
+        return Ok(last_battery.1.clone());
       }
     }
 
@@ -58,19 +58,19 @@ impl SystemWrapper {
   }
 }
 
-#[derive(Debug, Clone)]
+impl Default for SystemWrapper {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct BatteryWrapper {
   battery: Option<systemstat::BatteryLife>,
 }
 
-impl Default for BatteryWrapper {
-  fn default() -> Self {
-    Self { battery: None }
-  }
-}
-
 impl BatteryWrapper {
-  pub fn format_with(&self, icons: &BatteryIcons, format: &String) -> String {
+  pub fn format_with(&self, icons: &BatteryIcons, format: &str) -> String {
     let reg = register_hitokage_helpers(Handlebars::new());
 
     let mut args = HashMap::new();

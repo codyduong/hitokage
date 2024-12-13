@@ -86,14 +86,14 @@ impl mlua::UserData for Monitor {
     fields.add_field_method_get("geometry", |lua, this| lua.to_value(&this.geometry));
     fields.add_field_method_get("manufacturer", |_, this| Ok(this.manufacturer.clone()));
     fields.add_field_method_get("model", |_, this| Ok(this.model.clone()));
-    fields.add_field_method_get("refresh_rate", |_, this| Ok(this.refresh_rate.clone()));
-    fields.add_field_method_get("is_primary", |_, this| Ok(this.is_primary.clone()));
+    fields.add_field_method_get("refresh_rate", |_, this| Ok(this.refresh_rate));
+    fields.add_field_method_get("is_primary", |_, this| Ok(this.is_primary));
     fields.add_field_method_get("device", |_, this| Ok(this.device.clone()));
     fields.add_field_method_get("device_id", |_, this| Ok(this.device_id.clone()));
-    fields.add_field_method_get("id", |_, this| Ok(this.id.clone()));
+    fields.add_field_method_get("id", |_, this| Ok(this.id));
     fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
     fields.add_field_method_get("scale_factor", |lua, this| lua.to_value(&this.scale_factor));
-    fields.add_field_method_get("index", |_, this| Ok(this.index.clone()));
+    fields.add_field_method_get("index", |_, this| Ok(this.index));
   }
 
   fn add_methods<M: mlua::UserDataMethods<Self>>(methods: &mut M) {

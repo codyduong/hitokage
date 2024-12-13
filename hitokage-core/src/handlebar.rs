@@ -2,7 +2,7 @@ use handlebars::{Context, Handlebars, Helper, Output, RenderContext, RenderError
 use serde_json::Value;
 use std::str::FromStr;
 
-pub fn register_hitokage_helpers<'h>(mut reg: Handlebars<'h>) -> Handlebars<'h> {
+pub fn register_hitokage_helpers(mut reg: Handlebars<'_>) -> Handlebars<'_> {
   reg.register_helper("add", Box::new(add_helper));
   reg.register_helper("mult", Box::new(mult_helper));
   reg.register_helper("div", Box::new(div_helper));

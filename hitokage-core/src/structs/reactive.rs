@@ -65,8 +65,8 @@ where
   fn from_lua(value: Value, _lua: &Lua) -> mlua::Result<Self> {
     match value {
       Value::UserData(ud) => {
-        let foo = ud.borrow::<Reactive<T>>()?;
-        Ok(foo.to_owned())
+        let userdata_ref = ud.borrow::<Reactive<T>>()?;
+        Ok(userdata_ref.to_owned())
       }
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
@@ -109,28 +109,24 @@ where
         return Err(mlua::Error::BindError);
       }
 
-      let key = args.get(0).unwrap();
+      let key = args.first().unwrap();
       let val = args.get(1).unwrap();
 
-      match key {
-        Value::String(s) => match s.to_str()?.as_ref() {
-          "value" => {
-            let deserialized_value: T = match lua.from_value(val.clone()) {
-              Ok(o) => o,
-              Err(e) => {
-                return Err(mlua::Error::WithContext {
-                  context: "Failed to modify reactive value".into(),
-                  cause: Arc::new(e),
-                })
-              }
-            };
-            let mut value = instance.value.lock().unwrap();
-            *value = deserialized_value.clone();
-            return Ok(());
-          }
-          _ => (),
-        },
-        _ => (),
+      if let Value::String(s) = key {
+        if s.to_str()?.as_ref() == "value" {
+          let deserialized_value: T = match lua.from_value(val.clone()) {
+            Ok(o) => o,
+            Err(e) => {
+              return Err(mlua::Error::WithContext {
+                context: "Failed to modify reactive value".into(),
+                cause: Arc::new(e),
+              })
+            }
+          };
+          let mut value = instance.value.lock().unwrap();
+          *value = deserialized_value.clone();
+          return Ok(());
+        }
       };
       Err(mlua::Error::RuntimeError("Attempt to modify readonly field".into()))
     });
@@ -154,7 +150,7 @@ pub(crate) trait AsReactive<T>
 where
   T: Clone + Debug + Serialize + for<'de> Deserialize<'de>,
 {
-  fn as_reactive(self, sender: impl Into<Option<Sender<()>>>) -> Reactive<T>;
+  fn as_reactive(&self, sender: impl Into<Option<Sender<()>>>) -> Reactive<T>;
 }
 
 pub fn create_react_sender<T: 'static + Clone + Debug>(relm_sender: &relm4::Sender<T>, msg: T) -> Sender<()> {

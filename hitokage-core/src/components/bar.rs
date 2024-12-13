@@ -23,9 +23,8 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::WindowsAndMessaging::{
-  CallWindowProcW, DefWindowProcW, GetWindowLongPtrW, SetWindowLongPtrW, SetWindowPos, ShowWindow, GWLP_WNDPROC,
-  GWL_EXSTYLE, HWND_NOTOPMOST, HWND_TOP, HWND_TOPMOST, SWP_NOSENDCHANGING, SWP_NOSIZE, SW_RESTORE, WINDOWPOS, WM_SIZE,
-  WM_SYSCOMMAND, WS_EX_NOACTIVATE,
+  CallWindowProcW, DefWindowProcW, SetWindowLongPtrW, SetWindowPos, ShowWindow, GWL_EXSTYLE, HWND_NOTOPMOST,
+  SWP_NOSENDCHANGING, SWP_NOSIZE, SW_RESTORE, WM_SIZE, WS_EX_NOACTIVATE,
 };
 
 #[derive(Copy, Clone)]

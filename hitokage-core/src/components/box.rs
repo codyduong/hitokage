@@ -53,9 +53,9 @@ impl From<BoxMsgPortable> for BoxMsg {
   }
 }
 
-impl Into<BoxMsg> for AppMsg {
-  fn into(self) -> BoxMsg {
-    BoxMsg::AppMsg(self)
+impl From<AppMsg> for BoxMsg {
+  fn from(val: AppMsg) -> Self {
+    BoxMsg::AppMsg(val)
   }
 }
 
@@ -146,60 +146,60 @@ impl Component for HitokageBox {
 macro_rules! generate_box_children {
   ($children:expr, $model: expr, $monitor: expr, $root: expr, $input_sender: expr) => {
     for child in $children.unwrap_or_default() {
-      use crate::components::Child;
-      use crate::components::ChildController;
+      use $crate::components::Child;
+      use $crate::components::ChildController;
       let monitor = $monitor.clone();
       match child {
         Child::Battery(inner_props) => {
-          let controller = crate::components::battery::Battery::builder()
+          let controller = $crate::components::battery::Battery::builder()
             .launch(inner_props)
             .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
           $model.children.push(ChildController::Battery(controller));
         }
         Child::Box(inner_props) => {
-          let controller = crate::components::r#box::HitokageBox::builder()
+          let controller = $crate::components::r#box::HitokageBox::builder()
             .launch((monitor, inner_props))
             .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
           $model.children.push(ChildController::Box(controller));
         }
         Child::Clock(inner_props) => {
-          let controller = crate::components::clock::Clock::builder().launch(inner_props).detach();
+          let controller = $crate::components::clock::Clock::builder().launch(inner_props).detach();
           $root.append(controller.widget());
           $model.children.push(ChildController::Clock(controller));
         }
         Child::Cpu(inner_props) => {
-          let controller = crate::components::cpu::Cpu::builder().launch(inner_props).detach();
+          let controller = $crate::components::cpu::Cpu::builder().launch(inner_props).detach();
           $root.append(controller.widget());
           $model.children.push(ChildController::Cpu(controller));
         }
         Child::Icon(inner_props) => {
-          let controller = crate::components::icon::Icon::builder().launch(inner_props).detach();
+          let controller = $crate::components::icon::Icon::builder().launch(inner_props).detach();
           $root.append(controller.widget());
           $model.children.push(ChildController::Icon(controller));
         }
         Child::Label(inner_props) => {
-          let controller = crate::components::label::Label::builder().launch(inner_props).detach();
+          let controller = $crate::components::label::Label::builder().launch(inner_props).detach();
           $root.append(controller.widget());
           $model.children.push(ChildController::Label(controller));
         }
         Child::Memory(inner_props) => {
-          let controller = crate::components::memory::Memory::builder()
+          let controller = $crate::components::memory::Memory::builder()
             .launch(inner_props)
             .detach();
           $root.append(controller.widget());
           $model.children.push(ChildController::Memory(controller));
         }
         Child::Weather(inner_props) => {
-          let controller = crate::components::weather::Weather::builder()
+          let controller = $crate::components::weather::Weather::builder()
             .launch(inner_props)
             .forward($input_sender, |m| m.into());
           $root.append(controller.widget());
           $model.children.push(ChildController::Weather(controller));
         }
         Child::Workspace(inner_props) => {
-          use crate::components::workspace::Workspace;
+          use $crate::components::workspace::Workspace;
           let controller = Workspace::builder().launch((inner_props, monitor.id as u32)).detach();
           $root.append(controller.widget());
           $model.children.push(ChildController::Workspace(controller));

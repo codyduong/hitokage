@@ -62,7 +62,7 @@ impl ReactiveStringFn {
 }
 
 impl AsReactive<String> for ReactiveStringFn {
-  fn as_reactive(self, sender: impl Into<Option<Sender<()>>>) -> Reactive<String> {
+  fn as_reactive(&self, sender: impl Into<Option<Sender<()>>>) -> Reactive<String> {
     match self {
       ReactiveStringFn::Str(str) => Reactive::<String> {
         value: Arc::new(Mutex::new(str.to_string())),

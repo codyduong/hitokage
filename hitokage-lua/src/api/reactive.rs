@@ -11,13 +11,13 @@ pub fn make(lua: &Lua) -> anyhow::Result<mlua::Table> {
         match f {
           Value::String(lua_str) => {
             let str = lua_str.to_str().unwrap().to_string();
-            let foo = Reactive::new(str);
-            log::info!("lua instantiated reactive at: {:?}", &foo);
+            let reactive_string = Reactive::new(str);
+            log::info!("lua instantiated reactive at: {:?}", &reactive_string);
             log::info!(
               "lua instantiated arc at: {:?}",
-              std::sync::Arc::<std::sync::Mutex<std::string::String>>::as_ptr(&foo.value)
+              std::sync::Arc::<std::sync::Mutex<std::string::String>>::as_ptr(&reactive_string.value)
             );
-            lua_inner.pack(foo)
+            lua_inner.pack(reactive_string)
           }
           // Value::Nil => (),
           _ => Err(mlua::Error::FromLuaConversionError {

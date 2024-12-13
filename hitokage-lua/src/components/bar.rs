@@ -134,7 +134,7 @@ impl UserData for BarUserData {
   }
 }
 
-pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
+pub fn make<C>(lua: &Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
 where
   C: Component<Input = crate::AppMsg>,
   <C as Component>::Output: std::marker::Send,

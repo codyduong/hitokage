@@ -105,7 +105,7 @@ impl Component for Cpu {
   view! {
     gtk::Label {
       #[track = "model.changed(Cpu::react() | Cpu::cpu())"]
-      set_label: format_cpu(&model.format.get(), &model.cpu.clone().into()).as_str(),
+      set_label: &format_cpu(&model.format.get(), model.cpu.clone().as_slice()),
     }
   }
 
@@ -119,7 +119,7 @@ impl Component for Cpu {
       let sender = sender.clone();
       let reactive = reactive.clone();
 
-      let res = match callback {
+      match callback {
         Some(_) => glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
           sender.input(CpuMsg::Tick);
           let (tx, rx) = std::sync::mpsc::channel::<_>();
@@ -144,9 +144,7 @@ impl Component for Cpu {
           sender.input(CpuMsg::Tick);
           glib::ControlFlow::Continue
         }),
-      };
-
-      res
+      }
     };
 
     let sys = System::new();
@@ -219,7 +217,7 @@ impl Component for Cpu {
         if let Some(callback) = &self.callback {
           let _ = sender.output(CpuMsgOut::RequestLuaAction(
             callback.r.clone(),
-            serde_json::to_value(&self.cpu.as_lua_args()).unwrap(),
+            serde_json::to_value(self.cpu.as_lua_args()).unwrap(),
             tx.clone(),
           ));
         }
@@ -228,7 +226,9 @@ impl Component for Cpu {
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-    self.source_id.take().map(glib::SourceId::remove);
+    if let Some(a) = self.source_id.take() {
+      glib::SourceId::remove(a)
+    }
   }
 }
 
@@ -242,6 +242,10 @@ impl CPULoadWrapper {
     CPULoadWrapper {
       cpu_loads: value.into(),
     }
+  }
+
+  fn as_slice(&self) -> &[CPULoad] {
+    self.cpu_loads.as_slice()
   }
 
   fn as_lua_args(&self) -> CpuLoadInfo {
@@ -315,12 +319,6 @@ impl From<Vec<CPULoad>> for CPULoadWrapper {
   }
 }
 
-impl Into<Vec<CPULoad>> for CPULoadWrapper {
-  fn into(self) -> Vec<CPULoad> {
-    self.cpu_loads
-  }
-}
-
 #[derive(Debug, Clone, Serialize)]
 struct CpuLoadCoreInfo {
   user: f32,
@@ -342,7 +340,7 @@ struct CpuLoadInfo {
   usage: f32,
 }
 
-fn format_cpu(format: &String, cpu_loads: &Vec<CPULoad>) -> String {
+fn format_cpu(format: &str, cpu_loads: &[CPULoad]) -> String {
   let reg = register_hitokage_helpers(Handlebars::new());
 
   let mut args = HashMap::new();
@@ -411,7 +409,7 @@ fn format_cpu(format: &String, cpu_loads: &Vec<CPULoad>) -> String {
 }
 
 // prepend numbers
-fn generate_cpu_classes(cpu_loads: &Vec<CPULoad>) -> Vec<String> {
+fn generate_cpu_classes(cpu_loads: &[CPULoad]) -> Vec<String> {
   let mut class_names = vec!["cpu".to_string()];
   let mut total_usage = 0.0;
   let num_cores = cpu_loads.len();

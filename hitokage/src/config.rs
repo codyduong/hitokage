@@ -188,7 +188,7 @@ pub fn create_watcher_handle(
   preventer_called: Arc<AtomicBool>,
   is_stopped: Arc<AtomicBool>,
 ) -> std::thread::JoinHandle<()> {
-  return thread::spawn(move || {
+  thread::spawn(move || {
     let mut start_time = Instant::now();
 
     loop {
@@ -217,7 +217,7 @@ pub fn create_watcher_handle(
 
       thread::sleep(Duration::from_millis(100));
     }
-  });
+  })
 }
 
 pub fn terminate_thread(id_arc: Arc<AtomicU32>) {
@@ -253,7 +253,7 @@ pub fn reload_css_provider(
   old_provider: &gtk4::CssProvider,
 ) -> gtk4::CssProvider {
   let provider = gtk4::CssProvider::new();
-  let css_file = gdk4::gio::File::for_path(&css_file_path);
+  let css_file = gdk4::gio::File::for_path(css_file_path);
   provider.load_from_file(&css_file);
 
   let display = gtk4::prelude::WidgetExt::display(root);

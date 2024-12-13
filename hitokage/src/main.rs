@@ -259,7 +259,7 @@ impl Component for App {
       file_last_checked_at,
       weather_station: Arc::new(Mutex::new(None)),
       weather_station_count: Arc::new(AtomicUsize::new(0)),
-      system: SystemWrapper::new(),
+      system: SystemWrapper::default(),
       _debouncer: debouncer,
       _css_debouncer: css_debouncer,
       _tx_lua: tx_lua,

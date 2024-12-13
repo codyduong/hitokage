@@ -65,8 +65,8 @@ impl UserData for BoxUserData {
   }
 }
 
-pub(crate) fn get_child_by_id<'lua, T>(
-  lua: &'lua mlua::Lua,
+pub(crate) fn get_child_by_id<T>(
+  lua: &mlua::Lua,
   instance: &T,
   args: mlua::Variadic<mlua::Value>,
 ) -> mlua::Result<mlua::Value>
@@ -100,14 +100,11 @@ where
     }
 
     if recursive.unwrap_or(false) {
-      match widget {
-        ChildUserData::Box(box_userdata) => {
-          let children = box_userdata.get_children()?;
-          for child in children {
-            queue.push_back(child);
-          }
+      if let ChildUserData::Box(box_userdata) = widget {
+        let children = box_userdata.get_children()?;
+        for child in children {
+          queue.push_back(child);
         }
-        _ => {}
       }
     }
   }
@@ -118,7 +115,7 @@ where
 #[macro_export]
 macro_rules! impl_lua_get_child_by_id {
   ($methods: expr) => {
-    $methods.add_method("get_widget_by_id", crate::components::r#box::get_child_by_id);
-    $methods.add_method("get_child_by_id", crate::components::r#box::get_child_by_id);
+    $methods.add_method("get_widget_by_id", $crate::components::r#box::get_child_by_id);
+    $methods.add_method("get_child_by_id", $crate::components::r#box::get_child_by_id);
   };
 }

@@ -16,10 +16,7 @@ use serde::{
   forward_to_deserialize_any,
 };
 use std::{cell::RefCell, rc::Rc};
-use std::{
-  os::raw::c_void,
-  sync::{Arc, Mutex},
-};
+use std::{os::raw::c_void, sync::Arc};
 
 /* ************************************************************* */
 /* https://docs.rs/mlua/0.9.8/src/mlua/serde/de.rs.html#663-682 */
@@ -95,8 +92,8 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
     match self.value {
       Value::Nil => visitor.visit_unit(),
       Value::Boolean(b) => visitor.visit_bool(b),
-      Value::Integer(i) => visitor.visit_i64(i.into()),
-      Value::Number(n) => visitor.visit_f64(n.into()),
+      Value::Integer(i) => visitor.visit_i64(i),
+      Value::Number(n) => visitor.visit_f64(n),
       Value::String(s) => match s.to_str() {
         Ok(s) => visitor.visit_str(&s),
         Err(_) => visitor.visit_bytes(&s.as_bytes()),
@@ -148,8 +145,8 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
         // Handle UserData specifically
         if let Ok(ud) = ud.borrow::<Reactive<String>>() {
           let ud = ud.to_owned();
-          let ptr1 = Arc::into_raw(ud.value) as *const Mutex<String>;
-          let ptr2 = Arc::into_raw(ud.sender) as *const Mutex<Option<std::sync::mpsc::Sender<()>>>;
+          let ptr1 = Arc::into_raw(ud.value);
+          let ptr2 = Arc::into_raw(ud.sender);
 
           let ptr1_value = ptr1 as usize;
           let ptr2_value = ptr2 as usize;

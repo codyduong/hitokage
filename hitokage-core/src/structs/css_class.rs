@@ -61,8 +61,8 @@ impl IntoPrepend for Vec<String> {
 #[macro_export]
 macro_rules! prepend_css_class {
   ($prepend:expr, $class:expr) => {{
-    use crate::structs::css_class::normalize_prepend;
     use indexmap::IndexSet;
+    use $crate::structs::css_class::normalize_prepend;
 
     let prepend_vec = normalize_prepend($prepend);
 

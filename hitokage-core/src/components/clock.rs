@@ -68,7 +68,7 @@ impl Component for Clock {
     });
 
     let mut model = Clock {
-      current_time: format_time(&props.format.clone().into()),
+      current_time: format_time(&props.format.clone().as_str()),
       format: props.format.as_reactive(None),
       base: props.base.clone().into(),
       source_id: Some(source_id),
@@ -105,12 +105,14 @@ impl Component for Clock {
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _outputt: relm4::Sender<Self::Output>) {
-    self.source_id.take().map(glib::SourceId::remove);
+    if let Some(a) = self.source_id.take() {
+      glib::SourceId::remove(a)
+    }
   }
 }
 
-fn format_time(format: &String) -> String {
-  let time_string = chrono::Local::now().format(&format).to_string();
+fn format_time(format: &str) -> String {
+  let time_string = chrono::Local::now().format(format).to_string();
 
   let reg = register_hitokage_helpers(Handlebars::new());
 

@@ -12,8 +12,8 @@ use relm4::ComponentParts;
 use relm4::ComponentSender;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
 use std::sync::Mutex;
 
 type WorkspaceState = (Option<String>, bool, bool);
@@ -48,7 +48,7 @@ pub struct Workspace {
   id: u32, // win id
   // workspaces: Vec<WorkspaceState>,
   constraint_layout: ConstraintLayout,
-  workspaces_to_check_constraints: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>, // this maps a workspace id to the constraints that should be reevaluated every workspace change
+  workspaces_to_check_constraints: Rc<Mutex<HashMap<i32, Vec<Constraint>>>>, // this maps a workspace id to the constraints that should be reevaluated every workspace change
 
   item_width: i32,
   item_height: i32,
@@ -108,7 +108,7 @@ impl Component for Workspace {
       flowbox: flowbox.clone(),
       id,
       constraint_layout,
-      workspaces_to_check_constraints: Arc::new(Mutex::new(HashMap::new())),
+      workspaces_to_check_constraints: Rc::new(Mutex::new(HashMap::new())),
       item_width,
       item_height,
       base: props.base.clone().into(),
@@ -138,7 +138,7 @@ impl Component for Workspace {
           &self.flowbox,
           &workspaces,
           &self.constraint_layout,
-          Arc::clone(&self.workspaces_to_check_constraints),
+          Rc::clone(&self.workspaces_to_check_constraints),
           self.item_width,
           self.item_height,
         );
@@ -174,7 +174,7 @@ impl Component for Workspace {
             &self.flowbox,
             &workspaces,
             &self.constraint_layout,
-            Arc::clone(&self.workspaces_to_check_constraints),
+            Rc::clone(&self.workspaces_to_check_constraints),
             self.item_width,
             self.item_height,
           );
@@ -190,7 +190,7 @@ impl Component for Workspace {
             &self.flowbox,
             &workspaces,
             &self.constraint_layout,
-            Arc::clone(&self.workspaces_to_check_constraints),
+            Rc::clone(&self.workspaces_to_check_constraints),
             self.item_width,
             self.item_height,
           );
@@ -291,7 +291,7 @@ fn update_workspaces(
   flowbox: &gtk4::FlowBox,
   workspaces: &[WorkspaceState],
   constraints_layout: &ConstraintLayout,
-  workspaces_to_check_constraints_guard: Arc<Mutex<HashMap<i32, Vec<Constraint>>>>,
+  workspaces_to_check_constraints_guard: Rc<Mutex<HashMap<i32, Vec<Constraint>>>>,
   width: i32,
   height: i32,
 ) {

@@ -1,7 +1,7 @@
 use hitokage_core::event::LUA_ACTION_REQUESTS;
 use mlua::Lua;
 
-pub fn make<'lua>(lua: &'lua Lua) -> anyhow::Result<mlua::Table> {
+pub fn make(lua: &Lua) -> anyhow::Result<mlua::Table> {
   let table = lua.create_table()?;
 
   {

@@ -3,7 +3,7 @@ use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
 use mlua::{Lua, LuaSerdeExt, Value};
 use relm4::{Component, ComponentSender};
 
-pub fn make<'lua, C>(lua: &'lua Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
+pub fn make<C>(lua: &Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
 where
   C: Component<Input = crate::AppMsg>,
   <C as Component>::Output: std::marker::Send,

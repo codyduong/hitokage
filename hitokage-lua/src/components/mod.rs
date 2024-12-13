@@ -221,8 +221,8 @@ macro_rules! impl_getter_fn {
 
 // use mlua::LuaSerdeExt;
 
-pub(crate) fn convert_variadic_to_vec<'lua, T>(
-  lua: &'lua mlua::Lua,
+pub(crate) fn convert_variadic_to_vec<T>(
+  lua: &mlua::Lua,
   args: mlua::Variadic<mlua::Value>,
   name: &str,
   t: &str,
@@ -232,7 +232,7 @@ where
 {
   let mut vec = Vec::with_capacity(args.len());
 
-  if let Some(first_arg) = args.get(0) {
+  if let Some(first_arg) = args.first() {
     if let mlua::Value::Table(table) = first_arg.clone() {
       if table.raw_len() > 0 {
         if args.len() > 1 {
@@ -280,7 +280,7 @@ where
 macro_rules! impl_setter_fn {
   ($fn_name:ident, $msg_enum:path, $request_enum:path, Vec<$from:ty>) => {
     pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
-      use crate::components::convert_variadic_to_vec;
+      use $crate::components::convert_variadic_to_vec;
 
       let sender = self.sender()?;
       let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;
@@ -302,7 +302,7 @@ macro_rules! impl_setter_fn {
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $request_enum:path, Vec<$from:ty>) => {
     pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
-      use crate::components::convert_variadic_to_vec;
+      use $crate::components::convert_variadic_to_vec;
 
       let sender = self.sender()?;
       let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;
@@ -324,7 +324,7 @@ macro_rules! impl_setter_fn {
   };
   ($fn_name:ident, $msg_enum1:path, $msg_enum2:path, $msg_enum3:path, $request_enum:path, Vec<$from:ty>) => {
     pub(crate) fn $fn_name(&self, lua: &mlua::Lua, args: mlua::Variadic<Value>) -> Result<(), mlua::Error> {
-      use crate::components::convert_variadic_to_vec;
+      use $crate::components::convert_variadic_to_vec;
 
       let sender = self.sender()?;
       let value: Vec<$from> = convert_variadic_to_vec(lua, args, stringify!($fn_name), stringify!($from))?;

@@ -133,7 +133,7 @@ impl AsyncComponent for Battery {
       let sender = sender.clone();
       let reactive = reactive.clone();
 
-      let res = match callback {
+      match callback {
         Some(_) => glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
           sender.input(BatteryMsg::RequestBatteryLife);
           let (tx, rx) = std::sync::mpsc::channel::<_>();
@@ -158,9 +158,7 @@ impl AsyncComponent for Battery {
           sender.input(BatteryMsg::RequestBatteryLife);
           glib::ControlFlow::Continue
         }),
-      };
-
-      res
+      }
     };
 
     let battery = match system.battery_life().await {
@@ -225,7 +223,7 @@ impl AsyncComponent for Battery {
         if let Some(callback) = &self.callback {
           let _ = sender.output(BatteryMsgOut::RequestLuaAction(
             callback.r.clone(),
-            serde_json::to_value(&self.battery.as_lua_args()).unwrap(),
+            serde_json::to_value(self.battery.as_lua_args()).unwrap(),
             tx.clone(),
           ));
         }
@@ -234,6 +232,8 @@ impl AsyncComponent for Battery {
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _sender: relm4::Sender<Self::Output>) {
-    self.source_id.take().map(glib::SourceId::remove);
+    if let Some(a) = self.source_id.take() {
+      glib::SourceId::remove(a)
+    }
   }
 }

@@ -11,7 +11,7 @@ pub mod components;
 
 // Thanks @wez https://github.com/wez/wezterm/blob/b8f94c474ce48ac195b51c1aeacf41ae049b774e/config/src/lua.rs#L211
 
-pub fn get_or_create_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<mlua::Table> {
+pub fn get_or_create_module(lua: &Lua, name: &str) -> anyhow::Result<mlua::Table> {
   let globals: Table = lua.globals();
   // let package: Table = globals.get("package")?;
   // let loaded: Table = package.get("loaded")?;
@@ -34,7 +34,7 @@ pub fn get_or_create_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<
   }
 }
 
-pub fn get_or_create_sub_module<'lua>(lua: &'lua Lua, name: &str) -> anyhow::Result<mlua::Table> {
+pub fn get_or_create_sub_module(lua: &Lua, name: &str) -> anyhow::Result<mlua::Table> {
   let hitokage_mod = get_or_create_module(lua, "hitokage")?;
   let sub = hitokage_mod.get(name)?;
   match sub {

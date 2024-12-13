@@ -25,5 +25,6 @@ win32-display-data = { workspace = true }
 workspace = true
 features = [
   "Win32_Graphics_Gdi",
+  "Win32_UI_HiDpi",
 ]
 

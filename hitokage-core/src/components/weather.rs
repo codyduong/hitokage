@@ -371,7 +371,7 @@ impl AsyncComponent for Weather {
       react: false,
       tracker: 0,
       forecast: request_forecast_from_station(&weather_station).await,
-      weather_station: weather_station,
+      weather_station,
       map: props.weather_options.icons,
     };
 
@@ -564,7 +564,7 @@ impl WeatherStation {
     if let Some(last_forecast) = self.last_forecast.lock().unwrap().as_ref() {
       if now.duration_since(last_forecast.0) < Duration::from_secs(55) {
         log::debug!("Using cached weather forecast");
-        return Ok(last_forecast.1.clone().into());
+        return Ok(last_forecast.1.clone());
       }
     }
 
@@ -606,10 +606,10 @@ impl WeatherStation {
   }
 }
 
-fn format_temperature(forecast: &WeatherForecast, map: &WeatherIcons, format: &String) -> String {
+fn format_temperature(forecast: &WeatherForecast, map: &WeatherIcons, format: &str) -> String {
   let reg = register_hitokage_helpers(Handlebars::new());
 
-  if format == "" {
+  if format.is_empty() {
     return map.unknown.clone();
   }
 

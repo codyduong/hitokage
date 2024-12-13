@@ -25,7 +25,7 @@ pub enum BaseMsgHook {
   SetWidthRequest(Option<i32>),
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct BaseProps {
   pub id: Option<String>,
   pub class: Option<CssClass>,
@@ -35,21 +35,6 @@ pub struct BaseProps {
   pub valign: Option<Align>,
   pub vexpand: Option<bool>,
   pub width_request: Option<i32>,
-}
-
-impl Default for BaseProps {
-  fn default() -> Self {
-    Self {
-      id: None,
-      class: None,
-      height_request: None,
-      halign: None,
-      hexpand: None,
-      valign: None,
-      vexpand: None,
-      width_request: None,
-    }
-  }
 }
 
 impl From<BaseProps> for Base {
@@ -66,7 +51,7 @@ impl From<BaseProps> for Base {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Base {
   pub id: Option<String>,
   pub classes: Vec<String>,
@@ -75,20 +60,6 @@ pub struct Base {
   pub hexpand: bool,
   pub valign: Option<Align>,
   pub vexpand: bool,
-}
-
-impl Default for Base {
-  fn default() -> Self {
-    Self {
-      id: None,
-      classes: Vec::new(),
-      classes_temp: Vec::new(),
-      halign: None,
-      hexpand: false,
-      valign: None,
-      vexpand: false,
-    }
-  }
 }
 
 #[macro_export]
@@ -108,7 +79,7 @@ macro_rules! generate_base_match_arms {
         .unwrap();
       }
       BaseMsgHook::SetClass(classes) => {
-        use crate::structs::CssClass;
+        use $crate::structs::CssClass;
         prepend_css_class_to_model!($self, $box_str, CssClass::Vec(classes), $root);
       }
       BaseMsgHook::GetHeight(tx) => {
