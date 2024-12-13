@@ -9,6 +9,7 @@ on:
       - '.github/workflows/build.yml'
       - '**.lua'
       - '**.rs'
+      - 'wix/*'
       - '!hitokage-lua-lib/**'
     branches:
       - "*"
@@ -17,6 +18,7 @@ on:
       - '.github/workflows/build.yml'
       - '**.lua'
       - '**.rs'
+      - 'wix/*'
       - '!hitokage-lua-lib/**'
     branches:
       - "master"
