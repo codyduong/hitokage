@@ -93,7 +93,7 @@ pub fn create_lua_handle(
         // @codyduong this is super fragile, we can double run this on accident, instead use a different method to check
         if ((*guard).elapsed() <= Duration::from_millis(250)) || valid_status {
           drop(guard);
-          return Ok(());
+          return Ok(mlua::VmState::Continue);
         }
 
         let mut update_guard = CONFIG_UPDATE.write();
@@ -117,7 +117,7 @@ pub fn create_lua_handle(
         *guard = Instant::now();
         drop(guard);
 
-        Ok(())
+        Ok(mlua::VmState::Continue)
       }
     });
 

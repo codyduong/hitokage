@@ -62,7 +62,7 @@ impl<'lua> LuaDeserializer<'lua> {
       options,
       visited: Rc::new(RefCell::new(FxHashSet::default())),
       inner: mlua::serde::de::Deserializer::new_with_options(value, options),
-      lua
+      lua,
     }
   }
 
@@ -77,7 +77,7 @@ impl<'lua> LuaDeserializer<'lua> {
       options,
       visited,
       inner: mlua::serde::de::Deserializer::new_with_options(value, options),
-      lua
+      lua,
     }
   }
 }
@@ -122,8 +122,7 @@ impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
         //     lua
         // };
         //   // wat da fuck am i doing
-        //   let owned = mlua::Function::from_lua(f.into_lua(lua)?, lua).map(|s| s.into_owned())?;
-  
+        //   let owned = mlua::Function::from_lua(f.into_lua(lua)?, lua).map(|s| s.into_owned())?;  
         //   if !lua_visitor.is_null() && (*lua_visitor).f.is_none() {
         //     (*lua_visitor).f = Some(owned);
         //   }
@@ -396,7 +395,7 @@ impl<'lua> MapPairs<'lua> {
     //     Ok(MapPairs::Iter(t.pairs::<Value, Value>()))
     // }
     Ok(MapPairs::Iter(t.pairs::<Value, Value>()))
-}
+  }
 
   pub(crate) fn count(self) -> usize {
     match self {
@@ -507,9 +506,7 @@ pub(crate) fn check_value_for_skip(
     // {
     //   return Ok(true); // skip
     // }
-    Value::Thread(_) | Value::LightUserData(_) | Value::Error(_)
-      if !options.deny_unsupported_types =>
-    {
+    Value::Thread(_) | Value::LightUserData(_) | Value::Error(_) if !options.deny_unsupported_types => {
       return Ok(true); // skip
     }
     _ => {}

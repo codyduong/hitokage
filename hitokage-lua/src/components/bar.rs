@@ -119,21 +119,18 @@ impl UserData for BarUserData {
 
     impl_lua_get_child_by_id!(methods);
 
-    methods.add_meta_method(
-      "__index",
-      |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
-        match value {
-          Value::String(s) => match s.to_str()?.as_ref() {
-            "ready" => Ok(lua.to_value(&instance.is_ready())?),
-            "children" => Ok(lua.pack(instance.get_children()?)?),
-            "widgets" => Ok(lua.pack(instance.get_children()?)?),
-            "geometry" => Ok(lua.to_value(&instance.get_geometry()?)?),
-            _ => Ok(Value::Nil),
-          },
+    methods.add_meta_method("__index", |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
+      match value {
+        Value::String(s) => match s.to_str()?.as_ref() {
+          "ready" => Ok(lua.to_value(&instance.is_ready())?),
+          "children" => Ok(lua.pack(instance.get_children()?)?),
+          "widgets" => Ok(lua.pack(instance.get_children()?)?),
+          "geometry" => Ok(lua.to_value(&instance.get_geometry()?)?),
           _ => Ok(Value::Nil),
-        }
-      },
-    )
+        },
+        _ => Ok(Value::Nil),
+      }
+    })
   }
 }
 

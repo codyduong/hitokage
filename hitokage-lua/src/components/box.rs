@@ -51,20 +51,17 @@ impl UserData for BoxUserData {
 
     impl_lua_get_child_by_id!(methods);
 
-    methods.add_meta_method(
-      "__index",
-      |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
-        match value {
-          Value::String(s) => match s.to_str()?.as_ref() {
-            "type" => Ok(lua.to_value(&instance.r#type.clone())?),
-            "children" => Ok(lua.pack(instance.get_children()?)?),
-            "widgets" => Ok(lua.pack(instance.get_children()?)?),
-            _ => Ok(Value::Nil),
-          },
+    methods.add_meta_method("__index", |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
+      match value {
+        Value::String(s) => match s.to_str()?.as_ref() {
+          "type" => Ok(lua.to_value(&instance.r#type.clone())?),
+          "children" => Ok(lua.pack(instance.get_children()?)?),
+          "widgets" => Ok(lua.pack(instance.get_children()?)?),
           _ => Ok(Value::Nil),
-        }
-      },
-    )
+        },
+        _ => Ok(Value::Nil),
+      }
+    })
   }
 }
 

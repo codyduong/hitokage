@@ -33,17 +33,14 @@ impl UserData for IconUserData {
     methods.add_method("get_image_reactive", |_, this, _: ()| Ok(this.get_image_reactive()?));
     methods.add_method("set_image", |lua, this, value: mlua::Value| this.set_image(lua, value));
 
-    methods.add_meta_method(
-      "__index",
-      |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
-        match value {
-          Value::String(s) => match s.to_str()?.as_ref() {
-            "type" => Ok(lua.to_value(&instance.r#type.clone())?),
-            _ => Ok(Value::Nil),
-          },
+    methods.add_meta_method("__index", |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
+      match value {
+        Value::String(s) => match s.to_str()?.as_ref() {
+          "type" => Ok(lua.to_value(&instance.r#type.clone())?),
           _ => Ok(Value::Nil),
-        }
-      },
-    )
+        },
+        _ => Ok(Value::Nil),
+      }
+    })
   }
 }

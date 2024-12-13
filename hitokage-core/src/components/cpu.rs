@@ -41,7 +41,7 @@ pub enum CpuMsg {
   LuaHook(CpuMsgHook),
   React,
   Tick,
-  Callback(std::sync::mpsc::Sender<mlua::Value>)
+  Callback(std::sync::mpsc::Sender<mlua::Value>),
 }
 
 #[derive(Debug)]
@@ -260,10 +260,10 @@ impl CPULoadWrapper {
       total_system += cpu.system;
       total_interrupt += cpu.interrupt;
       total_idle += cpu.idle;
-  
+
       let total_usage = 1.0 - cpu.idle;
       overall_usage += total_usage;
-  
+
       cores.push(CpuLoadCoreInfo {
         user: cpu.user,
         nice: cpu.nice,

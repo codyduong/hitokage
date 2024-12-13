@@ -34,7 +34,7 @@ pub enum BatteryMsg {
   LuaHook(BatteryMsgHook),
   React,
   RequestBatteryLife,
-  Callback(std::sync::mpsc::Sender<mlua::Value>)
+  Callback(std::sync::mpsc::Sender<mlua::Value>),
 }
 
 #[derive(Debug)]
@@ -92,7 +92,7 @@ pub struct Battery {
   battery: BatteryWrapper,
   react: bool,
   #[tracker::do_not_track]
-  callback: Option<LuaFn>
+  callback: Option<LuaFn>,
 }
 
 #[relm4::component(async, pub)]

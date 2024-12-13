@@ -38,17 +38,14 @@ impl UserData for LabelUserData {
     methods.add_method("get_label_reactive", |_, this, _: ()| Ok(this.get_label_reactive()?));
     methods.add_method("set_label", |lua, this, value: mlua::Value| this.set_label(lua, value));
 
-    methods.add_meta_method(
-      "__index",
-      |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
-        match value {
-          Value::String(s) => match s.to_str()?.as_ref() {
-            "type" => Ok(lua.to_value(&instance.r#type.clone())?),
-            _ => Ok(Value::Nil),
-          },
+    methods.add_meta_method("__index", |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
+      match value {
+        Value::String(s) => match s.to_str()?.as_ref() {
+          "type" => Ok(lua.to_value(&instance.r#type.clone())?),
           _ => Ok(Value::Nil),
-        }
-      },
-    )
+        },
+        _ => Ok(Value::Nil),
+      }
+    })
   }
 }

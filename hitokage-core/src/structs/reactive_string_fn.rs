@@ -56,7 +56,7 @@ impl ReactiveStringFn {
   pub fn as_fn(&self) -> Option<LuaFn> {
     match self {
       ReactiveStringFn::Function(f) => Some(f.clone()),
-      _ => None
+      _ => None,
     }
   }
 }
@@ -80,7 +80,7 @@ impl AsReactive<String> for ReactiveStringFn {
       _ => Reactive::<String> {
         value: Arc::new(Mutex::new("".to_string())),
         sender: Arc::new(Mutex::new(sender.into())),
-      }
+      },
     }
   }
 }

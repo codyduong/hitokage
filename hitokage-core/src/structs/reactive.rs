@@ -70,7 +70,7 @@ where
       }
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
-        to: "Reactive",
+        to: "Reactive".to_string(),
         message: None,
       }),
     }

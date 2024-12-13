@@ -19,7 +19,11 @@ pub enum AppMsg {
   ),
   DropWeatherStation,
   RequestSystem(relm4::tokio::sync::oneshot::Sender<SystemWrapper>),
-  RequestLuaAction(Arc<mlua::RegistryKey>, serde_json::Value, std::sync::mpsc::Sender<mlua::Value>),
+  RequestLuaAction(
+    Arc<mlua::RegistryKey>,
+    serde_json::Value,
+    std::sync::mpsc::Sender<mlua::Value>,
+  ),
   NoOp, // we use this for .into calls for our macro that don't necessarily need an app msg.
         // todo @codyduong we need to remove this behavior somehow, since we are sending basically empty messages...
 }

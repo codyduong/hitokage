@@ -1,10 +1,10 @@
 use api::{actions, event, monitor, reactive};
+use components::bar;
 use hitokage_core::components::app::AppMsg;
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
 use relm4::{Component, ComponentSender};
 use std::fmt;
-use components::bar;
 
 pub mod api;
 pub mod components;
@@ -168,7 +168,7 @@ impl<'lua> FromLuaValue<'lua> for Table {
       Value::Table(table) => Ok(table),
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
-        to: "Table",
+        to: "Table".to_string(),
         message: None,
       }),
     }
@@ -181,7 +181,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::Function {
       Value::Function(function) => Ok(function),
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
-        to: "Function",
+        to: "Function".to_string(),
         message: None,
       }),
     }
@@ -194,7 +194,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::String {
       Value::String(string) => Ok(string),
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
-        to: "String",
+        to: "String".to_string(),
         message: None,
       }),
     }
@@ -207,7 +207,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::Integer {
       Value::Integer(integer) => Ok(integer),
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
-        to: "Integer",
+        to: "Integer".to_string(),
         message: None,
       }),
     }
@@ -220,7 +220,7 @@ impl<'lua> FromLuaValue<'lua> for bool {
       Value::Boolean(boolean) => Ok(boolean),
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
-        to: "Boolean",
+        to: "Boolean".to_string(),
         message: None,
       }),
     }
@@ -233,7 +233,7 @@ impl<'lua> FromLuaValue<'lua> for AnyUserData {
       Value::UserData(userdata) => Ok(userdata),
       _ => Err(mlua::Error::FromLuaConversionError {
         from: value.type_name(),
-        to: "UserData",
+        to: "UserData".to_string(),
         message: None,
       }),
     }

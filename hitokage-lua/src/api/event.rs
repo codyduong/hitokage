@@ -30,7 +30,7 @@ where
             _ => {
               return Err(mlua::Error::FromLuaConversionError {
                 from: f.type_name(),
-                to: "Function or Nil",
+                to: "Function or Nil".to_string(),
                 message: Some("Expected a function or nil".to_string()),
               })
             }
@@ -62,7 +62,7 @@ where
             _ => {
               return Err(mlua::Error::FromLuaConversionError {
                 from: f.type_name(),
-                to: "Function or Nil",
+                to: "Function or Nil".to_string(),
                 message: Some("Expected a function or nil".to_string()),
               })
             }

@@ -253,7 +253,7 @@ where
           name: None,
           cause: Arc::new(mlua::Error::FromLuaConversionError {
             from: first_arg.type_name(),
-            to: "Array or Element",
+            to: "Array or Element".to_string(),
             message: Some(format!("Expected an Array or {:}, not {:}", t, first_arg.type_name())),
           }),
         });

@@ -40,17 +40,14 @@ impl UserData for BatteryUserData {
       this.set_format(lua, value)
     });
 
-    methods.add_meta_method(
-      "__index",
-      |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
-        match value {
-          Value::String(s) => match s.to_str()?.as_ref() {
-            "type" => Ok(lua.to_value(&instance.r#type.clone())?),
-            _ => Ok(Value::Nil),
-          },
+    methods.add_meta_method("__index", |lua, instance, value| -> Result<mlua::Value, mlua::Error> {
+      match value {
+        Value::String(s) => match s.to_str()?.as_ref() {
+          "type" => Ok(lua.to_value(&instance.r#type.clone())?),
           _ => Ok(Value::Nil),
-        }
-      },
-    )
+        },
+        _ => Ok(Value::Nil),
+      }
+    })
   }
 }
