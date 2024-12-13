@@ -34,7 +34,7 @@ win32-display-data = { git = "https://github.com/LGUG2Z/win32-display-data", rev
 version = "0.56.0"
 
 [workspace.dependencies.mlua]
-version = "0.10.0-beta.2"
+version = "0.10.2"
 features = [
   "lua54",
   "serialize",
