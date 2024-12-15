@@ -1,7 +1,8 @@
 ---@meta hitokage.api.reactive
 
 -------------------------------------------------------------------------------
----Represents the monitor module for String type
+
+---Represents the reactive userdata for String type
 ---@class ReactiveString
 ---@field value string
 local reactive_string_userdata = {}
@@ -31,10 +32,10 @@ function reactive_string_userdata:set(value) end
 
 -------------------------------------------------------------------------------
 ---Represents the reactive module
----@class reactivelib
+---@class reactive
 local reactive = {}
 
----Creates a pointer to an rust Arc<Mutex<T>>. Currently only supports strings.
+---Creates a pointer to an rust `Arc<Mutex<T>>`. Currently only supports strings.
 ---
 ---@param value string
 ---@return ReactiveString

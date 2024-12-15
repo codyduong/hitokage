@@ -14,12 +14,11 @@ nav:
       - configuration/index.md
       # - Recipes: configuration/recipes/
       # - Samples: configuration/samples/
-  - API:
-      - api/index.md
-      - Lua: lua/
+  - API: api/
 
 theme:
   name: material
+  custom_dir: docs/overrides
   features:
     - content.action.edit
     - content.action.view
@@ -28,19 +27,23 @@ theme:
     - navigation.instant
     - navigation.footer
     - navigation.indexes
-    - navigation.sections
+    - navigation.expand
     - navigation.tabs
     - navigation.top
     - navigation.tracking
+    - navigation.prune
     - search.highlight
     - search.share
     - search.suggest
     - toc.follow
-    - toc.integrate
 
 markdown_extensions:
   - toc:
       permalink: true
+      toc_depth: 3
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - admonition
   - footnotes
   - pymdownx.betterem
@@ -54,13 +57,21 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - attr_list
+  - md_in_html
 
 plugins:
   - search
-  - literate-nav
+  - literate-nav:
+      implicit_index: true
   - gen-files:
       scripts:
         - docs/gen_pages.py
+  - tags
+  - section-index
 
 exclude_docs: |
   doc.md
+
+extra_css:
+  - stylesheets/extra.css

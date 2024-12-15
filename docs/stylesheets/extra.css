@@ -1,0 +1,46 @@
+code.hitokage-function {
+  color: #59c9ba;
+  background-color: var(--md-code-bg-color);
+}
+
+code.hitokage-method {
+  color: #598dc9;
+  background-color: var(--md-code-bg-color);
+}
+
+code.hitokage-attr {
+  color: #c9a559;
+  background-color: var(--md-code-bg-color);
+}
+
+code.hitokage-mod {
+  color: #62c959;
+  background-color: var(--md-code-bg-color);
+}
+
+code.hitokage-mod::before {
+  content: "mod";
+}
+
+code.hitokage-userdata {
+  color: #b659c9;
+  background-color: var(--md-code-bg-color);
+}
+
+code.hitokage-userdata::before {
+  content: "userdata";
+}
+
+code.hitokage-type {
+  color: #312fc7;
+  background-color: var(--md-code-bg-color);
+}
+
+code.hitokage-type::before {
+  content: "type";
+}
+
+div.hitokage-content {
+  padding-left: 25px;
+  border-left: .05rem solid var(--md-typeset-table-color);
+}

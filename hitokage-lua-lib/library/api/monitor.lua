@@ -2,17 +2,18 @@
 
 -------------------------------------------------------------------------------
 ---Represents the monitor module
----@class monitorlib
+---@class monitor
 local monitor = {}
 
----@return MonitorVec
+---@return MonitorVec #An array of monitor userdatas
 function monitor.get_all() end
 
----@return Monitor
+---@return Monitor #A monitor userdata
 function monitor.get_primary() end
 
 -------------------------------------------------------------------------------
 ---Links to 'pub struct MonitorGeometry' in 'hitokage-core\src\lua\monitor.rs'
+
 ---@class MonitorGeometry
 ---@field x number
 ---@field y number
@@ -21,12 +22,15 @@ function monitor.get_primary() end
 
 -------------------------------------------------------------------------------
 ---Links to 'pub struct MonitorScaleFactor' in 'hitokage-core\src\lua\monitor.rs'
+
+---
 ---@class MonitorScaleFactor
 ---@field x number,
 ---@field y number,
 
 -------------------------------------------------------------------------------
 ---Links to 'pub struct Monitor' in 'hitokage-core\src\lua\monitor.rs'
+
 ---@class Monitor
 ---@field connector string | nil,
 ---@field description string | nil,
@@ -47,7 +51,10 @@ local monitor_instance = {}
 
 ---Attaches a component on the monitor.
 ---
----!!! example
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
 ---
 ---    ```lua
 ---    local monitors = hitokage.monitor.get_all()
@@ -63,8 +70,8 @@ local monitor_instance = {}
 ---    end
 ---    ```
 ---
----@param props BarProps
----@return Bar
+---@param props BarProps A table specifying the shape of the bar
+---@return Bar #A bar userdata
 function monitor_instance:attach(props) end
 
 -------------------------------------------------------------------------------

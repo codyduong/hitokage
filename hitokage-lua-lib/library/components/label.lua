@@ -1,7 +1,8 @@
 ---@meta hitokage.components.label
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to LabelProps in 'hitokage-core\src\components\label.rs'
+
 ---@class LabelProps : BaseProps
 ---
 ---The contents of the label.
@@ -10,8 +11,9 @@
 ---
 ---@field label string | ReactiveString
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to LabelUserData hitokage-lua\src\components\label.rs
+
 ---@class Label : Base
 ---
 ---@field type 'Label'

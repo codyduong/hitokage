@@ -1,14 +1,16 @@
 ---@meta hitokage.components.memory
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to MemoryProps in 'hitokage-core\src\components\memory.rs'
+
 ---@class MemoryProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
 ---@field format string | ReactiveString
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to MemoryUserData hitokage-lua\src\components\memory.rs
+
 ---@class Memory : Base
 ---
 ---@field type 'Memory'
@@ -32,8 +34,9 @@ function memory_instance:get_format_reactive() end
 ---@return nil
 function memory_instance:set_format(string) end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to MemoryInfo hitokage-core\src\components\memory.rs
+
 ---@class MemoryInfo
 ---
 ---@field free number

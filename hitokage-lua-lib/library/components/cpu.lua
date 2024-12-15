@@ -1,14 +1,16 @@
 ---@meta hitokage.components.cpu
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to CpuProps in 'hitokage-core\src\components\cpu.rs'
+
 ---@class CpuProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
 ---@field format string | ReactiveString | fun(cpu_info: CpuLoadInfo): string
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to CpuUserData hitokage-lua\src\components\cpu.rs
+
 ---@class Cpu : Base
 ---
 ---@field type 'Cpu'
@@ -32,8 +34,9 @@ function cpu_instance:get_format_reactive() end
 ---@return nil
 function cpu_instance:set_format(string) end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to CpuLoadInfo hitokage-core\src\components\cpu.rs
+
 ---@class CpuLoadInfo
 ---
 ---@field cores table<number, CpuLoadCoreInfo>

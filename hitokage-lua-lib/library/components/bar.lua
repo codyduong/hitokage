@@ -4,14 +4,16 @@
 ---@field x integer?
 ---@field y integer?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
 ---@class BarProps : BoxProps
 ---@field width integer?
 ---@field height integer?
 ---@field offset BarOffset?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BarUserData in 'hitokage-lua\src\components\bar.rs'
+
 ---@class Bar : Base, Box
 ---
 ---Wrapper around [`is_ready`](lua://Bar.is_ready)

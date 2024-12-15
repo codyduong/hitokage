@@ -1,15 +1,17 @@
 ---@meta hitokage.components.clock
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to ClockProps in 'hitokage-core\src\components\clock.rs'
+
 ---@class ClockProps : BaseProps
 ---
 ---A string matching a [chrono::format::strftime](https://docs.rs/chrono/latest/chrono/format/strftime/index.html) string.
 ---
 ---@field format string | ReactiveString?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to ClockUserData hitokage-lua\src\components\clock.rs
+
 ---@class Clock : Base
 ---
 ---@field type 'Clock'

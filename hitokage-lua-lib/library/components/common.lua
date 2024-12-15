@@ -1,7 +1,8 @@
 ---@meta hitokage.components.common
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to Child in 'hitokage-core\src\components\mod.rs'
+
 ---
 ---@source hitokage-core\src\components\mod.rs
 ---

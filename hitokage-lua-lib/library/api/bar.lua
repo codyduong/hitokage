@@ -1,8 +1,9 @@
 ---@meta hitokage.api.bar
 
 -------------------------------------------------------------------------------
+---
 ---Represents the bar module
----@class barlib
+---@class bar
 local bar = {}
 
 ---!!! danger "Deprecated"

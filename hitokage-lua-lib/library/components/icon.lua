@@ -1,7 +1,8 @@
 ---@meta hitokage.components.icon
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to IconProps in 'hitokage-core\src\components\icon.rs'
+
 ---@class IconProps : BaseProps
 ---
 ---A path to the file to display.
@@ -10,8 +11,9 @@
 ---
 ---@field file string | ReactiveString
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to IconUserData hitokage-lua\src\components\icon.rs
+
 ---@class Icon : Base
 ---
 ---@field type 'Icon'

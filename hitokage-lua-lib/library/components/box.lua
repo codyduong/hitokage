@@ -2,8 +2,9 @@
 
 ---@alias ComponentProps table<number, WidgetBatteryProps | WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BoxProps in 'hitokage-core\src\components\box.rs'
+
 ---@class BoxProps : BaseProps
 ---
 ---An array of components.
@@ -37,8 +38,9 @@
 ---@deprecated
 ---@field widgets ComponentProps
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BoxUserData hitokage-lua\src\components\box.rs
+
 ---@class Box : Base
 ---
 ---@field type 'Box'

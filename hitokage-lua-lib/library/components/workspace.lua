@@ -1,7 +1,8 @@
 ---@meta hitokage.components.workspace
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to WorkspaceProps in 'hitokage-core\src\components\workspace.rs'
+
 ---@class WorkspaceProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
@@ -9,8 +10,9 @@
 ---@field item_height integer?
 ---@field format string?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to hitokage-lua\src\components\workspace.rs
+
 ---@class Workspace
 ---
 ---@field type 'Workspace'

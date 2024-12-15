@@ -1,7 +1,8 @@
 ---@meta hitokage.components.weather
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to WeatherProps in 'hitokage-core\src\components\weather.rs'
+
 ---@class WeatherProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
@@ -13,8 +14,9 @@
 ---
 ---@field icons table<string, string>?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to WeatherUserData in 'hitokage-lua\src\components\weather.rs'
+
 ---@class Weather : Base
 ---
 ---@field type 'Weather'
@@ -38,8 +40,9 @@ function weather_instance:get_format_reactive() end
 ---@return nil
 function weather_instance:set_format(string) end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to WeatherForecast in 'hitokage-lua\src\components\weather.rs'
+
 ---@class WeatherForecast
 ---
 ---@field temperature number

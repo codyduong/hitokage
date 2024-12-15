@@ -1,7 +1,8 @@
 ---@meta hitokage.components.battery
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BatteryProps in 'hitokage-core\src\components\battery.rs'
+
 ---@class BatteryProps : BaseProps
 -- @codyduong TODO add some descriptions here
 ---
@@ -9,8 +10,9 @@
 ---
 ---@field icons table<string, string>?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BatteryUserData hitokage-lua\src\components\battery.rs
+
 ---@class Battery : Base
 ---
 ---@field type 'Battery'
@@ -34,8 +36,9 @@ function battery_instance:get_format_reactive() end
 ---@return nil
 function battery_instance:set_format(string) end
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BatteryInfo hitokage-core\src\structs\system.rs
+
 ---@class BatteryInfo
 ---
 ---A value from 0.0 to 1.0 as a measure of battery capacity

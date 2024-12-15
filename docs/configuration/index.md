@@ -65,6 +65,12 @@ end
 }
 ```
 
+Once you can have done this, hitokage can be run from the command line or powershell
+
+```powershell
+hitokage
+```
+
 [^1]: More details can be found here: [about/features](../features.html)
 
 ## Setting up Lua Language Server

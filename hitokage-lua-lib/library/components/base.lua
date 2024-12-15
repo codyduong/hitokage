@@ -1,13 +1,15 @@
 ---@meta hitokage.components.base
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BaseProps in 'hitokage-core\src\components\base.rs'
+
 ---@class BaseProps
 ---
 ---Optional css class names. Either space-delimited classes, or an array of
 ---class names. Built-in hitokage components will always contain their type as
 ---a class name.
 ---
+---<!--@mkdocs-include
 ---!!! example
 ---
 ---    ```lua
@@ -17,7 +19,7 @@
 ---    ```lua
 ---    class = {"red", "blue", "green"}
 ---    ```
----
+----->
 ---[View gtk4 documentation](https://docs.gtk.org/gtk4/css-properties.html)
 ---
 ---@field class string | table<number, string>?
@@ -67,8 +69,9 @@
 ---
 ---@field width_request integer?
 
--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 ---Links to BoxUserData hitokage-lua\src\components\box.rs
+
 ---@class Base
 local base_instance = {}
 

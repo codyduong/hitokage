@@ -3,3 +3,5 @@ mkdocs-material
 mkdocs-gen-files
 mkdocs-literate-nav
 pymdown-extensions
+pydantic
+mkdocs-section-index
