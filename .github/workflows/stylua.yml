@@ -33,7 +33,7 @@ jobs:
       - name: Set up StyLua
         run: |
           if [ ! -f "stylua" ]; then
-            curl -L https://github.com/JohnnyMorganz/StyLua/releases/latest/download/stylua-linux.zip -o stylua.zip
+            curl -L https://github.com/JohnnyMorganz/StyLua/releases/download/v2.0.2/stylua-linux-x86_64.zip -o stylua.zip
             unzip stylua.zip
             chmod +x stylua
           fi
