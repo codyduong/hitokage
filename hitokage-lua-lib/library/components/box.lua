@@ -1,6 +1,6 @@
 ---@meta hitokage.components.box
 
----@alias ComponentProps table<number, WidgetBatteryProps | WidgetBoxProps | WidgetClockProps | WidgetCpuProps | WidgetIconProps | WidgetLabelProps | WidgetMemoryProps | WidgetWeatherProps | WidgetWorkspaceProps>?
+---@alias ComponentProps table<number, ComponentBatteryProps | ComponentBoxProps | ComponentClockProps | ComponentCpuProps | ComponentIconProps | ComponentLabelProps | ComponentMemoryProps | ComponentWeatherProps | ComponentWorkspaceProps>?
 
 --------------------------------------------------------------------------------
 ---Links to BoxProps in 'hitokage-core\src\components\box.rs'
@@ -79,18 +79,24 @@ function box_instance:get_children() end
 ---@return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_child_by_id(id, recursive) end
 
+---**Deprecated:** Use [`get_children`](lua://Box.get_children) instead.
+---<!--@mkdocs-include
 ---!!! danger "Deprecated"
 ---
----    Use [`get_children`](lua://Box.get_children) instead.
+---    Use <a href="#method-get_children">`get_children`</a> instead.
+----->
 ---
 ---Get the components on the box.
 ---@deprecated
 ---@return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_widgets() end
 
+---**Deprecated:** Use [`get_child_by_id`](lua://Box.get_child_by_id) instead.
+---<!--@mkdocs-include
 ---!!! danger "Deprecated"
 ---
----    Use [`get_child_by_id`](lua://Box.get_child_by_id) instead.
+---    Use <a href="#method-get_child_by_id">`get_child_by_id`</a> instead.
+----->
 ---
 ---Gets the first item in the widget tree that has the identifier.
 ---

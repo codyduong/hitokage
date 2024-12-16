@@ -7,6 +7,7 @@
 --------------------------------------------------------------------------------
 
 ---@class BarProps : BoxProps
+---@field type 'Bar'
 ---@field width integer?
 ---@field height integer?
 ---@field offset BarOffset?
@@ -14,6 +15,8 @@
 --------------------------------------------------------------------------------
 ---Links to BarUserData in 'hitokage-lua\src\components\bar.rs'
 
+---A bar is created using <!--@mkdocs-ignore-start-->[`monitor:attach`](Lua://Monitor.attach)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/Monitor#method-attach">`monitor:attach`</a> -->
 ---@class Bar : Base, Box
 ---
 ---Wrapper around [`is_ready`](lua://Bar.is_ready)

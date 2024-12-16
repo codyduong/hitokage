@@ -40,7 +40,26 @@ code.hitokage-type::before {
   content: "type";
 }
 
+code.hitokage-alias {
+  color: #2fb0c7;
+  background-color: var(--md-code-bg-color);
+}
+
+code.hitokage-alias::before {
+  content: "alias";
+}
+
 div.hitokage-content {
   padding-left: 25px;
   border-left: .05rem solid var(--md-typeset-table-color);
+}
+
+.hitokage-param > h3 {
+  font-size: inherit;
+  display: inline;
+}
+
+.hitokage-param > h3 > a.headerlink {
+  font-size: inherit;
+  margin-left: .25rem !important;
 }

@@ -21,6 +21,7 @@ LUA_NATIVE_TYPES = (
 )
 REPO_URL = "https://github.com/codyduong/hitokage"
 REPO_NAME = "hitokage"
+PERMALINK_ICON = "¶"
 
 from typing import (
     Annotated,
@@ -130,83 +131,163 @@ with open(DOC_JSON, "r", encoding="utf8") as raw_str:
 mkdocs_open = cast(Callable[..., TextIO], mkdocs_gen_files.open)
 
 
-def proccess_rawdesc(md_content: str) -> str:
-    """
-    Transforms Markdown content by processing specific @mkdocs-* tags in HTML comments.
+# view to url
+links: dict[str, str] = {
+    'nil':'https://www.lua.org/pil/2.1.html',
+    'boolean': 'https://www.lua.org/pil/2.2.html',
+    'number': 'https://www.lua.org/pil/2.3.html',
+    'string': 'https://www.lua.org/pil/2.4.html',
+    'userdata': 'https://www.lua.org/pil/28.1.html',
+    'function': 'https://www.lua.org/pil/2.6.html',
+    'thread': 'https://www.lua.org/pil/9.html',
+    'table': 'https://www.lua.org/pil/2.5.html',
+    'integer': 'https://www.lua.org/pil/2.3.html',
+}
+def register_link(view: str, path: str) -> None:
+    links[view] = f"/{REPO_NAME}/{path}"
 
-    Supported tags:
-      - @mkdocs-remove-next-line
-      - @mkdocs-ignore-start
-      - @mkdocs-ignore-end
-      - @mkdocs-include
 
-    Args:
-        md_content (str): The input Markdown content as a string.
+def process_view(view: str) -> str:
+    # Handle optional type with `?`
+    if view.endswith('?'):
+        base_type: str = view[:-1].strip()
+        return f'{process_view(base_type)}<a href="{links['nil']}">?</a>'
 
-    Returns:
-        str: The transformed Markdown content as a string.
+    # Handle unions (split by | and process each part)
+    if "|" in view:
+        parts = re.split(r'(\s*\|\s*)', view)  # Preserve spacers
+        return ''.join(process_view(part) if part.strip() != '|' else part for part in parts)
+    
+    # Handle generic types (e.g., table<number, string>)
+    generic_match = re.match(r'(\w+)\s*<(.+)>', view)
+    if generic_match:
+        base_type = generic_match.group(1)
+        args = generic_match.group(2)
+        if base_type not in links:
+            raise ValueError(f"Unknown type: {base_type}")
+        # Process the base type and arguments
+        linked_base = f"[{base_type}]({links[base_type]})"
+        linked_args = ', '.join(process_view(arg.strip()) for arg in split_generics(args))
+        return f"{linked_base}<{linked_args}>"
+    
+    # Handle string literals wrapped in single quotes
+    if re.fullmatch(r"'[^']*'", view.strip()):
+        return f"""<a href="{links['string']}">{view}</a>"""
+    
+    # Handle number literals
+    if re.fullmatch(r'\d+', view.strip()):
+        return f"""<a href="{links['number']}">{view}</a>"""
+    
+    # Handle primitive/custom types
+    view = view.strip()
+    if view in links:
+        return f'<a href="{links[view]}">{view}</a>'
+    
+    return (f"{view}")
+    raise ValueError(f"Unknown type: {view}")
 
-    Raises:
-        ValueError: If an unsupported @mkdocs-* tag is encountered.
-    """
-    lines: List[str] = md_content.splitlines()
-    result: List[str] = []
-    skip_block = False
+def split_generics(args: str) -> list[str]:
+    """Split generic arguments considering nested generics."""
+    depth = 0
+    result: list[str] = []
+    current: list[str] = []
+    for char in args:
+        if char == ',' and depth == 0:
+            result.append(''.join(current).strip())
+            current = []
+        else:
+            if char == '<':
+                depth += 1
+            elif char == '>':
+                depth -= 1
+            current.append(char)
+    if current:
+        result.append(''.join(current).strip())
+    return result
 
-    i = 0
-    while i < len(lines):
-        line = lines[i]
 
-        if "<!--@mkdocs-ignore-next-line-->" in line:
-            i += 1  # Skip the next line
-            i += 1
-            continue
+def proccess_rawdesc(text: str) -> str:
+    i: int = 0
+    length: int = len(text)
+    output: List[str] = []
+    ignoring_block: bool = False
+    ignoring_line: bool = False
+    next_line_ignore: bool = False
 
-        if "<!--@mkdocs-ignore-start-->" in line:
-            skip_block = True
-            i += 1
-            continue
-
-        if "<!--@mkdocs-ignore-end-->" in line:
-            skip_block = False
-            i += 1
-            continue
-
-        if "<!--@mkdocs-include" in line:
-            # Extract the content to include, stripping tags
-            include_content: List[str] = []
-            while i < len(lines) and not lines[i].strip().endswith("-->"):
-                include_content.append(lines[i])
-                i += 1
-
-            # Append the final line of the include block
-            if i < len(lines):
-                include_content.append(lines[i])
-
-            include_content_str = "\n".join(include_content)
-            include_match = re.search(r"<!--@mkdocs-include\s+(.*?)\s+-->", include_content_str, re.DOTALL)
-            if include_match:
-                result.append(include_match.group(1).strip())
+    while i < length:
+        if ignoring_block:
+            if starts_comment(text, i):
+                ctext, cfull, end_index = read_comment(text, i)
+                i = end_index
+                if '@mkdocs-ignore-end' in ctext:
+                    ignoring_block = False
             else:
-                raise ValueError(f"Malformed @mkdocs-include tag near line {i + 1}.")
+                i += 1
+            continue
+
+        if ignoring_line:
+            if text[i] == '\n':
+                ignoring_line = False
             i += 1
             continue
 
-        if "<!--@mkdocs-" in line:
-            # Detect unsupported tags
-            if not any(tag in line for tag in [
-                "<!--@mkdocs-ignore-next-line-->",
-                "<!--@mkdocs-ignore-start-->",
-                "<!--@mkdocs-ignore-end-->",
-                "<!--@mkdocs-include"]):
-                raise ValueError(f"Unsupported @mkdocs-* tag encountered at line {i + 1}: {line}")
+        if next_line_ignore:
+            if text[i] == '\n':
+                next_line_ignore = False
+                ignoring_line = True
+                i += 1
+                continue
+            # If we haven't hit the newline that ends the current line yet, we still output
+            # characters from the current line (the line that had the @mkdocs-ignore-next-line).
+            output.append(text[i])
+            i += 1
+            continue
 
-        if not skip_block:
-            result.append(line)
+        if starts_comment(text, i):
+            ctext, cfull, end_index = read_comment(text, i)
+            i = end_index
+            stripped = ctext.strip()
+            if '@mkdocs-ignore-start' in stripped and '@mkdocs-ignore-end' in stripped:
+                pass
+            elif '@mkdocs-ignore-start' in stripped:
+                ignoring_block = True
+            elif '@mkdocs-ignore-next-line' in stripped:
+                next_line_ignore = True
+            elif '@mkdocs-include' in stripped:
+                included = remove_directive(stripped, '@mkdocs-include')
+                output.append(included)
+            else:
+                output.append(cfull)
+        else:
+            output.append(text[i])
+            i += 1
 
+    return ''.join(output)
+
+def starts_comment(text: str, pos: int) -> bool:
+    return pos+3 < len(text) and text[pos:pos+4] == '<!--'
+
+def read_comment(text: str, start_index: int) -> Tuple[str, str, int]:
+    i: int = start_index + 4
+    length: int = len(text)
+    comment_chars: List[str] = []
+    while i < length:
+        if i+2 < length and text[i:i+3] == '-->':
+            full_comment = text[start_index:i+3]
+            return ''.join(comment_chars), full_comment, i+3
+        comment_chars.append(text[i])
         i += 1
+    # malformed comment
+    full_comment = text[start_index:i]
+    return ''.join(comment_chars), full_comment, i
 
-    return "\n".join(result)
+def remove_directive(text: str, directive: str) -> str:
+    idx = text.find(directive)
+    if idx == -1:
+        return text
+    before = text[:idx]
+    after = text[idx+len(directive):]
+    return (before + after).strip()
 
 
 def parse_fn(name: str, fn: Extends) -> Tuple[str, str]:
@@ -223,9 +304,10 @@ def parse_fn(name: str, fn: Extends) -> Tuple[str, str]:
             continue
 
         params.append(f"{arg.name}: {arg.view}")
-        desc: str = f"* `{arg.name}` ({html.escape(arg.view)})"
+        desc: str = f'* ### `{arg.name}` {{: #{name}({arg.name}) }} \n (<code>{process_view(arg.view)}</code>)'
         if arg.rawdesc:
-            desc += f"— {arg.rawdesc}"
+            desc += f"— {proccess_rawdesc(arg.rawdesc)}"
+        desc += "\n {: .hitokage-param .md-typeset }" # https://python-markdown.github.io/extensions/attr_list/ 
         paramDescriptions.append(desc)
 
     fnsig: str = f"```lua\nfunction {name}({", ".join(params)}) -> {"|".join([rv.view for rv in fn.returns]) if fn.returns else "nil"}\n```"
@@ -235,7 +317,7 @@ def parse_fn(name: str, fn: Extends) -> Tuple[str, str]:
         res += f"\n**Parameters:**\n\n{"\n".join(paramDescriptions)}\n"
 
     if fn.returns and len(fn.returns) > 0:
-        res += f"\n**Returns:**\n\n{"\n".join([f"* `{rv.view}`{f'— {rv.rawdesc}' if rv.rawdesc else ''}" for rv in fn.returns])}\n"
+        res += f"\n**Returns:**\n\n{"\n".join([f"* <code>{process_view(rv.view)}</code>{f'— {proccess_rawdesc(rv.rawdesc)}' if rv.rawdesc else ''}" for rv in fn.returns])}\n"
 
     return (fnsig, res)
 
@@ -304,6 +386,8 @@ def process_fields(flds: List[FieldDefinition], filepath: str, parent: str) -> s
 {fld.name}: {fld.view}
 ```
 <div class="hitokage-content" markdown>
+**Type**: {process_view(fld.view)}
+
 {proccess_rawdesc(fld.rawdesc) if fld.rawdesc else ""}      
 </div>
 """)
@@ -339,7 +423,7 @@ def process_fields(flds: List[FieldDefinition], filepath: str, parent: str) -> s
     return res
 
 
-SUPPORTED_TYPES = Union[Literal['mod'], Literal['userdata'], Literal['type']]
+SUPPORTED_TYPES = Union[Literal['mod'], Literal['userdata'], Literal['type'], Literal['alias']]
 # weight, keys, markdown location
 to_add_nav: List[Tuple[int, List[str], str]] = []
 
@@ -349,6 +433,7 @@ transformers: dict[str, Tuple[Optional[Callable[[RootItem], bool]], Callable[[Ro
 TYPE_TO_WEIGHT: dict[SUPPORTED_TYPES, int] = {
     "mod": -100,
     "userdata": -50,
+    "alias": -25,
     "type": 0
 }
 
@@ -372,6 +457,8 @@ def normalize_link(raw_link: str) -> str:
 
 
 def create_transformer(name: str, matcher: Optional[Callable[[RootItem], bool]], type: SUPPORTED_TYPES, filepath: str) -> None:
+    register_link(name, filepath)
+
     def default_transformer(item: RootItem, filepath: str) -> str:
         matched_dfn: DefineDefinition | None = next(
             filter(lambda x: x.view == item.name, item.defines), None
@@ -423,6 +510,9 @@ title: {item.name} | API
 
 default_matcher: Callable[[RootItem], bool] = lambda x: x.type == "type"
 
+create_transformer("Align", default_matcher, "alias", "api/Align")
+create_transformer("ComponentProps", default_matcher, "alias", "api/ComponentProps")
+
 create_transformer("hitokage", default_matcher, "mod", "api/hitokage")
 create_transformer("bar", default_matcher, "mod", "api/hitokage/bar")
 create_transformer("monitor", default_matcher, "mod", "api/hitokage/monitor")
@@ -433,24 +523,24 @@ create_transformer("ReactiveString", default_matcher, "userdata", "api/ReactiveS
 create_transformer("MonitorGeometry", default_matcher, "type", "api/MonitorGeometry")
 create_transformer("BarProps", default_matcher, "type", "api/BarProps")
 create_transformer("BarOffset", default_matcher, "type", "api/BarOffset")
-create_transformer("WidgetBatteryProps", default_matcher, "type", "api/WidgetBatteryProps")
-create_transformer("WidgetBoxProps", default_matcher, "type", "api/WidgetBoxProps")
-create_transformer("WidgetClockProps", default_matcher, "type", "api/WidgetClockProps")
-create_transformer("WidgetCpuProps", default_matcher, "type", "api/WidgetCpuProps")
-create_transformer("WidgetIconProps", default_matcher, "type", "api/WidgetIconProps")
-create_transformer("WidgetLabelProps", default_matcher, "type", "api/WidgetLabelProps")
-create_transformer("WidgetMemoryProps", default_matcher, "type", "api/WidgetMemoryProps")
-create_transformer("WidgetWeatherProps", default_matcher, "type", "api/WidgetWeatherProps")
-create_transformer("WidgetWorkspaceProps", default_matcher, "type", "api/WidgetWorkspaceProps")
-create_transformer("BatteryProps", default_matcher, "type", "api/WidgetBatteryProps/BatteryProps")
-create_transformer("BoxProps", default_matcher, "type", "api/WidgetBoxProps/BoxProps")
-create_transformer("ClockProps", default_matcher, "type", "api/WidgetClockProps/ClockProps")
-create_transformer("CpuProps", default_matcher, "type", "api/WidgetCpuProps/CpuProps")
-create_transformer("IconProps", default_matcher, "type", "api/WidgetIconProps/IconProps")
-create_transformer("LabelProps", default_matcher, "type", "api/WidgetLabelProps/LabelProps")
-create_transformer("MemoryProps", default_matcher, "type", "api/WidgetMemoryProps/MemoryProps")
-create_transformer("WeatherProps", default_matcher, "type", "api/WidgetWeatherProps/WeatherProps")
-create_transformer("WorkspaceProps", default_matcher, "type", "api/WidgetWorkspaceProps/WorkspaceProps")
+create_transformer("WrapBatteryProps", default_matcher, "type", "api/WrapBatteryProps")
+create_transformer("WrapBoxProps", default_matcher, "type", "api/WrapBoxProps")
+create_transformer("WrapClockProps", default_matcher, "type", "api/WrapClockProps")
+create_transformer("WrapCpuProps", default_matcher, "type", "api/WrapCpuProps")
+create_transformer("WrapIconProps", default_matcher, "type", "api/WrapIconProps")
+create_transformer("WrapLabelProps", default_matcher, "type", "api/WrapLabelProps")
+create_transformer("WrapMemoryProps", default_matcher, "type", "api/WrapMemoryProps")
+create_transformer("WrapWeatherProps", default_matcher, "type", "api/WrapWeatherProps")
+create_transformer("WrapWorkspaceProps", default_matcher, "type", "api/WrapWorkspaceProps")
+create_transformer("BatteryProps", default_matcher, "type", "api/WrapBatteryProps/BatteryProps")
+create_transformer("BoxProps", default_matcher, "type", "api/WrapBoxProps/BoxProps")
+create_transformer("ClockProps", default_matcher, "type", "api/WrapClockProps/ClockProps")
+create_transformer("CpuProps", default_matcher, "type", "api/WrapCpuProps/CpuProps")
+create_transformer("IconProps", default_matcher, "type", "api/WrapIconProps/IconProps")
+create_transformer("LabelProps", default_matcher, "type", "api/WrapLabelProps/LabelProps")
+create_transformer("MemoryProps", default_matcher, "type", "api/WrapMemoryProps/MemoryProps")
+create_transformer("WeatherProps", default_matcher, "type", "api/WrapWeatherProps/WeatherProps")
+create_transformer("WorkspaceProps", default_matcher, "type", "api/WrapWorkspaceProps/WorkspaceProps")
 create_transformer("Battery", default_matcher, "userdata", "api/Battery")
 create_transformer("Box", default_matcher, "userdata", "api/Box")
 create_transformer("Clock", default_matcher, "userdata", "api/Clock")
@@ -462,42 +552,42 @@ create_transformer("Weather", default_matcher, "userdata", "api/Weather")
 create_transformer("Workspace", default_matcher, "userdata", "api/Workspace")
 create_transformer("Bar", default_matcher, "userdata", "api/Bar")
 create_transformer("MonitorScaleFactor", default_matcher, "type", "api/MonitorScaleFactor")
-create_transformer("Align", default_matcher, "type", "api/Align")
 create_transformer("KomorebiAnimationStyle", default_matcher, "type", "api/komorebi/KomorebiAnimationStyle")
-create_transformer("KomorebiApplicationIdentifier", default_matcher, "type", "api/komorebi/KomorebiApplicationIdentifier")
-create_transformer("KomorebiAxis", default_matcher, "type", "api/komorebi/KomorebiAxis")
-create_transformer("KomorebiBorderImplementation", default_matcher, "type", "api/komorebi/KomorebiBorderImplementation")
-create_transformer("KomorebiBorderStyle", default_matcher, "type", "api/komorebi/KomorebiBorderStyle")
+create_transformer("KomorebiApplicationIdentifier", default_matcher, "alias", "api/komorebi/KomorebiApplicationIdentifier")
+create_transformer("KomorebiAxis", default_matcher, "alias", "api/komorebi/KomorebiAxis")
+create_transformer("KomorebiBorderImplementation", default_matcher, "alias", "api/komorebi/KomorebiBorderImplementation")
+create_transformer("KomorebiBorderStyle", default_matcher, "alias", "api/komorebi/KomorebiBorderStyle")
 create_transformer("KomorebiColumn", default_matcher, "type", "api/komorebi/KomorebiColumn")
-create_transformer("KomorebiColumnSplit", default_matcher, "type", "api/komorebi/KomorebiColumnSplit")
-create_transformer("KomorebiColumnSplitWithCapacity", default_matcher, "type", "api/komorebi/KomorebiColumnSplitWithCapacity")
+create_transformer("KomorebiColumnSplit", default_matcher, "alias", "api/komorebi/KomorebiColumnSplit")
+create_transformer("KomorebiColumnSplitWithCapacity", default_matcher, "alias", "api/komorebi/KomorebiColumnSplitWithCapacity")
 create_transformer("KomorebiColumnWidth", default_matcher, "type", "api/komorebi/KomorebiColumnWidth")
 create_transformer("KomorebiContainer", default_matcher, "type", "api/komorebi/KomorebiContainer")
-create_transformer("KomorebiCustomLayout", default_matcher, "type", "api/komorebi/KomorebiCustomLayout")
-create_transformer("KomorebiCycleDirection", default_matcher, "type", "api/komorebi/KomorebiCycleDirection")
-create_transformer("KomorebiDefaultLayout", default_matcher, "type", "api/komorebi/KomorebiDefaultLayout")
-create_transformer("KomorebiFocusFollowsMouseImplementation", default_matcher, "type", "api/komorebi/KomorebiFocusFollowsMouseImplementation")
+create_transformer("KomorebiCustomLayout", default_matcher, "alias", "api/komorebi/KomorebiCustomLayout")
+create_transformer("KomorebiCycleDirection", default_matcher, "alias", "api/komorebi/KomorebiCycleDirection")
+create_transformer("KomorebiDefaultLayout", default_matcher, "alias", "api/komorebi/KomorebiDefaultLayout")
+create_transformer("KomorebiFocusFollowsMouseImplementation", default_matcher, "alias", "api/komorebi/KomorebiFocusFollowsMouseImplementation")
 create_transformer("KomorebiLayout", default_matcher, "type", "api/komorebi/KomorebiLayout")
 create_transformer("KomorebiMonitor", default_matcher, "type", "api/komorebi/KomorebiMonitor")
 create_transformer("KomorebiMonitorRing", default_matcher, "type", "api/komorebi/KomorebiMonitorRing")
-create_transformer("KomorebiMoveBehaviour", default_matcher, "type", "api/komorebi/KomorebiMoveBehaviour")
+create_transformer("KomorebiMoveBehaviour", default_matcher, "alias", "api/komorebi/KomorebiMoveBehaviour")
 create_transformer("KomorebiNotification", default_matcher, "type", "api/komorebi/KomorebiNotification")
 create_transformer("KomorebiNotificationEvent", default_matcher, "type", "api/komorebi/KomorebiNotificationEvent")
-create_transformer("KomorebiOperationBehaviour", default_matcher, "type", "api/komorebi/KomorebiOperationBehaviour")
+create_transformer("KomorebiOperationBehaviour", default_matcher, "alias", "api/komorebi/KomorebiOperationBehaviour")
 create_transformer("KomorebiRect", default_matcher, "type", "api/komorebi/KomorebiRect")
-create_transformer("KomorebiSizing", default_matcher, "type", "api/komorebi/KomorebiSizing")
+create_transformer("KomorebiSizing", default_matcher, "alias", "api/komorebi/KomorebiSizing")
 create_transformer("KomorebiSocketMessage", default_matcher, "type", "api/komorebi/KomorebiSocketMessage")
-create_transformer("KomorebiStackbarLabel", default_matcher, "type", "api/komorebi/KomorebiStackbarLabel")
-create_transformer("KomorebiStackbarMode", default_matcher, "type", "api/komorebi/KomorebiStackbarMode")
+create_transformer("KomorebiStackbarLabel", default_matcher, "alias", "api/komorebi/KomorebiStackbarLabel")
+create_transformer("KomorebiStackbarMode", default_matcher, "alias", "api/komorebi/KomorebiStackbarMode")
 create_transformer("KomorebiState", default_matcher, "type", "api/komorebi/KomorebiState")
 create_transformer("KomorebiWindow", default_matcher, "type", "api/komorebi/KomorebiWindow")
-create_transformer("KomorebiWindowContainerBehaviour", default_matcher, "type", "api/komorebi/KomorebiWindowContainerBehaviour")
-create_transformer("KomorebiWindowManagerEvent", default_matcher, "type", "api/komorebi/KomorebiWindowManagerEvent")
+create_transformer("KomorebiWindowContainerBehaviour", default_matcher, "alias", "api/komorebi/KomorebiWindowContainerBehaviour")
+create_transformer("KomorebiWindowManagerEvent", default_matcher, "alias", "api/komorebi/KomorebiWindowManagerEvent")
 create_transformer("KomorebiWindowRing", default_matcher, "type", "api/komorebi/KomorebiWindowRing")
-create_transformer("KomorebiWinEvent", default_matcher, "type", "api/komorebi/KomorebiWinEvent")
+create_transformer("KomorebiWinEvent", default_matcher, "alias", "api/komorebi/KomorebiWinEvent")
 create_transformer("KomorebiWorkspace", default_matcher, "type", "api/komorebi/KomorebiWorkspace")
 create_transformer("KomorebiWorkspaceRing", default_matcher, "type", "api/komorebi/KomorebiWorkspaceRing")
-
+create_transformer("Base", default_matcher, "userdata", "api/Base")
+create_transformer("BaseProps", default_matcher, "type", "api/BaseProps")
 
 for item in data.root:
     if item.name in transformers and (
@@ -520,13 +610,15 @@ def prepend_code_to_nav(x: re.Match[str]) -> str:
     
 with mkdocs_gen_files.open("api/SUMMARY.md", "w") as nav_file:
     nav = mkdocs_gen_files.Nav()
-    fixed_nav = sorted(to_add_nav, key=lambda x: (x[0], x[2]))
+    fixed_nav = sorted(to_add_nav, key=lambda x: ("Komorebi" in x[2], x[0], x[2]))
     for (_, path, md) in fixed_nav:
         nav[*path] = md
     res = "".join(nav.build_literate_nav())
     res = re.sub(f"\\* \\[({'|'.join(transformers.keys())})\\]", prepend_code_to_nav, res, flags=re.MULTILINE)
     print(res)
     nav_file.writelines(f"{res}")
+
+print(links)
 
 
 # IGNORE = (

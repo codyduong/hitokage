@@ -6,29 +6,29 @@
 ---
 ---@source hitokage-core\src\components\mod.rs
 ---
----@class WidgetBatteryProps
+---@class WrapBatteryProps
 ---@field Battery BatteryProps
 ---
----@class WidgetBoxProps
+---@class WrapBoxProps
 ---@field Box BoxProps
 ---
----@class WidgetClockProps
+---@class WrapClockProps
 ---@field Clock ClockProps
 ---
----@class WidgetCpuProps
+---@class WrapCpuProps
 ---@field Cpu CpuProps
 ---
----@class WidgetIconProps
+---@class WrapIconProps
 ---@field Icon IconProps
 ---
----@class WidgetLabelProps
+---@class WrapLabelProps
 ---@field Label LabelProps
 ---
----@class WidgetMemoryProps
+---@class WrapMemoryProps
 ---@field Memory MemoryProps
 ---
----@class WidgetWeatherProps
+---@class WrapWeatherProps
 ---@field Weather WeatherProps
 ---
----@class WidgetWorkspaceProps
+---@class WrapWorkspaceProps
 ---@field Workspace WorkspaceProps

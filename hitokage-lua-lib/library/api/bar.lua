@@ -6,13 +6,20 @@
 ---@class bar
 local bar = {}
 
----!!! danger "Deprecated"
+---<!--@mkdocs-ignore-next-line-->
+---**Deprecated:** Use [`monitor:attach`](lua://Monitor.attach) instead.
+---<!--@mkdocs-include
+---    !!! danger "Deprecated"
 ---
----    Use [`monitor:attach`](lua://Monitor.attach) instead.
+---    Use <a href="/hitokage/api/Monitor#method-attach">`monitor:attach`</a> instead.
+----->
 ---
 ---Creates a new bar on a specified monitor.
 ---
----!!! example
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example-->
 ---
 ---    ```lua
 ---    local monitors = hitokage.monitor.get_all()

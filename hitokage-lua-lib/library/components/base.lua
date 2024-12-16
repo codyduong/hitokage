@@ -40,7 +40,8 @@
 ---A unique identifier.
 ---
 ---This is not enforced or checked by hitokage, it is simply used in utility methods such
----as [`get_child_by_id`](lua://Bar.get_child_by_id).
+---as <!--@mkdocs-ignore-start-->[`get_child_by_id`](lua://Bar.get_child_by_id).<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="">`get_child_by_id`</a>-->
 ---
 ---@field id string?
 ---
@@ -72,6 +73,7 @@
 --------------------------------------------------------------------------------
 ---Links to BoxUserData hitokage-lua\src\components\box.rs
 
+---This is the abstract base userdata every other component extends from.
 ---@class Base
 local base_instance = {}
 
@@ -111,12 +113,16 @@ function base_instance:set_halign(halign) end
 ---@return integer
 function base_instance:get_height() end
 
----Gets the height request that was explicitly set for the widget using [`set_height_request`](lua://Base.set_height_request) or [`set_size_request`](lua://Base.set_size_request).
+---Gets the height request that was explicitly set for the widget using <!--@mkdocs-ignore-next-line-->
+---[`set_height_request`](lua://Base.set_height_request) or [`set_size_request`](lua://Base.set_size_request).
+---<!--@mkdocs-include <a href="#method-set_height_request">`set_height_request`</a> or <a href="#method-set_size_request">`set_size_request`</a>.-->
 ---
 ---A value of `-1` stored in height indicates that it has not been set explicitly and the natural requisition of the widget will be used instead.
 ---To get the height a widget will actually request, call [`measure_height`](lua://Base.measure_height) instead of this function.
 ---
----See also: [`get_width_request`](lua://Base.get_width_request), [`get_size_request`](lua://Base.get_size_request).
+---See also: <!--@mkdocs-ignore-next-line-->
+---[`get_width_request`](lua://Base.get_width_request), [`get_size_request`](lua://Base.get_size_request).
+---<!--@mkdocs-include <a href="#method-get_width_request">`get_width_request`</a>, <a href="#method-get_size_request">`get_size_request`</a>.-->
 ---
 ---[View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.get_size_request.html)
 ---
@@ -129,7 +135,9 @@ function base_instance:get_height_request() end
 ---
 ---If the height request in a given direction is `-1` (unset), then the “natural” height request of the widget will be used instead.
 ---
----See also: [`set_width_request`](lua://Base.set_width_request), [`set_size_request`](lua://Base.set_size_request).
+---See also: <!--@mkdocs-ignore-next-line-->
+---[`set_width_request`](lua://Base.set_width_request), [`set_size_request`](lua://Base.set_size_request).
+---<!--@mkdocs-include <a href="#method-set_width_request">`set_width_request`</a>, <a href="#method-set_size_request">`set_size_request`</a>.-->
 ---
 ---[View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.set_size_request.html)
 ---
@@ -152,12 +160,16 @@ function base_instance:get_hexpand() end
 ---@return nil
 function base_instance:set_hexpand(hexpand) end
 
----Gets the size request that was explicitly set for the widget using [`set_size_request`](lua://Base.set_size_request).
+---Gets the size request that was explicitly set for the widget using <!--@mkdocs-ignore-next-line-->
+---[`set_size_request`](lua://Base.set_size_request).
+---<!--@mkdocs-include <a href="#method-set_size_request">`set_size_request`</a>.-->
 ---
 ---A value of `-1` stored in width or height indicates that that dimension has not been set explicitly and the natural requisition of the widget will be used instead.
 ---To get the size a widget will actually request, call [`measure`](lua://Base.measure) instead of this function.
 ---
----See also: [`get_width_request`](lua://Base.get_width_request), [`get_height_request`](lua://Base.get_height_request).
+---See also: <!--@mkdocs-ignore-next-line-->
+---[`get_width_request`](lua://Base.get_width_request), [`get_height_request`](lua://Base.get_height_request).
+---<!--@mkdocs-include <a href="#method-get_width_request">`get_width_request`</a>, <a href="#method-get_height_request">`get_height_request`</a>.-->
 ---
 ---[View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.get_size_request.html)
 ---
@@ -170,7 +182,9 @@ function base_instance:get_size_request() end
 ---
 ---If the size request in a given direction is `-1` (unset), then the “natural” size request of the widget will be used instead.
 ---
----See also: [`set_width_request`](lua://Base.set_width_request), [`set_height_request`](lua://Base.set_height_request).
+---See also: <!--@mkdocs-ignore-next-line-->
+---[`set_width_request`](lua://Base.set_width_request), [`set_height_request`](lua://Base.set_height_request).
+---<!--@mkdocs-include <a href="#method-set_width_request">`set_width_request`</a>, <a href="#method-set_height_request">`set_height_request`</a>.-->
 ---
 ---[View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.set_size_request.html)
 ---
@@ -217,12 +231,16 @@ function base_instance:set_vexpand(vexpand) end
 ---@return integer
 function base_instance:get_width() end
 
----Gets the width request that was explicitly set for the widget using [`set_width_request`](lua://Base.set_width_request) or [`set_size_request`](lua://Base.set_size_request).
+---Gets the width request that was explicitly set for the widget using <!--@mkdocs-ignore-next-line-->
+---[`set_width_request`](lua://Base.set_width_request) or [`set_size_request`](lua://Base.set_size_request).
+---<!--@mkdocs-include <a href="#method-set_width_request">`set_width_request`</a> or <a href="#method-set_size_request">`set_size_request`</a>.-->
 ---
 ---A value of `-1` stored in width indicates that it has not been set explicitly and the natural requisition of the widget will be used instead.
 ---To get the width a widget will actually request, call [`measure_width`](lua://Base.measure_width) instead of this function.
 ---
----See also: [`get_height_request`](lua://Base.get_height_request), [`get_size_request`](lua://Base.get_size_request).
+---See also: <!--@mkdocs-ignore-next-line-->
+---[`get_height_request`](lua://Base.get_height_request), [`get_size_request`](lua://Base.get_size_request).
+---<!--@mkdocs-include <a href="#method-get_height_request">`get_height_request`</a>, <a href="#method-get_size_request">`get_size_request`</a>.-->
 ---
 ---[View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.get_size_request.html)
 ---
@@ -235,7 +253,9 @@ function base_instance:get_width_request() end
 ---
 ---If the width request in a given direction is `-1` (unset), then the “natural” width request of the widget will be used instead.
 ---
----See also: [`set_height_request`](lua://Base.set_height_request), [`set_size_request`](lua://Base.set_size_request).
+---See also: <!--@mkdocs-ignore-next-line-->
+---[`set_height_request`](lua://Base.set_height_request), [`set_size_request`](lua://Base.set_size_request).
+---<!--@mkdocs-include <a href="#method-set_height_request">`set_height_request`</a>, <a href="#method-set_size_request">`set_size_request`</a>.-->
 ---
 ---[View gtk4 documentation](https://docs.gtk.org/gtk4/method.Widget.set_size_request.html)
 ---
