@@ -440,7 +440,7 @@ TYPE_TO_WEIGHT: dict[SUPPORTED_TYPES, int] = {
 
 def normalize_link(raw_link: str) -> str:
     # Remove '[FORIEGN]file:///'
-    file_url = re.sub(r"(\[FORIEGN\]|file:///)", "", raw_link)
+    file_url = re.sub(r"(\[FORIEGN\]|file:///|{})", "", raw_link)
 
     # URL-decode the path (e.g., c%3A to c:)
     file_path = urllib.parse.unquote(file_url)
@@ -448,12 +448,11 @@ def normalize_link(raw_link: str) -> str:
     # Remove any leading slashes
     file_path = file_path.lstrip("/")
 
-    workspace_index = file_path.find(REPO_NAME)
-    if workspace_index != -1:
-        # Truncate the path to start from the workspace directory
-        return file_path[workspace_index+len(REPO_NAME)+1:]
-    else:
-        raise ValueError(f"Failed to parse url: {raw_link}\n")
+    found = None
+    while (found := re.search(f"/?{REPO_NAME}/?(?![.-])", file_path)) != None:
+        file_path = file_path[found.end():]
+
+    return file_path.lstrip("/")
 
 
 def create_transformer(name: str, matcher: Optional[Callable[[RootItem], bool]], type: SUPPORTED_TYPES, filepath: str) -> None:
