@@ -15,14 +15,18 @@
 --------------------------------------------------------------------------------
 ---Links to BarUserData in 'hitokage-lua\src\components\bar.rs'
 
----A bar is created using <!--@mkdocs-ignore-start-->[`monitor:attach`](Lua://Monitor.attach)<!--@mkdocs-ignore-end-->
----<!--@mkdocs-include <a href="/hitokage/api/Monitor#method-attach">`monitor:attach`</a> -->
+---A bar is created using <!--@mkdocs-ignore-start-->[`monitor:attach`](lua://Monitor.attach)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/Monitor#method-attach" title="Monitor#method-attach">`monitor:attach`</a> -->
 ---@class Bar : Base, Box
 ---
----Wrapper around [`is_ready`](lua://Bar.is_ready)
+---Wrapper around <!--@mkdocs-ignore-next-line-->
+---[`is_ready`](lua://Bar.is_ready)
+---<!--@mkdocs-include <a href="#method-is_ready" title="bar#method-is_ready">`is_ready`</a>-->
 ---@field ready boolean
 ---
----Wrapper around [`get_geometry`](lua://Bar.get_geometry)
+---Wrapper around <!--@mkdocs-ignore-next-line-->
+---[`get_geometry`](lua://Bar.get_geometry)
+---<!--@mkdocs-include <a href="#method-get_geometry" title="bar#method-get_geometry">`get_geometry`</a>-->
 ---@field geometry MonitorGeometry
 local bar_instance = {}
 

@@ -1,13 +1,13 @@
 ---@meta hitokage.components.box
 
----@alias ComponentProps table<number, ComponentBatteryProps | ComponentBoxProps | ComponentClockProps | ComponentCpuProps | ComponentIconProps | ComponentLabelProps | ComponentMemoryProps | ComponentWeatherProps | ComponentWorkspaceProps>?
+---@alias ComponentProps table<number, WrapBatteryProps | WrapBoxProps | WrapClockProps | WrapCpuProps | WrapIconProps | WrapLabelProps | WrapMemoryProps | WrapWeatherProps | WrapWorkspaceProps>?
 
 --------------------------------------------------------------------------------
 ---Links to BoxProps in 'hitokage-core\src\components\box.rs'
 
 ---@class BoxProps : BaseProps
 ---
----An array of components.
+---<!--@mkdocs-include An arrray of children and properties. See <a href="/hitokage/api/ComponentProps" title="ComponentProps">`ComponentProps`</a>-->
 ---
 ---!!! example
 ---
@@ -41,6 +41,7 @@
 --------------------------------------------------------------------------------
 ---Links to BoxUserData hitokage-lua\src\components\box.rs
 
+---A component that iself can hold children.
 ---@class Box : Base
 ---
 ---@field type 'Box'
@@ -79,6 +80,7 @@ function box_instance:get_children() end
 ---@return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_child_by_id(id, recursive) end
 
+---<!--@mkdocs-ignore-next-line-->
 ---**Deprecated:** Use [`get_children`](lua://Box.get_children) instead.
 ---<!--@mkdocs-include
 ---!!! danger "Deprecated"
@@ -91,6 +93,7 @@ function box_instance:get_child_by_id(id, recursive) end
 ---@return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
 function box_instance:get_widgets() end
 
+---<!--@mkdocs-ignore-next-line-->
 ---**Deprecated:** Use [`get_child_by_id`](lua://Box.get_child_by_id) instead.
 ---<!--@mkdocs-include
 ---!!! danger "Deprecated"

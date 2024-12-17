@@ -11,7 +11,7 @@ local bar = {}
 ---<!--@mkdocs-include
 ---    !!! danger "Deprecated"
 ---
----    Use <a href="/hitokage/api/Monitor#method-attach">`monitor:attach`</a> instead.
+---    Use <a href="/hitokage/api/Monitor#method-attach" title="hitokage.monitor#method-attach">`monitor:attach`</a> instead.
 ----->
 ---
 ---Creates a new bar on a specified monitor.
@@ -36,7 +36,7 @@ local bar = {}
 ---    ```
 ---
 ---@deprecated
----@param monitor Monitor
+---@param monitor Monitor A Monitor userdata
 ---@param bar_props BarProps
 ---@return Bar
 function bar.create(monitor, bar_props) end

@@ -306,7 +306,7 @@ def parse_fn(name: str, fn: Extends) -> Tuple[str, str]:
         params.append(f"{arg.name}: {arg.view}")
         desc: str = f'* ### `{arg.name}` {{: #{name}({arg.name}) }} \n (<code>{process_view(arg.view)}</code>)'
         if arg.rawdesc:
-            desc += f"— {proccess_rawdesc(arg.rawdesc)}"
+            desc += f" — {proccess_rawdesc(arg.rawdesc)}"
         desc += "\n {: .hitokage-param .md-typeset }" # https://python-markdown.github.io/extensions/attr_list/ 
         paramDescriptions.append(desc)
 
@@ -317,7 +317,7 @@ def parse_fn(name: str, fn: Extends) -> Tuple[str, str]:
         res += f"\n**Parameters:**\n\n{"\n".join(paramDescriptions)}\n"
 
     if fn.returns and len(fn.returns) > 0:
-        res += f"\n**Returns:**\n\n{"\n".join([f"* <code>{process_view(rv.view)}</code>{f'— {proccess_rawdesc(rv.rawdesc)}' if rv.rawdesc else ''}" for rv in fn.returns])}\n"
+        res += f"\n**Returns:**\n\n{"\n".join([f"* <code>{process_view(rv.view)}</code>{f' — {proccess_rawdesc(rv.rawdesc)}' if rv.rawdesc else ''}" for rv in fn.returns])}\n"
 
     return (fnsig, res)
 
@@ -331,14 +331,17 @@ def process_fields(flds: List[FieldDefinition], filepath: str, parent: str) -> s
     methodContents: list[str] = []
     fieldLinks: list[str] = []
     fieldContents: list[str] = []
+    dotPath = ".".join(filepath.split('/')[1:])
 
     for fld in flds:
+        titleAttr = f"title='{dotPath}.{fld.name}'"
+
         if not fld.visible or fld.visible != "public":
             continue
 
         if fld.type == "setfield" and fld.view == "function":
             assert(fld.name)
-            fnLinks.append(f"* [{fld.name}](#function-{fld.name})")
+            fnLinks.append(f"* [{fld.name}](#function-{fld.name}){{: {titleAttr}}}")
 
             (fnsig, other) = parse_fn(fld.name, fld.extends)
 
@@ -354,13 +357,13 @@ def process_fields(flds: List[FieldDefinition], filepath: str, parent: str) -> s
             continue
 
         if fld.type == "setfield" and (not fld.view in LUA_NATIVE_TYPES) and (not "table<" in fld.view):
-            moduleLinks.append(f"* [{fld.name}]({fld.view}/index.html)")
+            moduleLinks.append(f"* [{fld.name}]({fld.view}/index.html){{: {titleAttr}}}")
 
             continue
 
         if fld.type == "setmethod":
             assert(fld.name)
-            methodLinks.append(f"* [{fld.name}](#method-{fld.name})")
+            methodLinks.append(f"* [{fld.name}](#method-{fld.name}){{: {titleAttr}}}")
 
             (fnsig, other) = parse_fn(fld.name, fld.extends)
 
@@ -378,7 +381,7 @@ def process_fields(flds: List[FieldDefinition], filepath: str, parent: str) -> s
 
         if fld.type == "doc.field":
             assert(fld.name)
-            fieldLinks.append(f"* [{fld.name}](#attr-{fld.name})")
+            fieldLinks.append(f"* [{fld.name}](#attr-{fld.name}){{: {titleAttr}}}")
 
             fieldContents.append(f"""## <code class="hitokage-attr">attr</code> {fld.name}
 

@@ -11,7 +11,7 @@
 
 ---This is the primary module for [hitokage](https://github.com/codyduong/hitokage)
 ---
----It is globally available as part of the lua environment variable: (`_G`)[lua://G]
+---It is globally available as part of the lua global environment: <a href="https://www.lua.org/pil/14.html">_G</a>
 ---@class hitokage
 _G.hitokage = {}
 _G._not_deadlocked = function() end
@@ -83,7 +83,7 @@ function hitokage.subscribe(name, callback) end
 ---<!--@mkdocs-include
 ---!!! warning
 ---
----    The return result must be dispatched with [`hitokage.dispatch`](#function-dispatch) in order to run
+---    The return result must be dispatched with [`hitokage.dispatch`](#function-dispatch){: title="hitokage#function-dispatch"} in order to run
 ----->
 ---@param timeout number Number in milliseconds that must pass before the coroutine can be run again
 ---@param action function A callback function that is run once the `timeout` has passed

@@ -13,7 +13,7 @@ code.hitokage-attr {
   background-color: var(--md-code-bg-color);
 }
 
-code.hitokage-mod {
+code.hitokage-mod.hitokage-mod {
   color: #62c959;
   background-color: var(--md-code-bg-color);
 }
@@ -62,4 +62,8 @@ div.hitokage-content {
 .hitokage-param > h3 > a.headerlink {
   font-size: inherit;
   margin-left: .25rem !important;
+}
+
+a.hitokage-ref {
+  color: unset;
 }
