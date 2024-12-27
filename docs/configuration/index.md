@@ -20,6 +20,12 @@ for _, monitor in ipairs(monitors) do
 end
 ```
 
+!!! danger
+
+    This represents a full unsandboxed lua runtime! It can perform any action any lua runtime can
+    including arbitrary code execution. As such, you should audit any configuration files you
+    retrieve online.
+
 `styles.css`
 ```css
 .bar {

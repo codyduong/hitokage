@@ -26,12 +26,12 @@ theme:
     - content.tabs.link
     - navigation.instant
     - navigation.footer
-    - navigation.indexes
-    - navigation.expand
+    # - navigation.indexes # use section-index instead
+    # - navigation.expand  # use section-index instead
     - navigation.tabs
     - navigation.top
     - navigation.tracking
-    - navigation.prune
+    # - navigation.prune
     - search.highlight
     - search.share
     - search.suggest
