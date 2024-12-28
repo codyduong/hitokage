@@ -25,9 +25,9 @@ local clock_icons = {
 local reactive_clock_icons = {}
 
 for _, monitor in ipairs(monitors) do
-	-- if monitor.model == "LG SDQHD" then
-	-- 	goto continue
-	-- end
+	if monitor.model == "LG SDQHD" then
+		goto continue
+	end
 
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
 	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}")

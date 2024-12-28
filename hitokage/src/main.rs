@@ -52,11 +52,16 @@ struct App {
   _tx_lua: Sender<bool>,
 }
 
-#[relm4::component(pub)]
-impl Component for App {
+struct AppInit {
+  lua: mlua::Lua,
+  is_stopped: Arc<AtomicBool>,
+}
+
+#[relm4::component(pub, async)]
+impl AsyncComponent for App {
   type Input = AppMsg;
   type Output = ();
-  type Init = ();
+  type Init = AppInit;
   type CommandOutput = ();
 
   view! {
@@ -85,8 +90,10 @@ impl Component for App {
     },
   }
 
-  fn init(_: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
+  async fn init(init: Self::Init, root: Self::Root, sender: AsyncComponentSender<Self>) -> AsyncComponentParts<Self> {
     // start the lua hook
+    let lua = init.lua;
+    let is_stopped = init.is_stopped;
 
     let lua_file_path = get_hitokage_asset("init.lua");
     let css_file_path = get_hitokage_asset("styles.css");
@@ -95,14 +102,11 @@ impl Component for App {
     log::info!("attempting to load lua styles.css at: {}", css_file_path.display());
 
     let preventer_called = Arc::new(AtomicBool::new(false));
-    let is_stopped = Arc::new(AtomicBool::new(false));
     let lua_thread_id = Arc::new(AtomicU32::new(0));
     let file_last_checked_at = Arc::new(Mutex::new(Instant::now())); // when did we last check for a config update through any means?
 
     // these names suck, these are for sending to create a new luahandle for forceful termination
     let (tx_lua, rx_lua) = channel::<bool>();
-
-    let lua = mlua::Lua::new();
 
     // if we need this for some reason, uhh good luck managing the arc mutex,
     // plus untangle all the other ones then...
@@ -117,7 +121,12 @@ impl Component for App {
       tx_lua.clone(),
     );
 
-    let _monitor_handle = config::create_watcher_handle(preventer_called.clone(), is_stopped.clone());
+    let _monitor_handle = config::create_watcher_handle(
+      preventer_called.clone(),
+      is_stopped.clone(),
+      sender.input_sender().clone(),
+    )
+    .await;
 
     let (tx, rx) = channel();
 
@@ -137,68 +146,70 @@ impl Component for App {
       let file_last_checked_at = file_last_checked_at.clone();
       let tx_lua = tx_lua.clone();
 
-      let _filewatcher_handle = thread::spawn(move || loop {
-        match rx.recv() {
-          Ok(event) => match event {
-            Ok(e) => {
-              log::info!("File update: {:?}", e);
+      let _filewatcher_handle = thread::spawn(move || {
+        loop {
+          match rx.recv() {
+            Ok(event) => match event {
+              Ok(e) => {
+                log::info!("File update: {:?}", e);
 
-              sender.input(AppMsg::DestroyActual);
+                sender.input(AppMsg::DestroyActual);
 
-              if !is_stopped.load(Ordering::SeqCst) {
-                // if we are stuck in lua execution loop we need to dispatch a response to it for it to implode itself
-                let mut wg = CONFIG_UPDATE.write();
-                *wg = true;
-                drop(wg);
+                if !is_stopped.load(Ordering::SeqCst) {
+                  // if we are stuck in lua execution loop we need to dispatch a response to it for it to implode itself
+                  let mut wg = CONFIG_UPDATE.write();
+                  *wg = true;
+                  drop(wg);
 
-                match rx_lua.recv() {
-                  Ok(true) => {
-                    log::info!("Lua thread reset itself within lua environment");
+                  match rx_lua.recv() {
+                    Ok(true) => {
+                      log::info!("Lua thread reset itself within lua environment");
+                    }
+                    Ok(false) => {
+                      log::info!("Lua thread coroutine deadlocked, starting new lua thread");
+                      let _ = config::create_lua_handle(
+                        lua.clone(),
+                        sender.clone(),
+                        lua_file_path.clone(),
+                        lua_thread_id.clone(),
+                        preventer_called.clone(),
+                        is_stopped.clone(),
+                        file_last_checked_at.clone(),
+                        tx_lua.clone(),
+                      );
+                    }
+                    Err(_) => {
+                      // @codyduong LOL, todo
+                      log::error!("Lua channel closed before receiving confirmation of launch of lua thread");
+                      is_stopped.store(true, Ordering::SeqCst);
+                    }
                   }
-                  Ok(false) => {
-                    log::info!("Lua thread coroutine deadlocked, starting new lua thread");
-                    let _ = config::create_lua_handle(
-                      lua.clone(),
-                      sender.clone(),
-                      lua_file_path.clone(),
-                      lua_thread_id.clone(),
-                      preventer_called.clone(),
-                      is_stopped.clone(),
-                      file_last_checked_at.clone(),
-                      tx_lua.clone(),
-                    );
-                  }
-                  Err(_) => {
-                    // @codyduong LOL, todo
-                    log::error!("Lua channel closed before receiving confirmation of launch of lua thread");
-                    is_stopped.store(true, Ordering::SeqCst);
-                  }
+                } else {
+                  log::info!("Lua thread finished executing, starting new lua thread");
+                  // otherwise we have finished execution, so dispatch a new thread
+                  let _ = config::create_lua_handle(
+                    lua.clone(),
+                    sender.clone(),
+                    lua_file_path.clone(),
+                    lua_thread_id.clone(),
+                    preventer_called.clone(),
+                    is_stopped.clone(),
+                    file_last_checked_at.clone(),
+                    tx_lua.clone(),
+                  );
+                  is_stopped.store(false, Ordering::SeqCst);
                 }
-              } else {
-                log::info!("Lua thread finished executing, starting new lua thread");
-                // otherwise we have finished execution, so dispatch a new thread
-                let _ = config::create_lua_handle(
-                  lua.clone(),
-                  sender.clone(),
-                  lua_file_path.clone(),
-                  lua_thread_id.clone(),
-                  preventer_called.clone(),
-                  is_stopped.clone(),
-                  file_last_checked_at.clone(),
-                  tx_lua.clone(),
-                );
-                is_stopped.store(false, Ordering::SeqCst);
               }
-            }
+              Err(e) => {
+                log::error!("Watch error: {:?}", e);
+              }
+            },
             Err(e) => {
-              log::error!("Watch error: {:?}", e);
+              log::error!("Receive error: {:?}", e);
             }
-          },
-          Err(e) => {
-            log::error!("Receive error: {:?}", e);
-          }
-        };
-        thread::sleep(Duration::from_millis(100));
+          };
+          thread::sleep(Duration::from_millis(100));
+        }
       });
     }
 
@@ -270,10 +281,10 @@ impl Component for App {
     *EVENT.write() = VecDeque::with_capacity(50);
     *LUA_ACTION_REQUESTS.write() = VecDeque::with_capacity(50);
 
-    ComponentParts { model, widgets }
+    AsyncComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: AppMsg, sender: ComponentSender<Self>, root: &Self::Root) {
+  async fn update(&mut self, msg: AppMsg, sender: AsyncComponentSender<Self>, root: &Self::Root) {
     match msg {
       // Komorebi States
       AppMsg::Komorebi(notif) => {
@@ -371,11 +382,12 @@ impl Component for App {
   }
 
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-    socket::shutdown().expect("Failed to shutdown komorebi socket");
+    cleanup();
   }
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
   simple_logger::SimpleLogger::new()
     .with_module_level("handlebars", LevelFilter::Warn)
     .init()
@@ -398,6 +410,30 @@ fn main() {
   }
 
   let app = RelmApp::new("com.example.hitokage");
+  let is_stopped = Arc::new(AtomicBool::new(false));
+  let lua = mlua::Lua::new();
+
+  {
+    let is_stopped = is_stopped.clone();
+    tokio::spawn(async move {
+      tokio::signal::ctrl_c().await.unwrap();
+      is_stopped.store(true, Ordering::SeqCst);
+      use windows::Win32::System::Console::{GenerateConsoleCtrlEvent, CTRL_C_EVENT};
+      cleanup();
+
+      // todo this should be signalled rather than timed for completion of cleanup
+      tokio::time::sleep(Duration::from_millis(500)).await;
+
+      unsafe {
+        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0).expect("Failed to re-send CTRL+C signal");
+      }
+    });
+  }
+
   // let _ = app.set_global_css_from_file(style_file_path);
-  app.run::<App>(());
+  app.run_async::<App>(AppInit { lua, is_stopped });
+}
+
+fn cleanup() {
+  socket::shutdown().expect("Failed to shutdown komorebi socket");
 }

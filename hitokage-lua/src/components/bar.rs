@@ -14,7 +14,8 @@ use mlua::{
   Lua, LuaSerdeExt, UserData, UserDataMethods,
   Value::{self},
 };
-use relm4::{Component, ComponentSender};
+use relm4::prelude::AsyncComponent;
+use relm4::{AsyncComponentSender, Component, ComponentSender};
 use serde::Deserialize;
 use std::sync::{Arc, Mutex};
 
@@ -134,10 +135,10 @@ impl UserData for BarUserData {
   }
 }
 
-pub fn make<C>(lua: &Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
+pub fn make<C>(lua: &Lua, sender: &AsyncComponentSender<C>) -> anyhow::Result<mlua::Table>
 where
-  C: Component<Input = crate::AppMsg>,
-  <C as Component>::Output: std::marker::Send,
+  C: AsyncComponent<Input = crate::AppMsg>,
+  <C as AsyncComponent>::Output: std::marker::Send,
 {
   let table = lua.create_table()?;
 
@@ -154,7 +155,7 @@ where
 
           let bar_sender: Arc<Mutex<Option<relm4::Sender<BarMsg>>>> = Arc::new(Mutex::new(None));
 
-          sender.input(<C as Component>::Input::LuaHook(LuaHook {
+          sender.input(<C as AsyncComponent>::Input::LuaHook(LuaHook {
             t: LuaHookType::CreateBar(Box::new(monitor.clone()), props, {
               let bar_sender = Arc::clone(&bar_sender);
               {

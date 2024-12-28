@@ -2,18 +2,13 @@ use crate::{App, LuaCoroutineMessage};
 use gtk4::{style_context_add_provider_for_display, style_context_remove_provider_for_display, ApplicationWindow};
 use hitokage_core::{event::CONFIG_UPDATE, win_utils};
 use mlua::LuaSerdeExt;
-use relm4::ComponentSender;
+use relm4::AsyncComponentSender;
 use std::{
-  fs::File,
-  io::Read,
-  path::PathBuf,
-  sync::{
+  fs::File, io::Read, path::PathBuf, sync::{
     atomic::{AtomicBool, AtomicU32, Ordering},
     mpsc::Sender,
     Arc, Mutex,
-  },
-  thread::{self},
-  time::{Duration, Instant},
+  }, thread, time::{Duration, Instant}
 };
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::Foundation::HANDLE;
@@ -33,9 +28,9 @@ pub fn load_content(path: Option<PathBuf>) -> String {
   prepend.to_owned() + "\n" + &contents + "\n" + append
 }
 
-pub fn create_lua_handle(
+pub(crate) fn create_lua_handle(
   lua: mlua::Lua,
-  sender: ComponentSender<App>,
+  sender: AsyncComponentSender<App>,
   file_path: PathBuf,
   lua_thread_id: Arc<AtomicU32>,
   preventer_called: Arc<AtomicBool>,
@@ -43,7 +38,9 @@ pub fn create_lua_handle(
   file_last_checked_at: Arc<Mutex<Instant>>,
   tx: Sender<bool>,
 ) -> std::thread::JoinHandle<Result<(), mlua::Error>> {
-  return thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
+  thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
+    terminate_thread(&lua_thread_id);
+
     let lua = hitokage_lua::make(lua, sender.clone()).unwrap();
 
     lua_thread_id.store(win_utils::get_current_thread_id(), Ordering::SeqCst);
@@ -102,13 +99,6 @@ pub fn create_lua_handle(
           drop(update_guard);
 
           lua.remove_hook();
-
-          {
-            let lua_thread_id = lua_thread_id.clone();
-            thread::spawn(move || {
-              terminate_thread(lua_thread_id.clone());
-            });
-          }
 
           // safe reload not possible!
           tx_clone.send(false).unwrap();
@@ -181,21 +171,26 @@ pub fn create_lua_handle(
         std::thread::sleep(Duration::from_millis(100) - time.elapsed())
       }
     }
-  });
+  })
 }
 
-pub fn create_watcher_handle(
+pub(crate) async fn create_watcher_handle(
   preventer_called: Arc<AtomicBool>,
   is_stopped: Arc<AtomicBool>,
-) -> std::thread::JoinHandle<()> {
-  thread::spawn(move || {
+  input_sender: relm4::Sender<hitokage_core::components::app::AppMsg>
+) -> tokio::task::JoinHandle<()> {
+  tokio::spawn(async move  {
     let mut start_time = Instant::now();
 
     loop {
       let is_stopped = is_stopped.load(Ordering::SeqCst);
 
       if is_stopped {
+        // this should never happen given that in prepend.lua we have a dispatch loop
+        // unless we have crashed the lua runtime or CTRL+C the progrma. in any case
+        // shutdown all bars
         log::debug!("Lua execution finished, stopping lua watcher");
+        input_sender.send(hitokage_core::components::app::AppMsg::DestroyActual).unwrap();
         break;
       }
 
@@ -215,15 +210,15 @@ pub fn create_watcher_handle(
         start_time = Instant::now();
       };
 
-      thread::sleep(Duration::from_millis(100));
+      let _ = tokio::time::sleep(Duration::from_millis(100));
     }
   })
 }
 
-pub fn terminate_thread(id_arc: Arc<AtomicU32>) {
+fn terminate_thread(id_arc: &Arc<AtomicU32>) {
   let id_guard = id_arc.load(Ordering::SeqCst);
-  log::debug!("Attempting to terminate lua thread with id: {:?}", id_guard);
   if id_guard != 0 {
+    log::debug!("Attempting to terminate lua thread with id: {:?}", id_guard);
     unsafe {
       let handle = OpenThread(THREAD_TERMINATE, false, id_guard).unwrap();
 

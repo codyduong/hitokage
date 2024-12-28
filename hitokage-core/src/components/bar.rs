@@ -209,7 +209,19 @@ impl Component for Bar {
           model.index,
           komorebi_client::Rect { left: 0, top: height, right: 0, bottom: height }
         ));
-      }
+      },
+
+      connect_unrealize => move |_window| {
+        let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
+          model.index,
+          komorebi_client::Rect {
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+          },
+        ));
+      },
     }
   }
 
@@ -296,15 +308,5 @@ impl Component for Bar {
     }
   }
 
-  fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {
-    let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
-      self.index,
-      komorebi_client::Rect {
-        left: 0,
-        top: 0,
-        right: 0,
-        bottom: 0,
-      },
-    ));
-  }
+  fn shutdown(&mut self, _widgets: &mut Self::Widgets, _output: relm4::Sender<Self::Output>) {}
 }
