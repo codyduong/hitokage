@@ -348,7 +348,7 @@ fn update_workspaces(
       if let Some(constraints) = workspaces_to_check_constraints.get_mut(&(i as i32)) {
         for constraint in constraints.drain(..) {
           // log::debug!("[Workspace] removing constraint {:?}", constraint);
-          // constraints_layout.remove_constraint(&constraint);
+          constraints_layout.remove_constraint(&constraint);
         }
       }
 
