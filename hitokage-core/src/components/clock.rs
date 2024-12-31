@@ -61,18 +61,13 @@ impl Component for Clock {
   }
 
   fn init(props: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let sender_clone = sender.clone();
-    let source_id = glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
-      sender_clone.input(ClockMsg::Tick);
-      glib::ControlFlow::Continue
-    });
-
     let mut model = Clock {
-      current_time: format_time(&props.format.clone().as_str()),
+      current_time: "".to_string(),
       format: props.format.as_reactive(None),
       base: props.base.clone().into(),
-      source_id: Some(source_id),
+      source_id: None,
     };
+    format_time(&mut model, sender);
 
     prepend_css_class_to_model!("clock", model, root);
     set_initial_base_props!(model, root, props.base);
@@ -82,9 +77,9 @@ impl Component for Clock {
     ComponentParts { model, widgets }
   }
 
-  fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
+  fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
-      ClockMsg::Tick => self.current_time = format_time(&self.format.get()),
+      ClockMsg::Tick => format_time(self, sender),
       ClockMsg::LuaHook(hook) => match hook {
         ClockMsgHook::BaseHook(base) => {
           generate_base_match_arms!(self, "clock", root, base)
@@ -99,6 +94,7 @@ impl Component for Clock {
           let arc = self.format.value.clone();
           let mut str = arc.lock().unwrap();
           *str = format;
+          format_time(self, sender);
         }
       },
     }
@@ -111,17 +107,27 @@ impl Component for Clock {
   }
 }
 
-fn format_time(format: &str) -> String {
-  let time_string = chrono::Local::now().format(format).to_string();
+fn format_time(model: &mut Clock, sender: ComponentSender<Clock>) -> () {
+  let time_string = chrono::Local::now().format(&model.format.get()).to_string();
 
   let reg = register_hitokage_helpers(Handlebars::new());
 
   match reg.render_template(&time_string, &None::<()>) {
-    Ok(name) => return name,
+    Ok(name) => {
+      if model.source_id.is_none() {
+        let source_id = glib::timeout_add_local(std::time::Duration::from_millis(500), move || {
+          sender.input(ClockMsg::Tick);
+          glib::ControlFlow::Continue
+        });
+        model.source_id = Some(source_id);
+      }
+      model.current_time = name.clone();
+    }
     Err(err) => {
       log::error!("{:?}", err);
+      if let Some(a) = model.source_id.take() {
+        glib::SourceId::remove(a)
+      };
     }
   };
-
-  "".to_owned()
 }
