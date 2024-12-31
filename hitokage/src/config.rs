@@ -2,13 +2,18 @@ use crate::{App, LuaCoroutineMessage};
 use gtk4::{style_context_add_provider_for_display, style_context_remove_provider_for_display, ApplicationWindow};
 use hitokage_core::{event::CONFIG_UPDATE, win_utils};
 use mlua::LuaSerdeExt;
-use relm4::AsyncComponentSender;
+use relm4::ComponentSender;
 use std::{
-  fs::File, io::Read, path::PathBuf, sync::{
+  fs::File,
+  io::Read,
+  path::PathBuf,
+  sync::{
     atomic::{AtomicBool, AtomicU32, Ordering},
     mpsc::Sender,
     Arc, Mutex,
-  }, thread, time::{Duration, Instant}
+  },
+  thread,
+  time::{Duration, Instant},
 };
 use windows::Win32::Foundation::CloseHandle;
 use windows::Win32::Foundation::HANDLE;
@@ -28,158 +33,187 @@ pub fn load_content(path: Option<PathBuf>) -> String {
   prepend.to_owned() + "\n" + &contents + "\n" + append
 }
 
-pub(crate) fn create_lua_handle(
+#[derive(Clone)]
+pub(crate) struct LuaRuntime {
   lua: mlua::Lua,
-  sender: AsyncComponentSender<App>,
+  sender: ComponentSender<App>,
   file_path: PathBuf,
   lua_thread_id: Arc<AtomicU32>,
   preventer_called: Arc<AtomicBool>,
   is_stopped: Arc<AtomicBool>,
   file_last_checked_at: Arc<Mutex<Instant>>,
   tx: Sender<bool>,
-) -> std::thread::JoinHandle<Result<(), mlua::Error>> {
-  thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
-    terminate_thread(&lua_thread_id);
-
-    let lua = hitokage_lua::make(lua, sender.clone()).unwrap();
-
-    lua_thread_id.store(win_utils::get_current_thread_id(), Ordering::SeqCst);
-
-    let globals = lua.globals();
-
-    let preventer_fn = lua.create_function(move |_, ()| {
-      preventer_called.store(true, Ordering::SeqCst);
-      Ok(())
-    })?;
-
-    globals.set("_not_deadlocked", preventer_fn)?;
-
-    let func_or_err = lua.load(load_content(Some(file_path.clone()))).into_function();
-
-    // if we failed to create a coroutine default to an empty script
-    let coroutine = lua
-      .create_thread({
-        match func_or_err {
-          Ok(func) => func,
-          Err(err) => {
-            log::error!("There was an error loading your user script: {:?}", err);
-            log::info!("Falling back to an empty script. Waiting for user script fixes");
-            lua
-              .load(load_content(None))
-              .into_function()
-              .expect("Internal script error when falling back to empty user script")
-          }
-        }
-      })
-      .expect("Failed to create a lua thread");
-
-    let tx_clone = tx.clone();
-
-    // file-watcher is injected through a hook to ensure we are polling it through other means as well
-    coroutine.set_hook(mlua::HookTriggers::new().every_nth_instruction(500), {
-      let file_last_checked_at = Arc::clone(&file_last_checked_at);
-      move |lua, _| {
-        let valid_status = match lua.current_thread().status() {
-          mlua::ThreadStatus::Resumable => true,
-          mlua::ThreadStatus::Finished => false,
-          mlua::ThreadStatus::Running => false,
-          mlua::ThreadStatus::Error => false,
-        };
-        let mut guard = file_last_checked_at.lock().unwrap();
-        // skip if we havent passed enough time, or we aren't invalid status
-        // @codyduong this is super fragile, we can double run this on accident, instead use a different method to check
-        if ((*guard).elapsed() <= Duration::from_millis(250)) || valid_status {
-          drop(guard);
-          return Ok(mlua::VmState::Continue);
-        }
-
-        let mut update_guard = CONFIG_UPDATE.write();
-        if *update_guard {
-          *update_guard = false;
-          drop(update_guard);
-
-          lua.remove_hook();
-
-          // safe reload not possible!
-          tx_clone.send(false).unwrap();
-        }
-
-        *guard = Instant::now();
-        drop(guard);
-
-        Ok(mlua::VmState::Continue)
-      }
-    });
-
-    loop {
-      let time = Instant::now();
-      match coroutine.resume::<mlua::Value>(()) {
-        Ok(value) => match value {
-          mlua::Value::Nil => (),
-          mlua::Value::Boolean(_) => (),
-          mlua::Value::UserData(_) => (),
-          mlua::Value::LightUserData(_) => (),
-          _ => {
-            let props: mlua::Result<LuaCoroutineMessage> = lua.from_value(value.clone());
-
-            match props {
-              Ok(msg) => match msg {
-                LuaCoroutineMessage::Suspend => {
-                  log::info!("Received suspend from lua coroutine");
-                  is_stopped.store(true, Ordering::SeqCst);
-                  break Ok(());
-                }
-                LuaCoroutineMessage::Reload => {
-                  log::info!("Received reload from lua coroutine");
-                  let mut sswg = CONFIG_UPDATE.write();
-                  *sswg = false;
-                  let user_script = load_content(Some(file_path.clone()));
-                  let result = lua.load(user_script).into_function();
-                  drop(sswg);
-                  match result {
-                    Ok(func) => {
-                      let _ = coroutine.reset(func);
-                      tx.send(true).unwrap(); // safe reload success
-                    }
-                    Err(_) => {
-                      // no need to handle the error since we will attempt to start again
-                      // which will indicate the error
-                      tx.send(false).unwrap();
-                    }
-                  }
-                }
-              },
-              Err(err) => {
-                log::error!("Received unknown coroutine return, {:?}, {:?}", err, value);
-                is_stopped.store(true, Ordering::SeqCst);
-                break Err(err);
-              }
-            }
-          }
-        },
-        Err(mlua::Error::CoroutineUnresumable) => {
-          is_stopped.store(true, Ordering::SeqCst);
-          break Ok(());
-        }
-        Err(err) => {
-          log::error!("Lua error: {:?}", err);
-          is_stopped.store(true, Ordering::SeqCst);
-          break Err(err);
-        }
-      }
-      if time.elapsed() <= Duration::from_millis(100) {
-        std::thread::sleep(Duration::from_millis(100) - time.elapsed())
-      }
-    }
-  })
 }
 
-pub(crate) async fn create_watcher_handle(
+impl LuaRuntime {
+  pub(crate) fn new(
+    lua: mlua::Lua,
+    sender: ComponentSender<App>,
+    file_path: PathBuf,
+    lua_thread_id: Arc<AtomicU32>,
+    preventer_called: Arc<AtomicBool>,
+    is_stopped: Arc<AtomicBool>,
+    file_last_checked_at: Arc<Mutex<Instant>>,
+    tx: Sender<bool>,
+  ) -> Self {
+    Self {
+      lua,
+      sender,
+      file_path,
+      lua_thread_id,
+      preventer_called,
+      is_stopped,
+      file_last_checked_at,
+      tx,
+    }
+  }
+
+  pub(crate) fn start_runtime(self) -> () {
+    thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
+      terminate_thread(&self.lua_thread_id);
+
+      let lua = hitokage_lua::make(self.lua, self.sender.clone()).unwrap();
+
+      self
+        .lua_thread_id
+        .store(win_utils::get_current_thread_id(), Ordering::SeqCst);
+
+      let globals = lua.globals();
+
+      let preventer_fn = lua.create_function(move |_, ()| {
+        self.preventer_called.store(true, Ordering::SeqCst);
+        Ok(())
+      })?;
+
+      globals.set("_not_deadlocked", preventer_fn)?;
+
+      let func_or_err = lua.load(load_content(Some(self.file_path.clone()))).into_function();
+
+      // if we failed to create a coroutine default to an empty script
+      let coroutine = lua
+        .create_thread({
+          match func_or_err {
+            Ok(func) => func,
+            Err(err) => {
+              log::error!("There was an error loading your user script: {:?}", err);
+              log::info!("Falling back to an empty script. Waiting for user script fixes");
+              lua
+                .load(load_content(None))
+                .into_function()
+                .expect("Internal script error when falling back to empty user script")
+            }
+          }
+        })
+        .expect("Failed to create a lua thread");
+
+      let tx_clone = self.tx.clone();
+
+      // file-watcher is injected through a hook to ensure we are polling it through other means as well
+      coroutine.set_hook(mlua::HookTriggers::new().every_nth_instruction(500), {
+        let file_last_checked_at = Arc::clone(&self.file_last_checked_at);
+        move |lua, _| {
+          let valid_status = match lua.current_thread().status() {
+            mlua::ThreadStatus::Resumable => true,
+            mlua::ThreadStatus::Finished => false,
+            mlua::ThreadStatus::Running => false,
+            mlua::ThreadStatus::Error => false,
+          };
+          let mut guard = file_last_checked_at.lock().unwrap();
+          // skip if we havent passed enough time, or we aren't invalid status
+          // @codyduong this is super fragile, we can double run this on accident, instead use a different method to check
+          if ((*guard).elapsed() <= Duration::from_millis(250)) || valid_status {
+            drop(guard);
+            return Ok(mlua::VmState::Continue);
+          }
+
+          let mut update_guard = CONFIG_UPDATE.write();
+          if *update_guard {
+            *update_guard = false;
+            drop(update_guard);
+
+            lua.remove_hook();
+
+            // safe reload not possible!
+            tx_clone.send(false).unwrap();
+          }
+
+          *guard = Instant::now();
+          drop(guard);
+
+          Ok(mlua::VmState::Continue)
+        }
+      });
+
+      loop {
+        let time = Instant::now();
+        match coroutine.resume::<mlua::Value>(()) {
+          Ok(value) => match value {
+            mlua::Value::Nil => (),
+            mlua::Value::Boolean(_) => (),
+            mlua::Value::UserData(_) => (),
+            mlua::Value::LightUserData(_) => (),
+            _ => {
+              let props: mlua::Result<LuaCoroutineMessage> = lua.from_value(value.clone());
+
+              match props {
+                Ok(msg) => match msg {
+                  LuaCoroutineMessage::Suspend => {
+                    log::info!("Received suspend from lua coroutine");
+                    self.is_stopped.store(true, Ordering::SeqCst);
+                    break Ok(());
+                  }
+                  LuaCoroutineMessage::Reload => {
+                    log::info!("Received reload from lua coroutine");
+                    let mut sswg = CONFIG_UPDATE.write();
+                    *sswg = false;
+                    let user_script = load_content(Some(self.file_path.clone()));
+                    let result = lua.load(user_script).into_function();
+                    drop(sswg);
+                    match result {
+                      Ok(func) => {
+                        let _ = coroutine.reset(func);
+                        self.tx.send(true).unwrap(); // safe reload success
+                      }
+                      Err(_) => {
+                        // no need to handle the error since we will attempt to start again
+                        // which will indicate the error
+                        self.tx.send(false).unwrap();
+                      }
+                    }
+                  }
+                },
+                Err(err) => {
+                  log::error!("Received unknown coroutine return, {:?}, {:?}", err, value);
+                  self.is_stopped.store(true, Ordering::SeqCst);
+                  break Err(err);
+                }
+              }
+            }
+          },
+          Err(mlua::Error::CoroutineUnresumable) => {
+            self.is_stopped.store(true, Ordering::SeqCst);
+            break Ok(());
+          }
+          Err(err) => {
+            log::error!("Lua error: {:?}", err);
+            self.is_stopped.store(true, Ordering::SeqCst);
+            break Err(err);
+          }
+        }
+        if time.elapsed() <= Duration::from_millis(100) {
+          std::thread::sleep(Duration::from_millis(100) - time.elapsed())
+        }
+      }
+    });
+  }
+}
+
+pub(crate) fn create_watcher_handle(
   preventer_called: Arc<AtomicBool>,
   is_stopped: Arc<AtomicBool>,
-  input_sender: relm4::Sender<hitokage_core::components::app::AppMsg>
-) -> tokio::task::JoinHandle<()> {
-  tokio::spawn(async move  {
+  input_sender: relm4::Sender<hitokage_core::components::app::AppMsg>,
+) -> std::thread::JoinHandle<()> {
+  std::thread::spawn(move || {
     let mut start_time = Instant::now();
 
     loop {
@@ -190,7 +224,9 @@ pub(crate) async fn create_watcher_handle(
         // unless we have crashed the lua runtime or CTRL+C the progrma. in any case
         // shutdown all bars
         log::debug!("Lua execution finished, stopping lua watcher");
-        input_sender.send(hitokage_core::components::app::AppMsg::DestroyActual).unwrap();
+        input_sender
+          .send(hitokage_core::components::app::AppMsg::DestroyActual)
+          .unwrap();
         break;
       }
 
@@ -210,7 +246,7 @@ pub(crate) async fn create_watcher_handle(
         start_time = Instant::now();
       };
 
-      let _ = tokio::time::sleep(Duration::from_millis(100));
+      std::thread::sleep(Duration::from_millis(100));
     }
   })
 }

@@ -135,7 +135,7 @@ pub enum BarMsg {
   LuaHook(BarLuaHook),
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Copy, Clone)]
 pub enum BarPosition {
   Top,
   Bottom,
@@ -205,10 +205,17 @@ impl Component for Bar {
 
         // println!("{:?} {:?}", (model.geometry.height + &model.offset_y), height);
 
-        let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
-          model.index,
-          komorebi_client::Rect { left: 0, top: height, right: 0, bottom: height }
-        ));
+        if (model.position.is_some_and(|pos| pos == BarPosition::Bottom)) {
+          let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
+            model.index,
+            komorebi_client::Rect { left: 0, top: 0, right: 0, bottom: height }
+          ));
+        } else {
+          let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
+            model.index,
+            komorebi_client::Rect { left: 0, top: height, right: 0, bottom: height }
+          ));
+        }
       },
 
       connect_unrealize => move |_window| {

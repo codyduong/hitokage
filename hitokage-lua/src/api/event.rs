@@ -1,13 +1,12 @@
 use hitokage_core::components::app::{LuaHook, LuaHookType};
 use hitokage_core::event::{CONFIG_UPDATE, EVENT, NEW_EVENT};
 use mlua::{Lua, LuaSerdeExt, Value};
-use relm4::prelude::AsyncComponent;
-use relm4::AsyncComponentSender;
+use relm4::{Component, ComponentSender};
 
-pub fn make<C>(lua: &Lua, sender: &AsyncComponentSender<C>) -> anyhow::Result<mlua::Table>
+pub fn make<C>(lua: &Lua, sender: &ComponentSender<C>) -> anyhow::Result<mlua::Table>
 where
-  C: AsyncComponent<Input = crate::AppMsg>,
-  <C as AsyncComponent>::Output: std::marker::Send,
+  C: Component<Input = crate::AppMsg>,
+  <C as Component>::Output: std::marker::Send,
 {
   let table = lua.create_table()?;
 

@@ -1,4 +1,4 @@
-use config::reload_css_provider;
+use config::{reload_css_provider, LuaRuntime};
 use gtk4::prelude::*;
 use hitokage_core::components;
 use hitokage_core::components::app::{AppMsg, LuaHookType};
@@ -57,8 +57,8 @@ struct AppInit {
   is_stopped: Arc<AtomicBool>,
 }
 
-#[relm4::component(pub, async)]
-impl AsyncComponent for App {
+#[relm4::component(pub)]
+impl Component for App {
   type Input = AppMsg;
   type Output = ();
   type Init = AppInit;
@@ -90,7 +90,7 @@ impl AsyncComponent for App {
     },
   }
 
-  async fn init(init: Self::Init, root: Self::Root, sender: AsyncComponentSender<Self>) -> AsyncComponentParts<Self> {
+  fn init(init: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
     // start the lua hook
     let lua = init.lua;
     let is_stopped = init.is_stopped;
@@ -110,7 +110,7 @@ impl AsyncComponent for App {
 
     // if we need this for some reason, uhh good luck managing the arc mutex,
     // plus untangle all the other ones then...
-    let _ = config::create_lua_handle(
+    let runtime = LuaRuntime::new(
       lua.clone(),
       sender.clone(),
       lua_file_path.clone(),
@@ -120,31 +120,24 @@ impl AsyncComponent for App {
       file_last_checked_at.clone(),
       tx_lua.clone(),
     );
+    runtime.clone().start_runtime();
 
     let _monitor_handle = config::create_watcher_handle(
       preventer_called.clone(),
       is_stopped.clone(),
       sender.input_sender().clone(),
-    )
-    .await;
+    );
 
     let (tx, rx) = channel();
 
-    let mut debouncer = new_debouncer(Duration::from_secs(1), None, tx).unwrap();
+    let mut debouncer = new_debouncer(Duration::from_secs(1), Some(Duration::from_millis(500)), tx).unwrap();
     debouncer
       .watcher()
       .watch(&lua_file_path, notify::RecursiveMode::NonRecursive)
       .unwrap();
 
     {
-      let lua = lua.clone();
       let sender = sender.clone();
-      let lua_file_path = lua_file_path.clone();
-      let lua_thread_id = lua_thread_id.clone();
-      let preventer_called = preventer_called.clone();
-      let is_stopped = is_stopped.clone();
-      let file_last_checked_at = file_last_checked_at.clone();
-      let tx_lua = tx_lua.clone();
 
       let _filewatcher_handle = thread::spawn(move || {
         loop {
@@ -167,16 +160,7 @@ impl AsyncComponent for App {
                     }
                     Ok(false) => {
                       log::info!("Lua thread coroutine deadlocked, starting new lua thread");
-                      let _ = config::create_lua_handle(
-                        lua.clone(),
-                        sender.clone(),
-                        lua_file_path.clone(),
-                        lua_thread_id.clone(),
-                        preventer_called.clone(),
-                        is_stopped.clone(),
-                        file_last_checked_at.clone(),
-                        tx_lua.clone(),
-                      );
+                      runtime.clone().start_runtime();
                     }
                     Err(_) => {
                       // @codyduong LOL, todo
@@ -187,16 +171,7 @@ impl AsyncComponent for App {
                 } else {
                   log::info!("Lua thread finished executing, starting new lua thread");
                   // otherwise we have finished execution, so dispatch a new thread
-                  let _ = config::create_lua_handle(
-                    lua.clone(),
-                    sender.clone(),
-                    lua_file_path.clone(),
-                    lua_thread_id.clone(),
-                    preventer_called.clone(),
-                    is_stopped.clone(),
-                    file_last_checked_at.clone(),
-                    tx_lua.clone(),
-                  );
+                  runtime.clone().start_runtime();
                   is_stopped.store(false, Ordering::SeqCst);
                 }
               }
@@ -206,6 +181,7 @@ impl AsyncComponent for App {
             },
             Err(e) => {
               log::error!("Receive error: {:?}", e);
+              break;
             }
           };
           thread::sleep(Duration::from_millis(100));
@@ -281,10 +257,10 @@ impl AsyncComponent for App {
     *EVENT.write() = VecDeque::with_capacity(50);
     *LUA_ACTION_REQUESTS.write() = VecDeque::with_capacity(50);
 
-    AsyncComponentParts { model, widgets }
+    ComponentParts { model, widgets }
   }
 
-  async fn update(&mut self, msg: AppMsg, sender: AsyncComponentSender<Self>, root: &Self::Root) {
+  fn update(&mut self, msg: AppMsg, sender: ComponentSender<Self>, root: &Self::Root) {
     match msg {
       // Komorebi States
       AppMsg::Komorebi(notif) => {
@@ -431,7 +407,7 @@ async fn main() {
   }
 
   // let _ = app.set_global_css_from_file(style_file_path);
-  app.run_async::<App>(AppInit { lua, is_stopped });
+  app.run::<App>(AppInit { lua, is_stopped });
 }
 
 fn cleanup() {

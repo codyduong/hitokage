@@ -9,7 +9,7 @@ use std::time::Duration;
 
 const NAME: &str = "hitokage.sock";
 
-pub(crate) fn start(sender: relm4::AsyncComponentSender<crate::App>) -> std::thread::JoinHandle<Result<(), anyhow::Error>> {
+pub(crate) fn start(sender: relm4::ComponentSender<crate::App>) -> std::thread::JoinHandle<Result<(), anyhow::Error>> {
   let listener = komorebi_client::subscribe(NAME).expect("Failed to open socket");
 
   std::thread::spawn(move || -> Result<()> {
@@ -46,7 +46,7 @@ pub(crate) fn start(sender: relm4::AsyncComponentSender<crate::App>) -> std::thr
   })
 }
 
-pub fn shutdown() -> Result<()> {
+pub(crate) fn shutdown() -> Result<()> {
   send_message(&komorebi_client::SocketMessage::RemoveSubscriberSocket(
     NAME.to_string(),
   ))?;

@@ -3,7 +3,7 @@ use components::bar;
 use hitokage_core::components::app::AppMsg;
 use luahelper::ValuePrinter;
 use mlua::{AnyUserData, Lua, Table, Value, Variadic};
-use relm4::{prelude::AsyncComponent, AsyncComponentSender};
+use relm4::{Component, ComponentSender};
 use std::fmt;
 
 pub mod api;
@@ -83,10 +83,10 @@ async fn sleep_ms(_: Lua, milliseconds: u64) -> mlua::Result<()> {
   Ok(())
 }
 
-pub fn make<C>(lua: mlua::Lua, sender: AsyncComponentSender<C>) -> anyhow::Result<mlua::Lua>
+pub fn make<C>(lua: mlua::Lua, sender: ComponentSender<C>) -> anyhow::Result<mlua::Lua>
 where
-  C: AsyncComponent<Input = AppMsg>,
-  <C as AsyncComponent>::Output: std::marker::Send,
+  C: Component<Input = AppMsg>,
+  <C as Component>::Output: std::marker::Send,
 {
   {
     let globals = lua.globals();
