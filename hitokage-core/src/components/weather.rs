@@ -49,146 +49,138 @@ impl Default for WeatherOptions {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct WeatherIcons {
-  #[serde(default)]
+  #[serde(default = "icon_day")]
   day: String,
-  // #[serde(default)]
-  // day_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_cloudy")]
   day_cloudy: String,
-  // #[serde(default)]
-  // day_cloudy_windy: String,
-  #[serde(default)]
-  day_overcast: String,
-  // #[serde(default)]
-  // day_overcast_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_foggy")]
   day_foggy: String,
-  // #[serde(default)]
-  // day_foggy_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_drizzle")]
   day_drizzle: String,
-  // #[serde(default)]
-  // day_drizzle_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_rain")]
   day_rain: String,
-  // #[serde(default)]
-  // day_rain_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_showers")]
   day_showers: String,
-  // #[serde(default)]
-  // day_showers_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_freezing_rain")]
   day_freezing_rain: String,
-  // #[serde(default)]
-  // day_freezing_rain_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_snow")]
   day_snow: String,
-  // #[serde(default)]
-  // day_snow_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_thunderstorm")]
   day_thunderstorm: String,
-  // #[serde(default)]
-  // day_thunderstorm_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_day_hail")]
   day_hail: String,
-  // #[serde(default)]
-  // day_hail_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night")]
   night: String,
-  // #[serde(default)]
-  // night_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_cloudy")]
   night_cloudy: String,
-  // #[serde(default)]
-  // night_cloudy_windy: String,
-  #[serde(default)]
-  night_overcast: String,
-  // #[serde(default)]
-  // night_overcast_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_foggy")]
   night_foggy: String,
-  // #[serde(default)]
-  // night_foggy_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_drizzle")]
   night_drizzle: String,
-  // #[serde(default)]
-  // night_drizzle_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_rain")]
   night_rain: String,
-  // #[serde(default)]
-  // night_rain_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_showers")]
   night_showers: String,
-  // #[serde(default)]
-  // night_showers_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_freezing_rain")]
   night_freezing_rain: String,
-  // #[serde(default)]
-  // night_freezing_rain_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_snow")]
   night_snow: String,
-  // #[serde(default)]
-  // night_snow_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_thunderstorm")]
   night_thunderstorm: String,
-  // #[serde(default)]
-  // night_thunderstorm_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_night_hail")]
   night_hail: String,
-  // #[serde(default)]
-  // night_hail_windy: String,
-  #[serde(default)]
+  #[serde(default = "icon_unknown")]
   unknown: String,
+}
+
+fn icon_day() -> String {
+  "\u{E30D}".to_owned() // nf-weather-day_sunny
+}
+fn icon_day_cloudy() -> String {
+  "\u{E302}".to_owned() // nf-weather-day_cloudy
+}
+fn icon_day_foggy() -> String {
+  "\u{E303}".to_owned() // nf-weather-day_fog
+}
+fn icon_day_drizzle() -> String {
+  "\u{E30B}".to_owned() // nf-weather-day_sprinkle
+}
+fn icon_day_rain() -> String {
+  "\u{E305}".to_owned() // nf-weather-day_rain
+}
+fn icon_day_showers() -> String {
+  "\u{E309}".to_owned() // nf-weather-day_showers
+}
+fn icon_day_freezing_rain() -> String {
+  "\u{E306}".to_owned() // nf-weather-day_rain_mix
+}
+fn icon_day_snow() -> String {
+  "\u{E30A}".to_owned() // nf-weather-day_snow
+}
+fn icon_day_thunderstorm() -> String {
+  "\u{E30F}".to_owned() // nf-weather-day_thunderstorm
+}
+fn icon_day_hail() -> String {
+  "\u{E365}".to_owned() // nf-weather-day_snow_thunderstorm
+}
+fn icon_night() -> String {
+  "\u{E32B}".to_owned() // nf-weather-weather_night_clear
+}
+fn icon_night_cloudy() -> String {
+  "\u{E37E}".to_owned() // nf-weather-night_alt_cloudy
+}
+fn icon_night_foggy() -> String {
+  "\u{E346}".to_owned() // nf-weather-night_fog
+}
+fn icon_night_drizzle() -> String {
+  "\u{E328}".to_owned() // nf-weather-night_alt_sprinkle
+}
+fn icon_night_rain() -> String {
+  "\u{E325}".to_owned() // nf-weather-night_alt_rain
+}
+fn icon_night_showers() -> String {
+  "\u{E326}".to_owned() // nf-weather-night_alt_showers
+}
+fn icon_night_freezing_rain() -> String {
+  "\u{E323}".to_owned() // nf-weather-night_alt_rain_mix
+}
+fn icon_night_snow() -> String {
+  "\u{E327}".to_owned() // nf-weather-night_alt_snow
+}
+fn icon_night_thunderstorm() -> String {
+  "\u{E32A}".to_owned() // nf-weather-night_alt_thunderstorm
+}
+fn icon_night_hail() -> String {
+  "\u{E367}".to_owned() // nf-weather-night_alt_snow_thunderstorm
+}
+fn icon_unknown() -> String {
+  "\u{F128}".to_owned() // nf-fa-question
 }
 
 impl Default for WeatherIcons {
   fn default() -> Self {
     Self {
-      day: "\u{E30D}".to_owned(), // nf-weather-day_sunny
-      // day_windy: "\u{E37D}".to_owned(), // nf-weather-day_windy
-      day_cloudy: "\u{E302}".to_owned(), // nf-weather-day_cloudy
-      // day_cloudy_windy: "\u{E301}".to_owned(), // nf-weather-day_cloudy_windy
-      day_overcast: "\u{E30C}".to_owned(), // nf-weather-day_sunny_overcast
-      // day_overcast_windy: "\u{E30C}".to_owned(), // nf-weather-day_sunny_overcast
-      day_foggy: "\u{E303}".to_owned(), // nf-weather-day_fog
-      // day_foggy_windy: "\u{E303}".to_owned(), // nf-weather-day_fog
-      day_drizzle: "\u{E30B}".to_owned(), // nf-weather-day_sprinkle
-      // day_drizzle_windy: "\u{E30B}".to_owned(), // nf-weather-day_sprinkle
-      day_rain: "\u{E305}".to_owned(), // nf-weather-day_rain
-      // day_rain_windy: "\u{E307}".to_owned(), // nf-weather-day_rain_wind
-      day_showers: "\u{E309}".to_owned(), // nf-weather-day_showers
-      // day_showers_windy: "\u{E309}".to_owned(), // nf-weather-day_showers
-      day_freezing_rain: "\u{E306}".to_owned(), // nf-weather-day_rain_mix
-      // day_freezing_rain_windy: "\u{E306}".to_owned(), // nf-weather-day_rain_mix
-      day_snow: "\u{E30A}".to_owned(), // nf-weather-day_snow
-      // day_snow_windy: "\u{E35F}".to_owned(), // nf-weather-day_snow_wind
-      day_thunderstorm: "\u{E30F}".to_owned(), // nf-weather-day_thunderstorm
-      // day_thunderstorm_windy: "\u{E30F}".to_owned(), // nf-weather-day_thunderstorm
-      day_hail: "\u{E365}".to_owned(), // nf-weather-day_snow_thunderstorm
-      // day_hail_windy: "\u{E365}".to_owned(), // nf-weather-day_snow_thunderstorm
-      night: "\u{E32B}".to_owned(), // nf-weather-weather_night_clear
-      // night_windy: "\u{E32B}".to_owned(), // nf-weather-weather_night_clear // hmm, there is no night windy
-      night_cloudy: "\u{E37E}".to_owned(), // nf-weather-night_alt_cloudy
-      // night_cloudy_windy: "\u{E320}".to_owned(), // nf-weather-night_alt_cloudy_windy
-      night_overcast: "\u{E312}".to_owned(), // nf-weather-cloudy
-      // night_overcast_windy: "\u{E311}".to_owned(), // nf-weather-cloudy_windy
-      night_foggy: "\u{E346}".to_owned(), // nf-weather-night_fog
-      // night_foggy_windy: "\u{E346}".to_owned(), // nf-weather-night_fog
-      night_drizzle: "\u{E328}".to_owned(), // nf-weather-night_alt_sprinkle
-      // night_drizzle_windy: "\u{E328}".to_owned(), // nf-weather-night_alt_sprinkle
-      night_rain: "\u{E325}".to_owned(), // nf-weather-night_alt_rain
-      // night_rain_windy: "\u{E324}".to_owned(), // nf-weather-night_alt_rain_wind
-      night_showers: "\u{E326}".to_owned(), // nf-weather-night_alt_showers
-      // night_showers_windy: "\u{E326}".to_owned(), // nf-weather-night_alt_showers
-      night_freezing_rain: "\u{E323}".to_owned(), // nf-weather-night_alt_rain_mix
-      // night_freezing_rain_windy: "\u{E323}".to_owned(), // nf-weather-night_alt_rain_mix
-      night_snow: "\u{E327}".to_owned(), // nf-weather-night_alt_snow
-      // night_snow_windy: "\u{E361}".to_owned(), // nf-weather-night_alt_snow_wind
-      night_thunderstorm: "\u{E32A}".to_owned(), // nf-weather-night_alt_thunderstorm
-      // night_thunderstorm_windy: "\u{E32A}".to_owned(), // nf-weather-night_alt_thunderstorm
-      night_hail: "\u{E367}".to_owned(), // nf-weather-night_alt_snow_thunderstorm
-      // night_hail_windy: "\u{E367}".to_owned(), // nf-weather-night_alt_snow_thunderstorm
-      unknown: "\u{F128}".to_owned(), // nf-fa-question
+      day: icon_day(),                                 // nf-weather-day_sunny
+      day_cloudy: icon_day_cloudy(),                   // nf-weather-day_cloudy
+      day_foggy: icon_day_foggy(),                     // nf-weather-day_fog
+      day_drizzle: icon_day_drizzle(),                 // nf-weather-day_sprinkle
+      day_rain: icon_day_rain(),                       // nf-weather-day_rain
+      day_showers: icon_day_showers(),                 // nf-weather-day_showers
+      day_freezing_rain: icon_day_freezing_rain(),     // nf-weather-day_rain_mix
+      day_snow: icon_day_snow(),                       // nf-weather-day_snow
+      day_thunderstorm: icon_day_thunderstorm(),       // nf-weather-day_thunderstorm
+      day_hail: icon_day_hail(),                       // nf-weather-day_snow_thunderstorm
+      night: icon_night(),                             // nf-weather-weather_night_clear
+      night_cloudy: icon_night_cloudy(),               // nf-weather-night_alt_cloudy
+      night_foggy: icon_night_foggy(),                 // nf-weather-night_fog
+      night_drizzle: icon_night_drizzle(),             // nf-weather-night_alt_sprinkle
+      night_rain: icon_night_rain(),                   // nf-weather-night_alt_rain
+      night_showers: icon_night_showers(),             // nf-weather-night_alt_showers
+      night_freezing_rain: icon_night_freezing_rain(), // nf-weather-night_alt_rain_mix
+      night_snow: icon_night_snow(),                   // nf-weather-night_alt_snow
+      night_thunderstorm: icon_night_thunderstorm(),   // nf-weather-night_alt_thunderstorm
+      night_hail: icon_night_hail(),                   // nf-weather-night_alt_snow_thunderstorm
+      unknown: icon_unknown(),                         // nf-fa-question
     }
   }
 }
@@ -362,6 +354,8 @@ impl AsyncComponent for Weather {
         glib::ControlFlow::Continue
       });
     }
+
+    log::debug!("{:?}", props.weather_options.icons.clone());
 
     let mut model = Weather {
       base: props.base.clone().into(),
