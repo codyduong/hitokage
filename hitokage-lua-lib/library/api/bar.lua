@@ -37,7 +37,7 @@ local bar = {}
 ---
 ---@deprecated
 ---@param monitor Monitor A Monitor userdata
----@param bar_props BarProps
+---@param bar_props BarProps #
 ---@return Bar
 function bar.create(monitor, bar_props) end
 

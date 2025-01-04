@@ -303,6 +303,10 @@ def parse_fn(name: str, fn: Extends) -> Tuple[str, str]:
                 raise ValueError(f"Failed to parse")
             continue
 
+        # don't document self
+        if arg.name == "self":
+            continue
+
         params.append(f"{arg.name}: {arg.view}")
         desc: str = f'* ### `{arg.name}` {{: #{name}({arg.name}) }} \n (<code>{process_view(arg.view)}</code>)'
         if arg.rawdesc:
@@ -339,6 +343,24 @@ def process_fields(flds: List[FieldDefinition], filepath: str, parent: str) -> s
         if not fld.visible or fld.visible != "public":
             continue
 
+        if fld.type == "setmethod" or (isinstance(fld.extends, ExtendsFunction) and any(arg.name == "self" for arg in fld.extends.args)):
+            assert(fld.name)
+            methodLinks.append(f"* [{fld.name}](#method-{fld.name}){{: {titleAttr}}}")
+
+            (fnsig, other) = parse_fn(fld.name, fld.extends)
+
+            methodContents.append(f"""## <code class="hitokage-method">method</code> {fld.name}
+
+{fnsig}
+<div class="hitokage-content" markdown>
+{proccess_rawdesc(fld.rawdesc) if fld.rawdesc else ""}
+
+{other}                        
+</div>
+""")
+
+            continue
+
         if fld.type == "setfield" and fld.view == "function":
             assert(fld.name)
             fnLinks.append(f"* [{fld.name}](#function-{fld.name}){{: {titleAttr}}}")
@@ -358,24 +380,6 @@ def process_fields(flds: List[FieldDefinition], filepath: str, parent: str) -> s
 
         if fld.type == "setfield" and (not fld.view in LUA_NATIVE_TYPES) and (not "table<" in fld.view):
             moduleLinks.append(f"* [{fld.name}]({fld.view}/index.html){{: {titleAttr}}}")
-
-            continue
-
-        if fld.type == "setmethod":
-            assert(fld.name)
-            methodLinks.append(f"* [{fld.name}](#method-{fld.name}){{: {titleAttr}}}")
-
-            (fnsig, other) = parse_fn(fld.name, fld.extends)
-
-            methodContents.append(f"""## <code class="hitokage-method">method</code> {fld.name}
-
-{fnsig}
-<div class="hitokage-content" markdown>
-{proccess_rawdesc(fld.rawdesc) if fld.rawdesc else ""}
-
-{other}                        
-</div>
-""")
 
             continue
 
@@ -513,7 +517,13 @@ title: {item.name} | API
 default_matcher: Callable[[RootItem], bool] = lambda x: x.type == "type"
 
 create_transformer("Align", default_matcher, "alias", "api/Align")
+create_transformer("Component", default_matcher, "alias", "api/Component")
 create_transformer("ComponentProps", default_matcher, "alias", "api/ComponentProps")
+
+create_transformer("MemoryInfo", default_matcher, "type", "api/MemoryInfo")
+create_transformer("CpuLoadInfo", default_matcher, "type", "api/CpuLoadInfo")
+create_transformer("BatteryInfo", default_matcher, "type", "api/BatteryInfo")
+create_transformer("WeatherForecast", default_matcher, "type", "api/WeatherForecast")
 
 create_transformer("hitokage", default_matcher, "mod", "api/hitokage")
 create_transformer("bar", default_matcher, "mod", "api/hitokage/bar")

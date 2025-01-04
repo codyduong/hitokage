@@ -3,20 +3,144 @@
 --------------------------------------------------------------------------------
 ---Links to WeatherProps in 'hitokage-core\src\components\weather.rs'
 
+---A native component within `hitokage` that displays current weather information.
+---
+---It polls <a href="https://open-meteo.com/">Open Meteo</a> every minute.
+---
+---Only one location is supported at the moment. The very first instance of Weather being attached to a monitor
+---must contain a latitude and longitude. All other Weather will assume the same location.
+---
+---See <!--@mkdocs-ignore-start-->[`ComponentProps`](lua://ComponentProps)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/ComponentProps" title="ComponentProps">`ComponentProps`</a> -->
+---
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
+---
+---    ```lua
+---    monitor = hitokage.monitor.get_primary()
+--- 
+---    ---@type WeatherProps
+---    weather_props = { latitude = 38.95773795883854, longitude = -95.25382422045898, format = "{{temp_fahrenheit}} °F" }
+--- 
+---    monitor:attach({
+---      children = {
+---        Weather = weather_props, 
+---      },
+---    })
+---    ```
+---
+---The mounted API is documented here: <!--@mkdocs-ignore-start-->[`Weather`](lua://Weather)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/Weather" title="Weather">`Weather`</a> -->
+---
 ---@class WeatherProps : BaseProps
--- @codyduong TODO add some descriptions here
+---
+---A handlebars template string or function accepts WeatherForecast and returns a handlebars template string
+---
+---@codyduong TODO explain this
 ---
 ---@field format string | ReactiveString | fun(forecast: WeatherForecast): string
 ---
+---The latitude of the location to receive weather forecasts for. It is only necessary on the very first declaration of
+---a weather component. Only one location is supported at the moment. <!--TODO-->
+---
 ---@field latitude number?
 ---
+---The longitude of the location to receive weather forecasts for. It is only necessary on the very first declaration of
+---a weather component. Only one location is supported at the moment. <!--TODO-->
+---
 ---@field longitude number?
+---
+---A table of "names" mapped to "icons". Below is the default table, as well as
+---what each name corresponds to in terms of Open Meteo's weather codes (which
+---are themselves based on WMO weather codes).
+---
+---More details at: <a href="https://open-meteo.com/en/docs">https://open-meteo.com/en/docs</a>
+---
+---These icons are based on the assumption you are using a nerd-font.
+---
+-- | Name                | Icon       | Weather Codes |
+-- | ------------------- | ---------- | ------------- |
+-- | day                 | "\u{E30D}" | 0             |
+-- | day_cloudy          | "\u{E302}" | 1, 2, 3       |
+-- | day_foggy           | "\u{E303}" | 45, 48        |
+-- | day_drizzle         | "\u{E30B}" | 51, 53, 55    |
+-- | day_rain            | "\u{E305}" | 61, 63, 65    |
+-- | day_showers         | "\u{E309}" | 80, 81, 82    |
+-- | day_freezing_rain   | "\u{E306}" | 66, 67        |
+-- | day_snow            | "\u{E30A}" | 85, 86        |
+-- | day_thunderstorm    | "\u{E30F}" | 95            |
+-- | day_hail            | "\u{E365}" | 96, 99        |
+-- | night               | "\u{E32B}" | 0             |
+-- | night_cloudy        | "\u{E37E}" | 1, 2, 3       |
+-- | night_foggy         | "\u{E346}" | 45, 48        |
+-- | night_drizzle       | "\u{E328}" | 51, 53, 55    |
+-- | night_rain          | "\u{E325}" | 61, 63, 65    |
+-- | night_showers       | "\u{E326}" | 80, 81, 82    |
+-- | night_freezing_rain | "\u{E323}" | 66, 67        |
+-- | night_snow          | "\u{E327}" | 85, 86        |
+-- | night_thunderstorm  | "\u{E32A}" | 95            |
+-- | night_hail          | "\u{E367}" | 96, 99        |
+-- | unknown             | "\u{F128}" | *             |
+---<!--@mkdocs-include
+---    !!! example -->
+---
+---    ```lua
+---    Weather = {
+---      icons = {
+---        night = "\u{E32B}"
+---      }
+---    }
+---    ```
 ---
 ---@field icons table<string, string>?
 
 --------------------------------------------------------------------------------
 ---Links to WeatherUserData in 'hitokage-lua\src\components\weather.rs'
 
+---A userdata which corresponds to the mounted version of <!--@mkdocs-ignore-start-->[`WeatherProps`](lua://WeatherProps)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/WrapWeatherProps/WeatherProps" title="WeatherProps">`WeatherProps`</a> -->
+---
+---> A native component within `hitokage` that displays current weather information.
+---> 
+---> It polls <a href="https://open-meteo.com/">Open Meteo</a> every minute.
+---> 
+---> Only one location is supported at the moment. The very first instance of Weather being attached to a monitor
+---> must contain a latitude and longitude. All other Weather will assume the same location.
+---
+---This userdata can be retrieved using:
+---<!--@mkdocs-ignore-start-->
+---* [`Box:get_child_by_id`](lua://Box.get_child_by_id)
+---* [`Box:get_children`](lua://Box.get_children)
+---* [`Bar:get_child_by_id`](lua://Bar.get_child_by_id)
+---* [`Bar:get_children`](lua://Bar.get_children)
+---<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include * <a href="/hitokage/api/Box#method-get_child_by_id" title="Box#method-get_child_by_id">`Box:get_child_by_id`</a>
+---* <a href="/hitokage/api/Box#method-get_children" title="Box#method-get_children">`Box:get_children`</a>
+---* <a href="/hitokage/api/Bar#method-get_child_by_id" title="Bar#method-get_child_by_id">`Bar:get_child_by_id`</a>
+---* <a href="/hitokage/api/Bar#method-get_children" title="Bar#method-get_children">`Bar:get_children`</a>
+----->
+---
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
+---
+---    ```lua
+---    monitor = hitokage.monitor.get_primary()
+--- 
+---    ---@type WeatherProps
+---    weather_props = { id = "weather1", latitude = 38.95773795883854, longitude = -95.25382422045898, format = "{{temp_fahrenheit}} °F" }
+--- 
+---    bar = monitor:attach({
+---      children = {
+---        Weather = weather_props, 
+---      },
+---    })
+--- 
+---    weather1 = bar:get_child_by_id("battery1")
+---    ```
 ---@class Weather : Base
 ---
 ---@field type 'Weather'
@@ -45,8 +169,43 @@ function weather_instance:set_format(string) end
 
 ---@class WeatherForecast
 ---
+---Temperature in degrees Celsius.
+---
 ---@field temperature number
+---
+---Wind speed in kilometers per hour.
+---
 ---@field wind_speed number
+---
+---Direction of wind in degrees [0-360).
+---
 ---@field wind_direction number
+---
+---WMO Weather Intepretation Codes. `hitokage` uses Open Meteo, so there is a truncated
+---list of weather codes we can actually encounter.
+---
+---More details at: <a href="https://open-meteo.com/en/docs">https://open-meteo.com/en/docs</a>
+--- 
+-- | Code       | Description                                          |
+-- |------------|------------------------------------------------------|
+-- | 0          | Clear sky                                            |
+-- | 1, 2, 3    | Mainly clear, partly cloudy, and overcast            |
+-- | 45, 48     | Fog and depositing rime fog                          |
+-- | 51, 53, 55 | Drizzle: Light, moderate, and dense intensity        |
+-- | 56, 57     | Freezing Drizzle: Light and dense intensity          |
+-- | 61, 63, 65 | Rain: Slight, moderate and heavy intensity           |
+-- | 66, 67     | Freezing Rain: Light and heavy intensity             |
+-- | 71, 73, 75 | Snow fall: Slight, moderate, and heavy intensity     |
+-- | 77         | Snow grains                                          |
+-- | 80, 81, 82 | Rain showers: Slight, moderate, and violent          |
+-- | 85, 86     | Snow showers: Slight and heavy                       |
+-- | 95 *       | Thunderstorm: Slight or moderate                     |
+-- | 96, 99 *   | Thunderstorm with slight and heavy hail              |
+---
+--- (*) Thunderstorm forecast with hail is only available in Central Europe
+---
 ---@field weather_code number
+---
+---`true` if the current time step has daylight, `false` at night.
+---
 ---@field is_day boolean

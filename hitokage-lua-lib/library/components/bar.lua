@@ -6,6 +6,33 @@
 
 --------------------------------------------------------------------------------
 
+---Used as entrypoint for <!--@mkdocs-ignore-start-->[`monitor:attach`](lua://Monitor.attach)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/Monitor#method-attach" title="Monitor#method-attach">`monitor:attach`</a> -->
+---
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
+---
+---    ```lua
+---    monitor = hitokage.monitor.get_primary()
+--- 
+---    ---@type BarProps
+---    bar_props = {
+---    	children = {
+---    		 { Workspace = { halign = "Start", item_height = 24, item_width = 24 } },
+---    		 { Box = {} },
+---    		 { Clock = { format = "%a %b %u %r", halign = "End" } },
+---    	 },
+---    	 homogeneous = true,
+---    }
+--- 
+---    monitor:attach(bar_props)
+---    ```
+---
+---The mounted API is documented here: <!--@mkdocs-ignore-start-->[`Bar`](lua://Bar)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/Bar" title="Bar">`Bar`</a> -->
+---
 ---@class BarProps : BoxProps
 ---@field width integer?
 ---@field height integer?
@@ -14,8 +41,33 @@
 --------------------------------------------------------------------------------
 ---Links to BarUserData in 'hitokage-lua\src\components\bar.rs'
 
+---A userdata which corresponds to the mounted version of <!--@mkdocs-ignore-start-->[`BarProps`](lua://BarProps)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/BarProps" title="BarProps">`BarProps`</a> -->
+---
 ---A bar is created using <!--@mkdocs-ignore-start-->[`monitor:attach`](lua://Monitor.attach)<!--@mkdocs-ignore-end-->
 ---<!--@mkdocs-include <a href="/hitokage/api/Monitor#method-attach" title="Monitor#method-attach">`monitor:attach`</a> -->
+---
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
+---
+---    ```lua
+---    monitor = hitokage.monitor.get_primary()
+--- 
+---    ---@type BarProps
+---    bar_props = {
+---    	children = {
+---    		 { Workspace = { halign = "Start", item_height = 24, item_width = 24 } },
+---    		 { Box = {} },
+---    		 { Clock = { format = "%a %b %u %r", halign = "End" } },
+---    	 },
+---    	 homogeneous = true,
+---    }
+--- 
+---    bar_userdata = monitor:attach(bar_props)
+---    ```
+---
 ---@class Bar : Base, Box
 ---
 ---@field type 'Bar'

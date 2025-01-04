@@ -41,7 +41,8 @@
 ---
 ---This is not enforced or checked by hitokage, it is simply used in utility methods such
 ---as <!--@mkdocs-ignore-start-->[`get_child_by_id`](lua://Bar.get_child_by_id).<!--@mkdocs-ignore-end-->
----<!--@mkdocs-include <a href="#get_child_by_id">`get_child_by_id`</a>-->
+---<!--@mkdocs-include <a href="/hitokage/api/Bar#method-get_child_by_id">`Bar:get_child_by_id`</a>
+--- or <a href="/hitokage/api/Box#method-get_child_by_id">`Box:get_child_by_id`.</a>-->
 ---
 ---@field id string?
 ---
@@ -73,7 +74,7 @@
 --------------------------------------------------------------------------------
 ---Links to BoxUserData hitokage-lua\src\components\box.rs
 
----Abstract base userdata every other component extends from.
+---Abstract base userdata every other userdata extends from.
 ---@class Base
 local base_instance = {}
 

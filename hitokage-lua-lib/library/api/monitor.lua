@@ -96,9 +96,10 @@ local monitor_instance = {}
 ---    end
 ---    ```
 ---
+---@param self Monitor A monitor userdata
 ---@param props BarProps A table specifying the shape of the bar
 ---@return Bar #A Bar userdata
-function monitor_instance:attach(props) end
+function monitor_instance.attach(self, props) end
 
 -------------------------------------------------------------------------------
 

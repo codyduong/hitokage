@@ -2,10 +2,9 @@
 
 --------------------------------------------------------------------------------
 ---Links to Child in 'hitokage-core\src\components\mod.rs'
-
 ---
 ---@source hitokage-core\src\components\mod.rs
----
+
 ---@class WrapBatteryProps
 ---@field Battery BatteryProps
 ---
@@ -32,3 +31,5 @@
 ---
 ---@class WrapWorkspaceProps
 ---@field Workspace WorkspaceProps
+
+---@alias WrapComponentProps WrapBatteryProps | WrapBoxProps | WrapClockProps | WrapCpuProps | WrapIconProps | WrapLabelProps | WrapMemoryProps | WrapWeatherProps | WrapWorkspaceProps>

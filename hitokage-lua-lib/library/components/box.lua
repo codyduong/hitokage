@@ -1,15 +1,83 @@
 ---@meta hitokage.components.box
 
+---Any native component within `hitokage`.
+---
+---@alias Component Battery | Box | Clock | Cpu | Icon | Label | Memory | Weather | Workspace
+
+---An array of any native components props within `hitokage`.
+---
+---<!--@mkdocs-include
+---
+---* <a href="/hitokage/api/WrapBatteryProps" title="WrapBatteryProps">`WrapBatteryProps`</a>
+---* <a href="/hitokage/api/WrapBoxProps" title="WrapBoxProps">`WrapBoxProps`</a>
+---* <a href="/hitokage/api/WrapClockProps" title="WrapClockProps">`WrapClockProps`</a>
+---* <a href="/hitokage/api/WrapCpuProps" title="WrapCpuProps">`WrapCpuProps`</a>
+---* <a href="/hitokage/api/WrapIconProps" title="WrapIconProps">`WrapIconProps`</a>
+---* <a href="/hitokage/api/WrapIconProps" title="WrapLabelProps">`WrapLabelProps`</a>
+---* <a href="/hitokage/api/WrapIconProps" title="WrapMemoryProps">`WrapMemoryProps`</a>
+---* <a href="/hitokage/api/WrapIconProps" title="WrapWeatherProps">`WrapWeatherProps`</a>
+---* <a href="/hitokage/api/WrapIconProps" title="WrapWorkspaceProps">`WrapWorkspaceProps`</a>
+---
+---Used in the following:
+---
+---* <a href="/hitokage/api/BarProps#attr-children" title="BarProps#attr-children">`BarProps.children`</a>
+---* <a href="/hitokage/api/WrapBoxProps/BoxProps#attr-children" title="BoxProps#attr-children">`BoxProps.children`</a>
+---
+----->
+---
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example-->
+---
+---    ```lua
+---    ---@type ComponentProps
+---    children = {
+---      { Box = {} },
+---      { Workspace = { halign = "Center", item_height = 22, item_width = 22 } },
+---      { Clock = { format = "%a %b %u %r", halign = 'End' } },
+---    }
+---    ```
+---
 ---@alias ComponentProps table<number, WrapBatteryProps | WrapBoxProps | WrapClockProps | WrapCpuProps | WrapIconProps | WrapLabelProps | WrapMemoryProps | WrapWeatherProps | WrapWorkspaceProps>?
 
 --------------------------------------------------------------------------------
 ---Links to BoxProps in 'hitokage-core\src\components\box.rs'
 
+---A native component within `hitokage` that can hold other components.
+---
+---See <!--@mkdocs-ignore-start-->[`ComponentProps`](lua://ComponentProps)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/ComponentProps" title="ComponentProps">`ComponentProps`</a> -->
+---
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
+---
+---    ```lua
+---    monitor = hitokage.monitor.get_primary()
+--- 
+---    ---@type BoxProps
+---    box_props = { id = "box1", children = { ... } }
+--- 
+---    monitor:attach({
+---      children = {
+---        Box = box_props, 
+---      },
+---    })
+---    ```
+---
+---The mounted API is documented here: <!--@mkdocs-ignore-start-->[`Box`](lua://Box)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/Box" title="Box">`Box`</a> -->
+---
 ---@class BoxProps : BaseProps
 ---
 ---<!--@mkdocs-include An arrray of children and properties. See <a href="/hitokage/api/ComponentProps" title="ComponentProps">`ComponentProps`</a>-->
 ---
----!!! example
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
 ---
 ---    ```lua
 ---    children = {
@@ -21,11 +89,17 @@
 ---
 ---@field children ComponentProps
 ---
----!!! danger
+---<!--@mkdocs-ignore-next-line-->
+---**Deprecated:**
+---<!--@mkdocs-include
+---    !!! danger -->
 ---
 ---    Use [`children`](lua://BoxProps.children) instead
 ---
----!!! example
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
 ---
 ---    ```lua
 ---    widgets = {
@@ -37,11 +111,61 @@
 ---
 ---@deprecated
 ---@field widgets ComponentProps
+---
+---Whether the children should all be the same size.
+---
+---[View gtk4 documentation](https://docs.gtk.org/gtk4/property.Box.homogeneous.html)
+---
+---@field homogeneous boolean?
 
 --------------------------------------------------------------------------------
 ---Links to BoxUserData hitokage-lua\src\components\box.rs
 
----A component that iself can hold children.
+---A userdata which corresponds to the mounted version of <!--@mkdocs-ignore-start-->[`BoxProps`](lua://BoxProps)<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include <a href="/hitokage/api/WrapBoxProps/BoxProps" title="BoxProps">`BoxProps`</a> -->
+---
+---> A native component within `hitokage` that can hold other components.
+---
+---Notably, it also has an extended userdata:
+---<!--@mkdocs-ignore-start-->
+---* [`Bar`](lua://Bar)
+---<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include * <a href="/hitokage/api/Bar" title="Bar">`Bar`</a>
+----->
+---
+---This userdata can be retrieved using:
+---<!--@mkdocs-ignore-start-->
+---* [`Box:get_child_by_id`](lua://Box.get_child_by_id)
+---* [`Box:get_children`](lua://Box.get_children)
+---* [`Bar:get_child_by_id`](lua://Bar.get_child_by_id)
+---* [`Bar:get_children`](lua://Bar.get_children)
+---<!--@mkdocs-ignore-end-->
+---<!--@mkdocs-include * <a href="/hitokage/api/Box#method-get_child_by_id" title="Box#method-get_child_by_id">`Box:get_child_by_id`</a>
+---* <a href="/hitokage/api/Box#method-get_children" title="Box#method-get_children">`Box:get_children`</a>
+---* <a href="/hitokage/api/Bar#method-get_child_by_id" title="Bar#method-get_child_by_id">`Bar:get_child_by_id`</a>
+---* <a href="/hitokage/api/Bar#method-get_children" title="Bar#method-get_children">`Bar:get_children`</a>
+----->
+---
+---<!--@mkdocs-ignore-next-line-->
+---**Example:**
+---<!--@mkdocs-include
+---    !!! example -->
+---
+---    ```lua
+---    monitor = hitokage.monitor.get_primary()
+--- 
+---    ---@type BoxProps
+---    box_props = { id = "box1", children = { ... } }
+--- 
+---    bar = monitor:attach({
+---      children = {
+---        Box = box_props, 
+---      },
+---    })
+--- 
+---    box1 = bar:get_child_by_id("box1")
+---    ```
+---
 ---@class Box : Base
 ---
 ---@field type 'Box'
@@ -67,7 +191,7 @@ function box_instance:get_homogeneous() end
 function box_instance:set_homogeneous(homogeneous) end
 
 ---Get the children on the box.
----@return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+---@return table<number, Component> # A table of Components
 function box_instance:get_children() end
 
 ---Gets the first item in the widget tree that has the identifier.
@@ -77,7 +201,7 @@ function box_instance:get_children() end
 ---
 ---@param id string The identifier
 ---@param recursive boolean? Defaults to `false`
----@return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+---@return Component? # A Component
 function box_instance:get_child_by_id(id, recursive) end
 
 ---<!--@mkdocs-ignore-next-line-->
@@ -90,7 +214,7 @@ function box_instance:get_child_by_id(id, recursive) end
 ---
 ---Get the components on the box.
 ---@deprecated
----@return table<number, Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+---@return table<number, Component> # A table of Components
 function box_instance:get_widgets() end
 
 ---<!--@mkdocs-ignore-next-line-->
@@ -109,5 +233,5 @@ function box_instance:get_widgets() end
 ---@deprecated
 ---@param id string The identifier
 ---@param recursive boolean? Defaults to `false`
----@return nil | Battery | Box | Clock | Cpu | Icon | Label | Weather | Workspace>
+---@return nil | Component # A Component
 function box_instance:get_widget_by_id(id, recursive) end
