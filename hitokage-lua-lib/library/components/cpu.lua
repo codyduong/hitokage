@@ -15,13 +15,13 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type ClockProps
 ---    cpu_props = { format = "{{pad "left" (concat (round (mult usage 100) 1) "%") 6}}" }
---- 
+---
 ---    monitor:attach({
 ---      children = {
----        cpu = cpu_props, 
+---        cpu = cpu_props,
 ---      },
 ---    })
 ---    ```
@@ -65,16 +65,16 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type CpuProps
 ---    cpu_props = { id = "cpu1", format = "{{pad "left" (concat (round (mult usage 100) 1) "%") 6}}" }
---- 
+---
 ---    bar = monitor:attach({
 ---      children = {
----        cpu = cpu_props, 
+---        cpu = cpu_props,
 ---      },
 ---    })
---- 
+---
 ---    cpu1 = bar:get_child_by_id("cpu1")
 ---    ```
 ---

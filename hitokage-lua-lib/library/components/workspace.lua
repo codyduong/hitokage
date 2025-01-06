@@ -20,10 +20,10 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type WorkspaceProps
 ---    workspace_props = { Workspace = { halign = "Start", item_height = 24, item_width = 24 } }
---- 
+---
 ---    monitor:attach({
 ---      children = {
 ---        Workspace = workspace_props,
@@ -48,9 +48,9 @@
 ---<!--@mkdocs-include <a href="/hitokage/api/WrapWorkspaceProps/WorkspaceProps" title="WorkspaceProps">`WorkspaceProps`</a> -->
 ---
 ---> A native component within `hitokage` that displays workspace information.
----> 
+--->
 ---> This is in the particular context of running `hitokage` with a window/tiling manager:
----> 
+--->
 ---> * [`komorebi`](https://github.com/LGUG2Z/komorebi)
 ---> * [TODO (not supported) `glazewm`](https://github.com/glzr-io/glazewm)
 ---
@@ -74,16 +74,16 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type WorkspaceProps
 ---    workspace_props = { id = "workspace1", Workspace = { halign = "Start", item_height = 24, item_width = 24 } }
---- 
+---
 ---    bar = monitor:attach({
 ---      children = {
 ---        Workspace = workspace_props,
 ---      },
 ---    })
---- 
+---
 ---    workspace1 = bar:get_child_by_id("workspace1")
 ---    ```
 ---

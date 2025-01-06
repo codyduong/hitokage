@@ -15,13 +15,13 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type BatteryProps
 ---    battery_props = { format = "{{icon}}" }
---- 
+---
 ---    monitor:attach({
 ---      children = {
----        Battery = battery_props, 
+---        Battery = battery_props,
 ---      },
 ---    })
 ---    ```
@@ -67,16 +67,16 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type BatteryProps
 ---    battery_props = { id = "battery1", format = "{{icon}}" }
---- 
+---
 ---    bar = monitor:attach({
 ---      children = {
----        Battery = battery_props, 
+---        Battery = battery_props,
 ---      },
 ---    })
---- 
+---
 ---    battery1 = bar:get_child_by_id("battery1")
 ---    ```
 ---

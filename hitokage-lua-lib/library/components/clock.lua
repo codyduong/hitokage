@@ -15,13 +15,13 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type ClockProps
 ---    clock_props = { format = "%a %b %u %r" }
---- 
+---
 ---    monitor:attach({
 ---      children = {
----        Clock = clock_props, 
+---        Clock = clock_props,
 ---      },
 ---    })
 ---    ```
@@ -63,16 +63,16 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type ClockProps
 ---    clock_props = { id = "clock1", format = "%a %b %u %r" }
---- 
+---
 ---    bar = monitor:attach({
 ---      children = {
----        Clock = clock_props, 
+---        Clock = clock_props,
 ---      },
 ---    })
---- 
+---
 ---    clock1 = bar:get_child_by_id("clock1")
 ---    ```
 ---

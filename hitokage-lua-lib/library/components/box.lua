@@ -56,13 +56,13 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type BoxProps
 ---    box_props = { id = "box1", children = { ... } }
---- 
+---
 ---    monitor:attach({
 ---      children = {
----        Box = box_props, 
+---        Box = box_props,
 ---      },
 ---    })
 ---    ```
@@ -153,16 +153,16 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type BoxProps
 ---    box_props = { id = "box1", children = { ... } }
---- 
+---
 ---    bar = monitor:attach({
 ---      children = {
----        Box = box_props, 
+---        Box = box_props,
 ---      },
 ---    })
---- 
+---
 ---    box1 = bar:get_child_by_id("box1")
 ---    ```
 ---

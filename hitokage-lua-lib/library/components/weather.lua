@@ -20,13 +20,13 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type WeatherProps
 ---    weather_props = { latitude = 38.95773795883854, longitude = -95.25382422045898, format = "{{temp_fahrenheit}} °F" }
---- 
+---
 ---    monitor:attach({
 ---      children = {
----        Weather = weather_props, 
+---        Weather = weather_props,
 ---      },
 ---    })
 ---    ```
@@ -103,9 +103,9 @@
 ---<!--@mkdocs-include <a href="/hitokage/api/WrapWeatherProps/WeatherProps" title="WeatherProps">`WeatherProps`</a> -->
 ---
 ---> A native component within `hitokage` that displays current weather information.
----> 
+--->
 ---> It polls <a href="https://open-meteo.com/">Open Meteo</a> every minute.
----> 
+--->
 ---> Only one location is supported at the moment. The very first instance of Weather being attached to a monitor
 ---> must contain a latitude and longitude. All other Weather will assume the same location.
 ---
@@ -129,16 +129,16 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type WeatherProps
 ---    weather_props = { id = "weather1", latitude = 38.95773795883854, longitude = -95.25382422045898, format = "{{temp_fahrenheit}} °F" }
---- 
+---
 ---    bar = monitor:attach({
 ---      children = {
----        Weather = weather_props, 
+---        Weather = weather_props,
 ---      },
 ---    })
---- 
+---
 ---    weather1 = bar:get_child_by_id("battery1")
 ---    ```
 ---@class Weather : Base
@@ -185,7 +185,7 @@ function weather_instance:set_format(string) end
 ---list of weather codes we can actually encounter.
 ---
 ---More details at: <a href="https://open-meteo.com/en/docs">https://open-meteo.com/en/docs</a>
---- 
+---
 -- | Code       | Description                                          |
 -- |------------|------------------------------------------------------|
 -- | 0          | Clear sky                                            |

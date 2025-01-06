@@ -15,16 +15,16 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
---- 	 local mem_str = 
+---
+--- 	 local mem_str =
 ---      '{{pad "left" (round (div used 1024) 1) 4}} ({{ pad "left" (concat (round (mult (div used total) 100) 1) "%") 4 }})'
---- 
+---
 ---    ---@type MemoryProps
 ---    memory_props = { format = mem_str }
---- 
+---
 ---    monitor:attach({
 ---      children = {
----        Memory = memory_props, 
+---        Memory = memory_props,
 ---      },
 ---    })
 ---    ```
@@ -68,19 +68,19 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
---- 	 local mem_str = 
+---
+--- 	 local mem_str =
 ---      '{{pad "left" (round (div used 1024) 1) 4}} ({{ pad "left" (concat (round (mult (div used total) 100) 1) "%") 4 }})'
---- 
+---
 ---    ---@type BatteryProps
 ---    memory_props = { id = "memory1", format = mem_str }
---- 
+---
 ---    bar = monitor:attach({
 ---      children = {
----        Memory = memory_props, 
+---        Memory = memory_props,
 ---      },
 ---    })
---- 
+---
 ---    memory1 = bar:get_child_by_id("memory1")
 ---    ```
 ---

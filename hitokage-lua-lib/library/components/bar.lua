@@ -16,7 +16,7 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type BarProps
 ---    bar_props = {
 ---    	children = {
@@ -26,7 +26,7 @@
 ---    	 },
 ---    	 homogeneous = true,
 ---    }
---- 
+---
 ---    monitor:attach(bar_props)
 ---    ```
 ---
@@ -54,7 +54,7 @@
 ---
 ---    ```lua
 ---    monitor = hitokage.monitor.get_primary()
---- 
+---
 ---    ---@type BarProps
 ---    bar_props = {
 ---    	children = {
@@ -64,7 +64,7 @@
 ---    	 },
 ---    	 homogeneous = true,
 ---    }
---- 
+---
 ---    bar_userdata = monitor:attach(bar_props)
 ---    ```
 ---
