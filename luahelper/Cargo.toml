@@ -11,4 +11,4 @@ publish = false
 bstr = "1.0"
 log = "0.4"
 mlua = { workspace = true }
-wezterm-dynamic = { git = "https://github.com/wez/wezterm", rev = "2b76c63bb618d26609434c06282c8755229c4099" }
+wezterm-dynamic = { git = "https://github.com/wez/wezterm", rev = "4906789a6d61da58f73b95f89b59c41af60e0f3b" }

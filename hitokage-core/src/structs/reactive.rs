@@ -140,10 +140,6 @@ where
   fn eq(&self, other: &Self) -> bool {
     *self.value.lock().unwrap() == *other.value.lock().unwrap()
   }
-
-  fn ne(&self, other: &Self) -> bool {
-    !self.eq(other)
-  }
 }
 
 pub(crate) trait AsReactive<T>

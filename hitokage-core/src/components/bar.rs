@@ -205,7 +205,7 @@ impl Component for Bar {
 
         // println!("{:?} {:?}", (model.geometry.height + &model.offset_y), height);
 
-        if (model.position.is_some_and(|pos| pos == BarPosition::Bottom)) {
+        if model.position.is_some_and(|pos| pos == BarPosition::Bottom) {
           let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
             model.index,
             komorebi_client::Rect { left: 0, top: 0, right: 0, bottom: height }

@@ -79,7 +79,7 @@ impl<'lua> LuaDeserializer<'lua> {
   }
 }
 
-impl<'de, 'lua> de::Deserializer<'de> for LuaDeserializer<'lua> {
+impl<'de> de::Deserializer<'de> for LuaDeserializer<'_> {
   type Error = LuaError;
 
   #[inline]
@@ -340,7 +340,7 @@ struct SeqDeserializer<'lua> {
   lua: &'lua mlua::Lua,
 }
 
-impl<'lua, 'de> de::SeqAccess<'de> for SeqDeserializer<'lua> {
+impl<'de> de::SeqAccess<'de> for SeqDeserializer<'_> {
   type Error = mlua::Error;
 
   fn next_element_seed<T>(&mut self, seed: T) -> mlua::Result<Option<T::Value>>
@@ -409,7 +409,7 @@ impl<'lua> MapPairs<'lua> {
   }
 }
 
-impl<'lua> Iterator for MapPairs<'lua> {
+impl Iterator for MapPairs<'_> {
   type Item = mlua::Result<(Value, Value)>;
 
   fn next(&mut self) -> Option<Self::Item> {
@@ -429,7 +429,7 @@ struct MapDeserializer<'lua> {
   lua: &'lua mlua::Lua,
 }
 
-impl<'lua, 'de> de::MapAccess<'de> for MapDeserializer<'lua> {
+impl<'de> de::MapAccess<'de> for MapDeserializer<'_> {
   type Error = mlua::Error;
 
   fn next_key_seed<T>(&mut self, seed: T) -> mlua::Result<Option<T::Value>>

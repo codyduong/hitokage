@@ -244,21 +244,17 @@ impl MemoryAndSwapWrapper {
 }
 
 impl PartialEq for MemoryAndSwapWrapper {
-  fn ne(&self, other: &Self) -> bool {
+  fn eq(&self, other: &Self) -> bool {
     self
       .memory
       .clone()
       .zip(other.memory.clone())
-      .map_or(false, |(a, b)| a.free != b.free || a.total != b.total)
-      || self
+      .map_or(true, |(a, b)| a.free == b.free && a.total == b.total)
+      && self
         .swap
         .clone()
         .zip(other.swap.clone())
-        .map_or(false, |(a, b)| a.free != b.free || a.total != b.total)
-  }
-
-  fn eq(&self, other: &Self) -> bool {
-    !self.ne(other)
+        .map_or(true, |(a, b)| a.free == b.free && a.total == b.total)
   }
 }
 

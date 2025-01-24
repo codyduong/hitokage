@@ -100,6 +100,12 @@ pub struct Enum<T> {
 // need to be Send.
 unsafe impl<T> Send for Enum<T> {}
 
+impl<T> Default for Enum<T> {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl<T> Enum<T> {
   pub fn new() -> Self {
     Self { phantom: PhantomData }

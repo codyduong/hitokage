@@ -231,6 +231,7 @@ pub fn from_lua_value_dynamic<T: FromDynamic>(value: LuaValue) -> mlua::Result<T
   })
 }
 
+#[allow(non_local_definitions)]
 #[derive(FromDynamic, ToDynamic)]
 pub struct ValueLua {
   pub value: wezterm_dynamic::Value,
@@ -266,6 +267,7 @@ impl PartialEq for ValuePrinterHelper {
 impl Eq for ValuePrinterHelper {}
 
 impl PartialOrd for ValuePrinterHelper {
+  #[allow(clippy::non_canonical_partial_ord_impl)]
   fn partial_cmp(&self, rhs: &Self) -> Option<std::cmp::Ordering> {
     let lhs = lua_value_to_dynamic(self.value.clone()).unwrap_or(DynValue::Null);
     let rhs = lua_value_to_dynamic(rhs.value.clone()).unwrap_or(DynValue::Null);
@@ -288,6 +290,7 @@ impl ValuePrinterHelper {
 }
 
 fn is_array_style_table(t: &mlua::Table) -> bool {
+  #[allow(clippy::mutable_key_type)]
   let mut keys = BTreeSet::new();
   for pair in t.clone().pairs::<LuaValue, LuaValue>() {
     match pair {
@@ -344,6 +347,7 @@ impl std::fmt::Debug for ValuePrinterHelper {
         } else {
           // Treat as map; put it into a BTreeMap so that we have a stable
           // order for our tests.
+          #[allow(clippy::mutable_key_type)]
           let mut map = BTreeMap::new();
           for pair in t.clone().pairs::<LuaValue, LuaValue>() {
             match pair {

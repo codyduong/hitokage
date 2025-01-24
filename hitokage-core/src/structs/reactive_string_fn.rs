@@ -15,7 +15,7 @@ pub enum ReactiveStringFn {
 
 struct ReactiveStringVisitor;
 
-impl<'de> serde::de::Visitor<'de> for ReactiveStringVisitor {
+impl serde::de::Visitor<'_> for ReactiveStringVisitor {
   type Value = ReactiveStringFn;
 
   fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

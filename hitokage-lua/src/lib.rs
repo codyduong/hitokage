@@ -162,7 +162,7 @@ trait FromLuaValue<'lua>: Sized {
   fn from_lua_value(value: Value) -> mlua::Result<Self>;
 }
 
-impl<'lua> FromLuaValue<'lua> for Table {
+impl FromLuaValue<'_> for Table {
   fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Table(table) => Ok(table),
@@ -175,7 +175,7 @@ impl<'lua> FromLuaValue<'lua> for Table {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for mlua::Function {
+impl FromLuaValue<'_> for mlua::Function {
   fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Function(function) => Ok(function),
@@ -188,7 +188,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::Function {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for mlua::String {
+impl FromLuaValue<'_> for mlua::String {
   fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::String(string) => Ok(string),
@@ -201,7 +201,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::String {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for mlua::Integer {
+impl FromLuaValue<'_> for mlua::Integer {
   fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Integer(integer) => Ok(integer),
@@ -214,7 +214,7 @@ impl<'lua> FromLuaValue<'lua> for mlua::Integer {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for bool {
+impl FromLuaValue<'_> for bool {
   fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::Boolean(boolean) => Ok(boolean),
@@ -227,7 +227,7 @@ impl<'lua> FromLuaValue<'lua> for bool {
   }
 }
 
-impl<'lua> FromLuaValue<'lua> for AnyUserData {
+impl FromLuaValue<'_> for AnyUserData {
   fn from_lua_value(value: Value) -> mlua::Result<Self> {
     match value {
       Value::UserData(userdata) => Ok(userdata),

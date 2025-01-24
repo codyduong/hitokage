@@ -513,12 +513,8 @@ impl Default for WeatherForecast {
 }
 
 impl PartialEq for WeatherForecast {
-  fn ne(&self, other: &Self) -> bool {
-    self.temperature != other.temperature
-  }
-
   fn eq(&self, other: &Self) -> bool {
-    !self.ne(other)
+    self.temperature == other.temperature
   }
 }
 

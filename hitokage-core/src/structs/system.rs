@@ -122,14 +122,10 @@ impl BatteryWrapper {
 }
 
 impl PartialEq for BatteryWrapper {
-  fn ne(&self, other: &Self) -> bool {
-    self.battery.clone().zip(other.battery.clone()).map_or(false, |(a, b)| {
-      a.remaining_capacity != b.remaining_capacity || a.remaining_time != b.remaining_time
-    })
-  }
-
   fn eq(&self, other: &Self) -> bool {
-    !self.ne(other)
+    self.battery.clone().zip(other.battery.clone()).map_or(true, |(a, b)| {
+      a.remaining_capacity == b.remaining_capacity && a.remaining_time == b.remaining_time
+    })
   }
 }
 

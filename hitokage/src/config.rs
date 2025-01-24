@@ -46,6 +46,7 @@ pub(crate) struct LuaRuntime {
 }
 
 impl LuaRuntime {
+  #[allow(clippy::too_many_arguments)]
   pub(crate) fn new(
     lua: mlua::Lua,
     sender: ComponentSender<App>,
@@ -68,7 +69,7 @@ impl LuaRuntime {
     }
   }
 
-  pub(crate) fn start_runtime(self) -> () {
+  pub(crate) fn start_runtime(self) {
     thread::spawn(move || -> anyhow::Result<(), mlua::Error> {
       terminate_thread(&self.lua_thread_id);
 

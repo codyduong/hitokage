@@ -21,7 +21,7 @@ impl<'de> Deserialize<'de> for LuaFn {
 
 pub struct LuaFnVisitor;
 
-impl<'de> serde::de::Visitor<'de> for LuaFnVisitor {
+impl serde::de::Visitor<'_> for LuaFnVisitor {
   type Value = LuaFn;
 
   fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {

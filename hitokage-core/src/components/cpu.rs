@@ -293,23 +293,19 @@ impl CPULoadWrapper {
 }
 
 impl PartialEq for CPULoadWrapper {
-  fn ne(&self, other: &Self) -> bool {
+  fn eq(&self, other: &Self) -> bool {
     self
       .cpu_loads
       .clone()
       .last()
       .zip(other.cpu_loads.clone().last())
-      .map_or(false, |(a, b)| {
-        (a.user != b.user)
-          || (a.nice != b.nice)
-          || (a.system != b.system)
-          || (a.interrupt != b.interrupt)
-          || (a.idle != b.idle)
+      .map_or(true, |(a, b)| {
+        (a.user == b.user)
+          && (a.nice == b.nice)
+          && (a.system == b.system)
+          && (a.interrupt == b.interrupt)
+          && (a.idle == b.idle)
       })
-  }
-
-  fn eq(&self, other: &Self) -> bool {
-    !self.ne(other)
   }
 }
 

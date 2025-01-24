@@ -90,6 +90,7 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
   let display = gdk4::Display::default().expect("Failed to get default display");
 
   let monitors = load_monitor_information().expect("Failed to get monitors");
+  #[allow(clippy::unnecessary_filter_map)]
   let other_monitors: Vec<gdk4_win32::Win32Monitor> = display
     .monitors()
     .into_iter()
@@ -100,6 +101,7 @@ fn get_monitors() -> impl Iterator<Item = Monitor> {
     })
     .collect();
 
+  #[allow(clippy::unnecessary_filter_map)]
   let iter = monitors.into_iter().enumerate().filter_map(move |(index, monitor)| {
     let mut geometry: MonitorGeometry = monitor.size;
 

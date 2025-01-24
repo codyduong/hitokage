@@ -107,7 +107,7 @@ impl Component for Clock {
   }
 }
 
-fn format_time(model: &mut Clock, sender: ComponentSender<Clock>) -> () {
+fn format_time(model: &mut Clock, sender: ComponentSender<Clock>) {
   let time_string = chrono::Local::now().format(&model.format.get()).to_string();
 
   let reg = register_hitokage_helpers(Handlebars::new());
