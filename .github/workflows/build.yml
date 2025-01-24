@@ -11,6 +11,8 @@ on:
       - '**.rs'
       - 'wix/*'
       - '!hitokage-lua-lib/**'
+      - '!examples/**'
+      - '!docs/**'
     branches:
       - "*"
   push:
@@ -20,6 +22,8 @@ on:
       - '**.rs'
       - 'wix/*'
       - '!hitokage-lua-lib/**'
+      - '!examples/**'
+      - '!docs/**'
     branches:
       - "master"
       - "feature/*"
