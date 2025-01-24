@@ -238,7 +238,10 @@ impl Component for App {
 
     // komorebi pipe
     let sender_clone = sender.clone();
-    socket::start(sender_clone);
+    let komorebi_socket = socket::start(sender_clone);
+    if komorebi_socket.is_err() {
+      log::debug!("No komorebi connection created");
+    }
 
     let model = App {
       // lua,
