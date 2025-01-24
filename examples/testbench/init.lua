@@ -143,7 +143,7 @@ for _, monitor in ipairs(monitors) do
 										{
 											Weather = {
 												format = function(r)
-													return "{{temp_fahrenheit}} °F"
+													return r.temperature .. " °F"
 												end,
 											},
 										},
@@ -179,9 +179,10 @@ for _, monitor in ipairs(monitors) do
 			-- 	x = 8,
 			-- 	y = 32,
 			-- },
-			position = "Bottom",
+			position = "Top",
 		})
 	)
+	break
 	::continue::
 end
 
@@ -216,16 +217,16 @@ for i, bar in ipairs(bars) do
 	end
 
 	local label = bar:get_child_by_id("test1", true)
-	---@cast label Label
-	local routine = hitokage.timeout(1000, function()
-		local current_label = label:get_label()
-		if current_label == "\u{F4BC}" then
-			label:set_label("a")
-		else
-			label:set_label("\u{F4BC}")
-		end
-	end)
-	hitokage.dispatch(routine)
+	-- ---@cast label Label
+	-- local routine = hitokage.timeout(1000, function()
+	-- 	local current_label = label:get_label()
+	-- 	if current_label == "\u{F4BC}" then
+	-- 		label:set_label("a")
+	-- 	else
+	-- 		label:set_label("\u{F4BC}")
+	-- 	end
+	-- end)
+	-- hitokage.dispatch(routine)
 end
 
 -- local halign_test = timeout(1000, function()

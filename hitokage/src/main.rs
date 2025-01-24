@@ -19,7 +19,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 use std::sync::mpsc::{channel, Sender};
-use std::sync::Arc;
+use std::sync::{Arc, Condvar};
 use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
@@ -42,8 +42,9 @@ struct App {
   // so we only keep one weather station to request forecasts (todo @codyduong support multiple weather stations)
   weather_station: Arc<Mutex<Option<WeatherStation>>>,
   weather_station_count: Arc<AtomicUsize>,
-
   system: SystemWrapper,
+  is_destroyed_condvar: Arc<(Mutex<bool>, Condvar)>,
+  bars_destroyed_condvar: Arc<(Mutex<usize>, Condvar)>, // the number of bars that have destroyed
 
   // keep alive for lifetime of app
   _debouncer: notify_debouncer_full::Debouncer<notify::ReadDirectoryChangesWatcher, notify_debouncer_full::FileIdMap>,
@@ -136,6 +137,9 @@ impl Component for App {
       .watch(&lua_file_path, notify::RecursiveMode::NonRecursive)
       .unwrap();
 
+    let is_destroyed_condvar = Arc::new((Mutex::new(false), Condvar::new()));
+    let is_destroyed_condvar_2 = Arc::clone(&is_destroyed_condvar);
+
     {
       let sender = sender.clone();
 
@@ -147,6 +151,17 @@ impl Component for App {
                 log::info!("File update: {:?}", e);
 
                 sender.input(AppMsg::DestroyActual);
+
+                let (lock, cvar) = &*is_destroyed_condvar_2;
+                let mut destroyed = lock.lock().unwrap();
+                while !*destroyed {
+                  destroyed = cvar.wait(destroyed).unwrap();
+                  std::thread::sleep(Duration::from_millis(100));
+                }
+                // SHAppBarMessage has no synchronization(? factcheck TODO) i could find, so just wait 500ms after we
+                // call it and hope the system was fast enough
+                std::thread::sleep(Duration::from_millis(2000));
+                *destroyed = false;
 
                 if !is_stopped.load(Ordering::SeqCst) {
                   // if we are stuck in lua execution loop we need to dispatch a response to it for it to implode itself
@@ -250,6 +265,8 @@ impl Component for App {
       weather_station: Arc::new(Mutex::new(None)),
       weather_station_count: Arc::new(AtomicUsize::new(0)),
       system: SystemWrapper::default(),
+      is_destroyed_condvar,
+      bars_destroyed_condvar: Arc::new((Mutex::new(0), Condvar::new())),
       _debouncer: debouncer,
       _css_debouncer: css_debouncer,
       _tx_lua: tx_lua,
@@ -291,7 +308,7 @@ impl Component for App {
           let builder = bar::Bar::builder();
 
           let bar = builder
-            .launch((*monitor, props, callback, root.clone()))
+            .launch((*monitor, props, callback, root.clone(), Arc::clone(&self.bars_destroyed_condvar)))
             .forward(sender.input_sender(), |m| m);
 
           self.bars.push(bar);
@@ -351,10 +368,22 @@ impl Component for App {
         deque.push_back(LuaActionRequest { id, args, f: Some(f) });
       }
       AppMsg::DestroyActual => {
+        let bars_count = self.bars.len();
         for bar in self.bars.drain(..) {
           bar.widget().destroy();
           drop(bar);
         }
+        // im not sure this does anything meaningful without sync signals from SHAppBarMessage
+        let (lock, cvar) = &*self.bars_destroyed_condvar;
+        let mut bars_destroyed = lock.lock().unwrap();
+        while *bars_destroyed != bars_count {
+          bars_destroyed = cvar.wait(bars_destroyed).unwrap();
+          std::thread::sleep(Duration::from_millis(50));
+        }
+        let (lock, cvar) = &*self.is_destroyed_condvar;
+        let mut destroyed = lock.lock().unwrap();
+        *destroyed = true;
+        cvar.notify_one();
       }
       AppMsg::NoOp => {}
     }

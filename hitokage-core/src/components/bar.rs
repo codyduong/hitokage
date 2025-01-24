@@ -212,6 +212,7 @@ pub struct Bar {
   offset_x: i32,
   offset_y: i32,
   r#box: BoxInner,
+  bars_destroyed_condvar: Arc<(Mutex<usize>, std::sync::Condvar)>
 }
 
 #[relm4::component(pub)]
@@ -223,6 +224,7 @@ impl Component for Bar {
     BarProps,
     Box<dyn Fn(relm4::Sender<BarMsg>) + Send>,
     gtk::ApplicationWindow,
+    Arc<(Mutex<usize>, std::sync::Condvar)>
   );
   type Widgets = AppWidgets;
   type CommandOutput = ();
@@ -265,7 +267,7 @@ impl Component for Bar {
         // }
       },
 
-      connect_unrealize => move |window| {
+      connect_unrealize[bars_destroyed_condvar = Arc::clone(&model.bars_destroyed_condvar)] => move |window| {
         // let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
         //   model.index,
         //   komorebi_client::Rect {
@@ -276,12 +278,16 @@ impl Component for Bar {
         //   },
         // ));
         shutdown_window_surface(window);
+        let (lock, cvar) = &*bars_destroyed_condvar;
+        let mut bars_destroyed = lock.lock().unwrap();
+        *bars_destroyed += 1;
+        cvar.notify_one();
       },
     }
   }
 
   fn init(input: Self::Init, root: Self::Root, sender: ComponentSender<Self>) -> ComponentParts<Self> {
-    let (monitor, props, callback, application_root) = input;
+    let (monitor, props, callback, application_root, bars_destroyed_condvar) = input;
 
     callback(sender.clone().input_sender().clone());
 
@@ -322,6 +328,7 @@ impl Component for Bar {
         children: Vec::new(),
         base: props.r#box.base.clone().into(),
       },
+      bars_destroyed_condvar,
     };
 
     root.set_transient_for(Some(&application_root));

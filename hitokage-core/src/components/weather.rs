@@ -328,15 +328,15 @@ impl AsyncComponent for Weather {
       {
         let sender = sender.clone();
         let tx = tx.clone();
-        source_ids.push(glib::idle_add_local_once(move || {
+        glib::idle_add_local_once(move || {
           sender.input(WeatherMsg::Callback(tx.clone()));
-        }));
+        });
       }
-      glib::timeout_add_local(std::time::Duration::from_secs(55), move || {
+      source_ids.push(glib::timeout_add_local(std::time::Duration::from_secs(55), move || {
         sender.input(WeatherMsg::Callback(tx.clone()));
         glib::ControlFlow::Continue
-      });
-      glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
+      }));
+      source_ids.push(glib::timeout_add_local(std::time::Duration::from_secs(1), move || {
         match rx.try_recv() {
           Ok(v) => match v {
             mlua::Value::String(s) => {
@@ -352,7 +352,7 @@ impl AsyncComponent for Weather {
           }
         }
         glib::ControlFlow::Continue
-      });
+      }));
     }
 
     log::debug!("{:?}", props.weather_options.icons.clone());
@@ -419,7 +419,7 @@ impl AsyncComponent for Weather {
   fn shutdown(&mut self, _widgets: &mut Self::Widgets, sender: relm4::Sender<Self::Output>) {
     sender.send(WeatherMsgOut::DropWeatherStation).unwrap();
     for source_id in self.source_ids.drain(..) {
-      source_id.remove()
+      source_id.remove();
     }
   }
 }
