@@ -143,8 +143,7 @@ for _, monitor in ipairs(monitors) do
 										{
 											Weather = {
 												format = function(r)
-													hitokage.debug("fuck yea", r)
-													return "{{temp_fahrenheit}} °F hell yeah"
+													return "{{temp_fahrenheit}} °F"
 												end,
 											},
 										},
@@ -176,10 +175,11 @@ for _, monitor in ipairs(monitors) do
 			},
 			homogeneous = true,
 			width = monitor.geometry.width - 16,
-			offset = {
-				x = 8,
-				y = 8,
-			},
+			-- offset = {
+			-- 	x = 8,
+			-- 	y = 32,
+			-- },
+			position = "Bottom"
 		})
 	)
 	::continue::

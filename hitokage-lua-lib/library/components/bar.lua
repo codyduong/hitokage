@@ -1,8 +1,11 @@
 ---@meta hitokage.components.bar
 
+---TODO don't use, the behavior of this is not well decided and subject to change
 ---@class BarOffset
 ---@field x integer?
 ---@field y integer?
+
+-- ---@alias BarPosition 'Top' | 'Bottom'
 
 --------------------------------------------------------------------------------
 
@@ -37,6 +40,7 @@
 ---@field width integer?
 ---@field height integer?
 ---@field offset BarOffset?
+-- ---@field position BarPosition?
 
 --------------------------------------------------------------------------------
 ---Links to BarUserData in 'hitokage-lua\src\components\bar.rs'

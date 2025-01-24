@@ -519,6 +519,7 @@ default_matcher: Callable[[RootItem], bool] = lambda x: x.type == "type"
 create_transformer("Align", default_matcher, "alias", "api/Align")
 create_transformer("Component", default_matcher, "alias", "api/Component")
 create_transformer("ComponentProps", default_matcher, "alias", "api/ComponentProps")
+# create_transformer("BarPosition", default_matcher, "type", "api/BarProps")
 
 create_transformer("MemoryInfo", default_matcher, "type", "api/MemoryInfo")
 create_transformer("CpuLoadInfo", default_matcher, "type", "api/CpuLoadInfo")

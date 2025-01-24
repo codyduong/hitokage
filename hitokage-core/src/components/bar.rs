@@ -22,6 +22,7 @@ use std::hash::Hasher;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
+use windows::Win32::UI::Shell::{SHAppBarMessage, ABE_BOTTOM, ABE_TOP, ABM_NEW, ABM_REMOVE, ABM_SETPOS, APPBARDATA};
 use windows::Win32::UI::WindowsAndMessaging::{
   CallWindowProcW, DefWindowProcW, SetWindowLongPtrW, SetWindowPos, ShowWindow, GWL_EXSTYLE, HWND_NOTOPMOST,
   SWP_NOSENDCHANGING, SWP_NOSIZE, SW_RESTORE, WM_SIZE, WS_EX_NOACTIVATE,
@@ -91,7 +92,7 @@ fn setup_window_size(
   Ok(())
 }
 
-fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::Result<()> {
+fn get_hwnd(window: &Window) -> windows::Win32::Foundation::HWND {
   // https://discourse.gnome.org/t/set-absolut-window-position-in-gtk4/8552/4
   let native = window.native().expect("Failed to get native");
   let surface = native.surface().expect("Failed to get surface");
@@ -101,19 +102,52 @@ fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::R
     .downcast::<gdk4_win32::Win32Surface>()
     .expect("Failed to get Win32Surface")
     .handle();
-  let hwnd = windows::Win32::Foundation::HWND(handle.0);
+  windows::Win32::Foundation::HWND(handle.0)
+}
+
+fn setup_window_surface(
+  window: &Window,
+  geometry: &MonitorGeometry,
+  scale_factor: &MonitorScaleFactor,
+  offset_x: i32,
+  offset_y: i32,
+  position: &BarPosition,
+) -> anyhow::Result<()> {
+  let height = ((geometry.height + offset_y) as f32) as i32;
+  let width = ((geometry.width + offset_x) as f32) as i32;
+  let u_edge = match position {
+    BarPosition::Top => ABE_TOP,
+    BarPosition::Bottom => ABE_BOTTOM,
+  };
+
+  let rc = windows::Win32::Foundation::RECT {
+    left: geometry.x,
+    right: geometry.x + width,
+    top: geometry.y,
+    bottom: geometry.y + height,
+  };
+
+  let hwnd = get_hwnd(window);
+  let mut appbar_data = APPBARDATA {
+    hWnd: hwnd,
+    rc,
+    uEdge: u_edge,
+    ..Default::default()
+  };
 
   unsafe {
+    SHAppBarMessage(ABM_NEW, &mut appbar_data);
+    SHAppBarMessage(ABM_SETPOS, &mut appbar_data);
+
     SetWindowPos(
-      hwnd, // TODO @codyduong, set this up for user configuration
+      hwnd,
       HWND_NOTOPMOST,
       geometry.x,
       geometry.y,
       0,
       0,
       SWP_NOSIZE | SWP_NOSENDCHANGING,
-    )
-    .ok();
+    )?;
     SetWindowLongPtrW(hwnd, GWL_EXSTYLE, WS_EX_NOACTIVATE.0 as _);
     // TODO @codyduong setup preventing movement via live-caption or other movements
     // let original_wnd_proc = std::mem::transmute(GetWindowLongPtrW(hwnd, GWLP_WNDPROC));
@@ -122,6 +156,19 @@ fn setup_window_surface(window: Window, geometry: &MonitorGeometry) -> anyhow::R
   }
 
   Ok(())
+}
+
+fn shutdown_window_surface(window: &Window) -> () {
+  let hwnd = get_hwnd(window);
+
+  let mut appbar_data = APPBARDATA {
+    hWnd: hwnd,
+    ..Default::default()
+  };
+
+  unsafe { SHAppBarMessage(ABM_REMOVE, &mut appbar_data) };
+
+  ()
 }
 
 #[derive(Debug)]
@@ -158,7 +205,7 @@ pub struct BarProps {
 }
 
 pub struct Bar {
-  position: Option<BarPosition>,
+  position: BarPosition,
   geometry: MonitorGeometry,
   index: usize,
   scale_factor: MonitorScaleFactor,
@@ -199,35 +246,36 @@ impl Component for Bar {
 
       connect_show => move |window| {
         // Surfaces aren't ready in realize, but they are ready for consumption here
-        let _ = setup_window_surface(window.clone(), &model.geometry);
+        let _ = setup_window_surface(&window, &model.geometry, &model.scale_factor, model.offset_x, model.offset_y, &model.position);
         // regardless of win version komorebi is consistent unlike gdk4
-        let height = ((model.geometry.height + model.offset_y) as f32 * model.scale_factor.y) as i32;
+        // let height = ((model.geometry.height + model.offset_y) as f32 * model.scale_factor.y) as i32;
 
         // println!("{:?} {:?}", (model.geometry.height + &model.offset_y), height);
 
-        if model.position.is_some_and(|pos| pos == BarPosition::Bottom) {
-          let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
-            model.index,
-            komorebi_client::Rect { left: 0, top: 0, right: 0, bottom: height }
-          ));
-        } else {
-          let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
-            model.index,
-            komorebi_client::Rect { left: 0, top: height, right: 0, bottom: height }
-          ));
-        }
+        // if model.position.is_some_and(|pos| pos == BarPosition::Bottom) {
+        //   let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
+        //     model.index,
+        //     komorebi_client::Rect { left: 0, top: 0, right: 0, bottom: height }
+        //   ));
+        // } else {
+        //   let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
+        //     model.index,
+        //     komorebi_client::Rect { left: 0, top: height, right: 0, bottom: height }
+        //   ));
+        // }
       },
 
-      connect_unrealize => move |_window| {
-        let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
-          model.index,
-          komorebi_client::Rect {
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: 0,
-          },
-        ));
+      connect_unrealize => move |window| {
+        // let _ = komorebi_client::send_message(&komorebi_client::SocketMessage::MonitorWorkAreaOffset(
+        //   model.index,
+        //   komorebi_client::Rect {
+        //     left: 0,
+        //     top: 0,
+        //     right: 0,
+        //     bottom: 0,
+        //   },
+        // ));
+        shutdown_window_surface(window);
       },
     }
   }
@@ -238,15 +286,18 @@ impl Component for Bar {
     callback(sender.clone().input_sender().clone());
 
     let mut geometry = monitor.geometry;
+    let position = props.position.unwrap_or(BarPosition::Top);
+
     let mut offset_x = 0;
     let mut offset_y = 0;
 
-    // by default use 32
-    // TODO @codyduong, this is assuming a horizontal bar, otherwise change defaults
-    geometry.height = crate::common::HITOKAGE_STATUSBAR_HEIGHT;
-
     geometry.width = props.width.unwrap_or(geometry.width);
-    geometry.height = props.height.unwrap_or(geometry.height);
+    geometry.height = props.height.unwrap_or(crate::common::HITOKAGE_STATUSBAR_HEIGHT);
+
+    match position {
+      BarPosition::Top => (),
+      BarPosition::Bottom => geometry.y += monitor.geometry.height - geometry.height,
+    };
 
     if let Some(offset) = props.offset {
       if let Some(x) = offset.x {
@@ -260,7 +311,7 @@ impl Component for Bar {
     }
 
     let mut model = Bar {
-      position: props.position,
+      position,
       geometry,
       index: monitor.index,
       scale_factor: monitor.scale_factor,
