@@ -179,7 +179,7 @@ for _, monitor in ipairs(monitors) do
 			-- 	x = 8,
 			-- 	y = 32,
 			-- },
-			position = "Bottom"
+			position = "Bottom",
 		})
 	)
 	::continue::
