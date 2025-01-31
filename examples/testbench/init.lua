@@ -182,8 +182,8 @@ for _, monitor in ipairs(monitors) do
 			position = "Top",
 		})
 	)
-	break
 	::continue::
+	break
 end
 
 ---@alias WorkspaceTable table<number, Workspace>
