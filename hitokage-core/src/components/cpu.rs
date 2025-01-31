@@ -135,7 +135,7 @@ impl Component for Cpu {
             },
             Err(std::sync::mpsc::TryRecvError::Empty) => {}
             Err(std::sync::mpsc::TryRecvError::Disconnected) => {
-              log::error!("Battery callback dropped");
+              log::error!("CPU callback dropped");
             }
           }
           glib::ControlFlow::Continue
