@@ -172,10 +172,8 @@ impl LuaRuntime {
                     drop(sswg);
                     match result {
                       Ok(func) => {
-                        // lua self reset has issues #64, need a condvar to signal and wait
-                        // let _ = coroutine.reset(func);
-                        // self.tx.send(true).unwrap(); // safe reload success
-                        self.tx.send(false).unwrap();
+                        let _ = coroutine.reset(func);
+                        self.tx.send(true).unwrap(); // safe reload success
                       }
                       Err(_) => {
                         // no need to handle the error since we will attempt to start again

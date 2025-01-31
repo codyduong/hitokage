@@ -63,6 +63,7 @@ local file_watcher = coroutine.create(function()
 		if new then
 			coroutine.yield("Reload")
 			-- stop running lua, then it will be passed to rust to reload this lua
+			_G['threads'] = {}
 		end
 		coroutine.yield()
 	end

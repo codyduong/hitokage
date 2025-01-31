@@ -1,7 +1,5 @@
 ---@meta hitokage.append
 
--- ---@module 'hitokage.prepend'
-
 local dispatcher = function(threads)
 	local min_time_ms = 100
 
@@ -16,6 +14,10 @@ local dispatcher = function(threads)
 
 		local connections = {}
 		for i = 1, n do
+			if threads[i] == nil then
+				goto kill_dispatcher
+			end
+
 			local status, res_array = coroutine.resume(threads[i])
 
 			if status and res_array then
@@ -52,6 +54,7 @@ local dispatcher = function(threads)
 		-- _not_deadlocked();
 		-- coroutine.yield()
 	end
+	::kill_dispatcher::
 end
 
 dispatcher(rawget(_G, "_threads"))

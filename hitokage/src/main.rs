@@ -156,7 +156,7 @@ impl Component for App {
                 let mut destroyed = lock.lock().unwrap();
                 while !*destroyed {
                   destroyed = cvar.wait(destroyed).unwrap();
-                  std::thread::sleep(Duration::from_millis(100));
+                  thread::sleep(Duration::from_millis(100));
                 }
                 // SHAppBarMessage has no synchronization(? factcheck TODO) i could find, so just wait 500ms after we
                 // call it and hope the system was fast enough
@@ -165,9 +165,16 @@ impl Component for App {
 
                 if !is_stopped.load(Ordering::SeqCst) {
                   // if we are stuck in lua execution loop we need to dispatch a response to it for it to implode itself
-                  let mut wg = CONFIG_UPDATE.write();
-                  *wg = true;
-                  drop(wg);
+                  match CONFIG_UPDATE.try_write() {
+                      Ok(mut wg) => {  
+                        *wg = true;
+                        drop(wg); 
+                      },
+                      Err(e) => {
+                        log::warn!("{}", e);
+                        runtime.clone().start_runtime();
+                      },
+                  };
 
                   match rx_lua.recv() {
                     Ok(true) => {
@@ -368,21 +375,29 @@ impl Component for App {
         deque.push_back(LuaActionRequest { id, args, f: Some(f) });
       }
       AppMsg::DestroyActual => {
+        self.weather_station_count.fetch_min(0, std::sync::atomic::Ordering::SeqCst);
+        let mut weather_station_lock = self.weather_station.lock().unwrap();
+        *weather_station_lock = None;
+
         let bars_count = self.bars.len();
         for bar in self.bars.drain(..) {
           bar.widget().destroy();
           drop(bar);
         }
+
         // im not sure this does anything meaningful without sync signals from SHAppBarMessage
         let (lock, cvar) = &*self.bars_destroyed_condvar;
         let mut bars_destroyed = lock.lock().unwrap();
         while *bars_destroyed != bars_count {
           bars_destroyed = cvar.wait(bars_destroyed).unwrap();
-          std::thread::sleep(Duration::from_millis(50));
+          thread::sleep(Duration::from_millis(50));
         }
         let (lock, cvar) = &*self.is_destroyed_condvar;
         let mut destroyed = lock.lock().unwrap();
+
+        *bars_destroyed = 0;
         *destroyed = true;
+
         cvar.notify_one();
       }
       AppMsg::NoOp => {}
