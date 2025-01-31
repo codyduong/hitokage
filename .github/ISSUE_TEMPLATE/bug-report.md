@@ -16,7 +16,7 @@ https://github.com/codyduong/hitokage/discussions
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-** Environment **
+**Environment**
 <!-- 
 Please don't leave this blank, you can determine your Windows version with
 `[Environment]::OSVersion.Version.ToString()`. _hitokage_ you can either check
