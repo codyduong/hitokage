@@ -143,7 +143,7 @@ for _, monitor in ipairs(monitors) do
 										{
 											Weather = {
 												format = function(r)
-													return r.temperature .. " °F"
+													return string.format("%.2f", r.temperature) .. " °F"
 												end,
 											},
 										},
