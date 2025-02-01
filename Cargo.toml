@@ -29,7 +29,8 @@ dirs = "5.0.1"
 # there is some issues with patching win32-display-data, so use this rev
 komorebi-client = { git = "https://github.com/LGUG2Z/komorebi", rev = "b612066367e05f1b29ca5ee42ab2449b76c6da0c"}
 win32-display-data = { git = "https://github.com/LGUG2Z/win32-display-data", rev = "dd65e3f22d0521b78fcddde11abc2a3e9dcc32a8" }
-tokio = { version = "1.42.0", features=["full"] } 
+tokio = { version = "1.42.0", features=["full"] }
+bon = "3.3.2"
 
 [workspace.dependencies.windows]
 version = "0.56.0"

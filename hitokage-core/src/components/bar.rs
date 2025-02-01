@@ -8,6 +8,7 @@ use crate::{
   generate_base_match_arms, generate_box_children, generate_box_match_arms, prepend_css_class,
   prepend_css_class_to_model, set_initial_base_props, set_initial_box_props,
 };
+use bon::builder;
 use gdk4_win32::windows::Win32::UI::WindowsAndMessaging::SIZE_MINIMIZED;
 use gtk4::prelude::*;
 use gtk4::Box as GtkBox;
@@ -74,6 +75,7 @@ unsafe extern "system" fn new_wnd_proc(hwnd: HWND, msg: u32, wparam: WPARAM, lpa
   }
 }
 
+#[builder]
 fn setup_window_size(
   window: Window,
   geometry: &MonitorGeometry,
@@ -105,6 +107,7 @@ fn get_hwnd(window: &Window) -> windows::Win32::Foundation::HWND {
   windows::Win32::Foundation::HWND(handle.0)
 }
 
+#[builder]
 fn setup_window_surface(
   window: &Window,
   geometry: &MonitorGeometry,
@@ -158,7 +161,7 @@ fn setup_window_surface(
   Ok(())
 }
 
-fn shutdown_window_surface(window: &Window) -> () {
+fn shutdown_window_surface(window: &Window) {
   let hwnd = get_hwnd(window);
 
   let mut appbar_data = APPBARDATA {
@@ -167,8 +170,6 @@ fn shutdown_window_surface(window: &Window) -> () {
   };
 
   unsafe { SHAppBarMessage(ABM_REMOVE, &mut appbar_data) };
-
-  ()
 }
 
 #[derive(Debug)]
@@ -212,7 +213,7 @@ pub struct Bar {
   offset_x: i32,
   offset_y: i32,
   r#box: BoxInner,
-  bars_destroyed_condvar: Arc<(Mutex<usize>, std::sync::Condvar)>
+  bars_destroyed_condvar: Arc<(Mutex<usize>, std::sync::Condvar)>,
 }
 
 #[relm4::component(pub)]
@@ -224,7 +225,7 @@ impl Component for Bar {
     BarProps,
     Box<dyn Fn(relm4::Sender<BarMsg>) + Send>,
     gtk::ApplicationWindow,
-    Arc<(Mutex<usize>, std::sync::Condvar)>
+    Arc<(Mutex<usize>, std::sync::Condvar)>,
   );
   type Widgets = AppWidgets;
   type CommandOutput = ();
@@ -243,12 +244,23 @@ impl Component for Bar {
       },
 
       connect_realize => move |window| {
-        let _ = setup_window_size(window.clone(), &model.geometry, &model.scale_factor);
+        let _ = setup_window_size()
+          .window(window.clone())
+          .geometry(&model.geometry)
+          .scale_factor(&model.scale_factor)
+          .call();
       },
 
       connect_show => move |window| {
         // Surfaces aren't ready in realize, but they are ready for consumption here
-        let _ = setup_window_surface(&window, &model.geometry, &model.scale_factor, model.offset_x, model.offset_y, &model.position);
+        let _ = setup_window_surface()
+          .window(window)
+          .geometry(&model.geometry)
+          .scale_factor( &model.scale_factor)
+          .offset_x(model.offset_x)
+          .offset_y(model.offset_y)
+          .position(&model.position)
+          .call();
         // regardless of win version komorebi is consistent unlike gdk4
         // let height = ((model.geometry.height + model.offset_y) as f32 * model.scale_factor.y) as i32;
 

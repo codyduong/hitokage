@@ -19,8 +19,8 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU32, AtomicUsize, Ordering};
 use std::sync::mpsc::{channel, Sender};
-use std::sync::{Arc, Condvar};
 use std::sync::Mutex;
+use std::sync::{Arc, Condvar};
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
@@ -111,16 +111,16 @@ impl Component for App {
 
     // if we need this for some reason, uhh good luck managing the arc mutex,
     // plus untangle all the other ones then...
-    let runtime = LuaRuntime::new(
-      lua.clone(),
-      sender.clone(),
-      lua_file_path.clone(),
-      lua_thread_id.clone(),
-      preventer_called.clone(),
-      is_stopped.clone(),
-      file_last_checked_at.clone(),
-      tx_lua.clone(),
-    );
+    let runtime = LuaRuntime::builder()
+      .lua(lua.clone())
+      .sender(sender.clone())
+      .file_path(lua_file_path.clone())
+      .lua_thread_id(lua_thread_id.clone())
+      .preventer_called(preventer_called.clone())
+      .is_stopped(is_stopped.clone())
+      .file_last_checked_at(file_last_checked_at.clone())
+      .tx(tx_lua.clone())
+      .build();
     runtime.clone().start_runtime();
 
     let _monitor_handle = config::create_watcher_handle(
@@ -166,14 +166,14 @@ impl Component for App {
                 if !is_stopped.load(Ordering::SeqCst) {
                   // if we are stuck in lua execution loop we need to dispatch a response to it for it to implode itself
                   match CONFIG_UPDATE.try_write() {
-                      Ok(mut wg) => {  
-                        *wg = true;
-                        drop(wg); 
-                      },
-                      Err(e) => {
-                        log::warn!("{}", e);
-                        runtime.clone().start_runtime();
-                      },
+                    Ok(mut wg) => {
+                      *wg = true;
+                      drop(wg);
+                    }
+                    Err(e) => {
+                      log::warn!("{}", e);
+                      runtime.clone().start_runtime();
+                    }
                   };
 
                   match rx_lua.recv() {
@@ -315,7 +315,13 @@ impl Component for App {
           let builder = bar::Bar::builder();
 
           let bar = builder
-            .launch((*monitor, props, callback, root.clone(), Arc::clone(&self.bars_destroyed_condvar)))
+            .launch((
+              *monitor,
+              props,
+              callback,
+              root.clone(),
+              Arc::clone(&self.bars_destroyed_condvar),
+            ))
             .forward(sender.input_sender(), |m| m);
 
           self.bars.push(bar);
@@ -375,7 +381,9 @@ impl Component for App {
         deque.push_back(LuaActionRequest { id, args, f: Some(f) });
       }
       AppMsg::DestroyActual => {
-        self.weather_station_count.fetch_min(0, std::sync::atomic::Ordering::SeqCst);
+        self
+          .weather_station_count
+          .fetch_min(0, std::sync::atomic::Ordering::SeqCst);
         let mut weather_station_lock = self.weather_station.lock().unwrap();
         *weather_station_lock = None;
 

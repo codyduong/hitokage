@@ -1,4 +1,5 @@
 use crate::{App, LuaCoroutineMessage};
+use bon::bon;
 use gtk4::{style_context_add_provider_for_display, style_context_remove_provider_for_display, ApplicationWindow};
 use hitokage_core::{event::CONFIG_UPDATE, win_utils};
 use mlua::LuaSerdeExt;
@@ -45,8 +46,10 @@ pub(crate) struct LuaRuntime {
   tx: Sender<bool>,
 }
 
+#[bon]
 impl LuaRuntime {
   #[allow(clippy::too_many_arguments)]
+  #[builder]
   pub(crate) fn new(
     lua: mlua::Lua,
     sender: ComponentSender<App>,
