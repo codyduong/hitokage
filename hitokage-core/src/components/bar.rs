@@ -23,7 +23,9 @@ use std::hash::Hasher;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
-use windows::Win32::UI::Shell::{SHAppBarMessage, ABE_BOTTOM, ABE_TOP, ABM_NEW, ABM_REMOVE, ABM_SETPOS, APPBARDATA};
+use windows::Win32::UI::Shell::{
+  SHAppBarMessage, ABE_BOTTOM, ABE_TOP, ABM_NEW, ABM_QUERYPOS, ABM_REMOVE, ABM_SETPOS, APPBARDATA,
+};
 use windows::Win32::UI::WindowsAndMessaging::{
   CallWindowProcW, DefWindowProcW, SetWindowLongPtrW, SetWindowPos, ShowWindow, GWL_EXSTYLE, HWND_NOTOPMOST,
   SWP_NOSENDCHANGING, SWP_NOSIZE, SW_RESTORE, WM_SIZE, WS_EX_NOACTIVATE,
@@ -139,8 +141,16 @@ fn setup_window_surface(
   };
 
   unsafe {
+    // let original_wnd_proc = std::mem::transmute(GetWindowLongPtrW(hwnd, GWLP_WNDPROC));
+    // WND_PROC_MAP.lock().unwrap().insert(hwnd.into(), original_wnd_proc);
+    // SetWindowLongPtrW(hwnd, GWLP_WNDPROC, new_wnd_proc as isize);
+
     SHAppBarMessage(ABM_NEW, &mut appbar_data);
+    SHAppBarMessage(ABM_QUERYPOS, &mut appbar_data);
     SHAppBarMessage(ABM_SETPOS, &mut appbar_data);
+
+    // LOL! w/e
+    std::thread::sleep(std::time::Duration::from_millis(500));
 
     SetWindowPos(
       hwnd,
@@ -152,11 +162,7 @@ fn setup_window_surface(
       SWP_NOSIZE | SWP_NOSENDCHANGING,
     )?;
     SetWindowLongPtrW(hwnd, GWL_EXSTYLE, WS_EX_NOACTIVATE.0 as _);
-    // TODO @codyduong setup preventing movement via live-caption or other movements
-    // let original_wnd_proc = std::mem::transmute(GetWindowLongPtrW(hwnd, GWLP_WNDPROC));
-    // WND_PROC_MAP.lock().unwrap().insert(hwnd.into(), original_wnd_proc);
-    // SetWindowLongPtrW(hwnd, GWLP_WNDPROC, new_wnd_proc as isize);
-  }
+  };
 
   Ok(())
 }
