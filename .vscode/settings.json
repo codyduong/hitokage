@@ -2,5 +2,6 @@
   "Lua.workspace.library": [
     "../hitokage-lua-lib/src/hitokage.lua"
   ],
-  "Lua.runtime.version": "Lua 5.4"
+  "Lua.runtime.version": "Lua 5.4",
+  "rust-analyzer.check.command": "clippy",
 }

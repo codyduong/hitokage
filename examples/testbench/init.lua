@@ -25,12 +25,9 @@ local clock_icons = {
 local reactive_clock_icons = {}
 
 for _, monitor in ipairs(monitors) do
-	if monitor.model == "LG SDQHD" then
-		goto continue
-	end
 
 	-- the unsafe operation occurs in creating reactives in lua. this has to do with how we serialize data...
-	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}")
+	local reactive_label = hitokage.unstable.reactive.create("foo \u{EECB}");
 	local reactive_img = hitokage.unstable.reactive.create("./smiley.png")
 	local reactive_clock_icon = hitokage.unstable.reactive.create(clock_icons[tonumber(os.date("%H")) % 12 + 1])
 
@@ -50,6 +47,14 @@ for _, monitor in ipairs(monitors) do
 	-- .. 'C5: {{pad "right" (concat (round (mult core5_usage 100) 1) "%") 6}}'
 	-- .. 'C6: {{pad "right" (concat (round (mult core6_usage 100) 1) "%") 6}}'
 	-- .. 'C7: {{pad "right" (concat (round (mult core7_usage 100) 1) "%") 6}}'
+
+	-- for some reason I get error 
+	-- There was an error loading your user script: SyntaxError { message: "[string \"hitokage\\src\\config.rs:94:29\"]:317: <goto continue> at line 160 jumps into the scope of local 'reactive_label'", incomplete_input: false }
+
+	-- when attempting to use this before any locals? is this an issue with mlua?... idk
+	if monitor.model == "LG SDQHD" then
+		goto continue
+	end
 
 	table.insert(
 		bars,
@@ -307,7 +312,7 @@ local update_clock_icon = hitokage.timeout(1000, function()
 end)
 
 -- hitokage.dispatch(format_reactor)
--- hitokage.dispatch(label_reactor)
--- hitokage.dispatch(img_reactor)
--- hitokage.dispatch(css_boxes_test)
--- hitokage.dispatch(update_clock_icon)
+hitokage.dispatch(label_reactor)
+hitokage.dispatch(img_reactor)
+hitokage.dispatch(css_boxes_test)
+hitokage.dispatch(update_clock_icon)

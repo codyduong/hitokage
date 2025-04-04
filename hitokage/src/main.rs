@@ -24,6 +24,7 @@ use std::sync::{Arc, Condvar};
 use std::thread;
 use std::time::Duration;
 use std::time::Instant;
+use windows::Win32::System::Console::{GenerateConsoleCtrlEvent, CTRL_C_EVENT};
 use windows::Win32::UI::HiDpi::{SetProcessDpiAwareness, PROCESS_PER_MONITOR_DPI_AWARE};
 use windows::Win32::UI::WindowsAndMessaging::{GetWindowLongPtrW, SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_TOOLWINDOW};
 mod config;
@@ -417,8 +418,7 @@ impl Component for App {
   }
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
   simple_logger::SimpleLogger::new()
     .with_module_level("handlebars", LevelFilter::Warn)
     .init()
@@ -446,18 +446,19 @@ async fn main() {
 
   {
     let is_stopped = is_stopped.clone();
-    tokio::spawn(async move {
-      tokio::signal::ctrl_c().await.unwrap();
-      is_stopped.store(true, Ordering::SeqCst);
-      use windows::Win32::System::Console::{GenerateConsoleCtrlEvent, CTRL_C_EVENT};
-      cleanup();
+    std::thread::spawn(move || {
+      let rt = tokio::runtime::Runtime::new().unwrap();
+      rt.block_on(async move {
+        tokio::signal::ctrl_c().await.unwrap();
+        is_stopped.store(true, Ordering::SeqCst);
+        cleanup();
 
-      // todo this should be signalled rather than timed for completion of cleanup
-      tokio::time::sleep(Duration::from_millis(500)).await;
+        tokio::time::sleep(Duration::from_millis(500)).await;
 
-      unsafe {
-        GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0).expect("Failed to re-send CTRL+C signal");
-      }
+        unsafe {
+          GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0).expect("Failed to re-send CTRL+C signal");
+        }
+      });
     });
   }
 
