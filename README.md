@@ -100,12 +100,28 @@ Install from [nightly](https://github.com/codyduong/hitokage/releases/nightly) o
 > [!CAUTION]
 > hitokage is in a pre-release state, the APIs are subject to breaking changes (this will not be the case after 0.1.0).
 
-### Developing/Building From Source
+### Build/Compile From Source
 
-Requires
-* https://github.com/Relm4/Relm4/tree/main
-  + https://gtk-rs.org/gtk4-rs/git/book/installation_windows.html
-  + https://github.com/wingtk/gvsbuild#development-environment
+Requires gtk4 DLLs in your local machine, follow the instructions below:
+* https://gtk-rs.org/gtk4-rs/git/book/installation_windows.html
+  + In particular I prefer using gvsbuild 
+    https://github.com/wingtk/gvsbuild#development-environment
+
+Building
+
+```sh
+git clone --depth 1 https://github.com/codyduong/hitokage
+cd hitokage
+cargo run --release 
+```
+
+Compiling
+
+```sh
+git clone --depth 1 https://github.com/codyduong/hitokage
+cd hitokage
+cargo install --path hitokage
+```
 
 <!--
 Build notes:
